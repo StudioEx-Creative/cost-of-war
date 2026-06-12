@@ -4,7 +4,8 @@ An interactive data artwork by **Blueprint × StudioEX** (2026).
 
 In 2025, violence cost humanity **$21.81 trillion** — 10.5% of everything the world produces. This site counts what war takes — in money, in futures, and in lives — and asks one question: *what if we chose differently?*
 
-**Live site:** https://[username].github.io/cost-of-war/ (set after deploy)
+**Live site:** https://studioex-creative.github.io/cost-of-war/
+**Repository:** https://github.com/StudioEx-Creative/cost-of-war
 
 ## Structure
 
