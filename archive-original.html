@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Cost of War — Blueprint × StudioEX</title>
+<meta property="og:title" content="The Cost of War">
+<meta property="og:description" content="In 2025, humanity spent $17.5 trillion on war and its consequences. See what else that money could do.">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#000;--near-black:#050508;--panel:#0a0a0f;
+  --red:#ff2d2d;--red-dim:#8b0000;--amber:#f5a623;
+  --green:#00ff88;--green-dim:#004422;
+  --teal:#00e5ff;--teal-dim:#003344;--purple:#b967ff;--blue:#4488ff;
+  --text:#e8e8e8;--muted:#555;--border:#1a1a2e;
+  --fd:'Bebas Neue',sans-serif;--fm:'IBM Plex Mono',monospace;--fb:'IBM Plex Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--text);font-family:var(--fb);overflow-x:hidden;cursor:crosshair}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:999}
+canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;position:relative;z-index:2}
+.eyebrow{font-family:var(--fm);font-size:.65rem;letter-spacing:.3em;color:var(--red);text-transform:uppercase;margin-bottom:2rem;opacity:0;animation:ri .8s .3s ease forwards}
+.hero-title{font-family:var(--fd);font-size:clamp(4rem,14vw,11rem);line-height:.85;color:#fff;opacity:0;animation:ri .8s .5s ease forwards}
+.hero-title span{color:var(--red);display:block;text-shadow:0 0 60px rgba(255,45,45,.4)}
+.hero-sub{font-family:var(--fm);font-size:clamp(.65rem,1.2vw,.85rem);color:var(--muted);max-width:520px;line-height:1.7;margin-top:1.5rem;opacity:0;animation:ri .8s .7s ease forwards}
+.hero-counters{display:flex;flex-wrap:wrap;gap:3rem;justify-content:center;margin:3rem 0 1.5rem;opacity:0;animation:ri .8s .9s ease forwards}
+.hc{text-align:center}
+.hc-lbl{font-family:var(--fm);font-size:.55rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:.4rem}
+.hc-num{font-family:var(--fd);font-size:clamp(2.5rem,7vw,5.5rem);line-height:1;text-shadow:0 0 40px currentColor}
+.hc-num.red{color:var(--red)} .hc-num.amber{color:var(--amber)}
+.hc-sub{font-family:var(--fm);font-size:.52rem;color:var(--muted);margin-top:.3rem}
+.scroll-cue{font-family:var(--fm);font-size:.6rem;letter-spacing:.2em;color:var(--muted);animation:blink 2s infinite;margin-top:.5rem}
+@keyframes blink{0%,100%{opacity:.2}50%{opacity:.8}}
+@keyframes ri{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTIONS */
+.section{padding:5rem 2rem;max-width:1200px;margin:0 auto;position:relative;z-index:2}
+.sec-title{font-family:var(--fd);font-size:clamp(2.5rem,6vw,4rem);line-height:1}
+.sec-title.red{color:var(--red);text-shadow:0 0 30px rgba(255,45,45,.2)}
+.sec-title.teal{color:var(--teal);text-shadow:0 0 30px rgba(0,229,255,.2)}
+.sec-title.amber{color:var(--amber)}
+.sec-desc{font-family:var(--fm);font-size:.7rem;color:var(--muted);max-width:560px;line-height:1.7;margin-top:.6rem;margin-bottom:2rem}
+
+/* WAR CARDS */
+.war-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1px;background:var(--red-dim);border:1px solid var(--red-dim)}
+.wc{background:var(--near-black);padding:1.2rem;position:relative;overflow:hidden;cursor:pointer;transition:background .25s}
+.wc:hover{background:#0d0003}
+.wc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.wc:hover::after{transform:scaleX(1)}
+.wc-tag{font-family:var(--fm);font-size:.52rem;letter-spacing:.2em;color:var(--red);text-transform:uppercase;margin-bottom:.4rem}
+.wc-amt{font-family:var(--fd);font-size:2rem;color:#fff;line-height:1}
+.wc-name{font-family:var(--fb);font-size:.78rem;font-weight:600;color:var(--text);margin:.25rem 0}
+.wc-sum{font-family:var(--fb);font-size:.7rem;color:var(--muted);line-height:1.5}
+.wc-expand{display:none;font-family:var(--fb);font-size:.7rem;color:var(--muted);line-height:1.6;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)}
+.wc.open .wc-expand{display:block}
+.wc-bar{height:2px;background:var(--border);margin:.75rem 0 .4rem;overflow:hidden}
+.wc-bar-fill{height:100%;background:linear-gradient(90deg,var(--red-dim),var(--red));transition:width 1.4s cubic-bezier(.16,1,.3,1)}
+.wc-src{font-family:var(--fm);font-size:.52rem}
+.wc-src a{color:#3a3a3a;text-decoration:none;border-bottom:1px solid #2a2a2a;transition:color .2s}
+.wc-src a:hover{color:var(--red)}
+.wc-more{font-family:var(--fm);font-size:.52rem;color:var(--red);margin-top:.4rem;cursor:pointer;opacity:.6}
+.wc-priceless{background:#040404}
+.wc-priceless::after{background:#fff !important}
+.wc-priceless .wc-tag{color:#888}
+.wc-priceless .wc-amt{color:#fff;letter-spacing:.02em}
+.wc-priceless .wc-more{color:#888}
+.wc-bar-white{background:linear-gradient(90deg,#333,#fff) !important}
+
+/* PRICELESS */
+.priceless-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1px;background:#2a2a2a;border:1px solid #2a2a2a;margin-top:1px}
+.pc{background:var(--near-black);padding:1.2rem;position:relative;overflow:hidden;transition:background .25s}
+.pc:hover{background:#0d0d0d}
+.pc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:#fff;transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.pc:hover::after{transform:scaleX(1)}
+.pc-tag{font-family:var(--fm);font-size:.52rem;letter-spacing:.2em;color:#888;text-transform:uppercase;margin-bottom:.4rem}
+.pc-val{font-family:var(--fd);font-size:2rem;color:#fff;line-height:1}
+.pc-title{font-family:var(--fb);font-size:.78rem;font-weight:600;color:var(--text);margin:.25rem 0}
+.pc-desc{font-family:var(--fb);font-size:.7rem;color:var(--muted);line-height:1.5}
+.pc-bar{height:2px;background:var(--border);margin:.75rem 0 .4rem}
+.pc-bar-fill{height:100%;background:linear-gradient(90deg,#333,#fff);width:100%}
+
+/* DIVIDER */
+.divider{padding:4rem 2rem;text-align:center;position:relative;z-index:2}
+.div-line{height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent);margin:.75rem 0}
+.div-text{font-family:var(--fd);font-size:clamp(1.8rem,4vw,3rem);color:var(--amber)}
+.div-sub{font-family:var(--fm);font-size:.68rem;color:var(--muted);margin-top:.5rem}
+
+/* STICKY TRACKER */
+.tracker{position:sticky;top:0;z-index:200;background:rgba(0,0,0,.97);backdrop-filter:blur(20px);border-bottom:1px solid #111;padding:.85rem 2rem}
+.tracker-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
+.ti{min-width:0}
+.ti-lbl{font-family:var(--fm);font-size:.5rem;letter-spacing:.15em;color:var(--muted);margin-bottom:.15rem;white-space:nowrap}
+.ti-val{font-family:var(--fd);font-size:1.5rem;line-height:1;white-space:nowrap;transition:color .4s}
+.ti-val.g{color:var(--green);text-shadow:0 0 15px rgba(0,255,136,.3)}
+.ti-val.a{color:var(--amber);text-shadow:0 0 15px rgba(245,166,35,.3)}
+.ti-val.r{color:var(--red);text-shadow:0 0 15px rgba(255,45,45,.3)}
+.ti-bar-w{flex:1;min-width:120px}
+.ti-bar{height:4px;background:#111;border-radius:2px;overflow:hidden}
+.ti-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--green),var(--teal));transition:width .5s cubic-bezier(.16,1,.3,1),background .4s}
+.ti-bar-fill.a{background:linear-gradient(90deg,var(--amber),#ff6b00)}
+.ti-bar-fill.r{background:var(--red)}
+.ti-count{font-family:var(--fm);font-size:.62rem;color:var(--teal);white-space:nowrap}
+
+/* ISSUE CARDS */
+.issues-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.875rem}
+.ic{background:var(--panel);border:1px solid var(--border);padding:.7rem .9rem;cursor:pointer;transition:border-color .2s,transform .15s,box-shadow .3s;position:relative;overflow:hidden}
+.ic:hover:not(.cant){border-color:#2a2a4e;transform:translateY(-1px)}
+.ic.sel{border-color:var(--teal);box-shadow:0 0 18px rgba(0,229,255,.1),inset 0 0 18px rgba(0,229,255,.03);animation:glow 2.5s ease infinite}
+.ic.cant{opacity:.4;cursor:not-allowed}
+@keyframes glow{0%,100%{box-shadow:0 0 10px rgba(0,229,255,.05)}50%{box-shadow:0 0 25px rgba(0,229,255,.18)}}
+.ic-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem}
+.ic-sdg{font-family:var(--fm);font-size:.52rem;letter-spacing:.15em;color:var(--purple);text-transform:uppercase}
+.ic-chk{width:15px;height:15px;border:1px solid var(--border);flex-shrink:0;transition:all .2s}
+.ic.sel .ic-chk{background:var(--teal);border-color:var(--teal)}
+.ic-name{font-family:var(--fd);font-size:1.35rem;color:#fff;line-height:1;margin-bottom:.2rem}
+.ic-cost{font-family:var(--fd);font-size:1.7rem;line-height:1;margin-bottom:.15rem}
+.ic-unit{font-family:var(--fm);font-size:.52rem;color:var(--muted);margin-bottom:.35rem}
+.ic-pb{height:2px;background:var(--border);margin-bottom:.3rem;overflow:hidden}
+.ic-pb-fill{height:100%;transition:width .8s cubic-bezier(.16,1,.3,1)}
+.ic-pct{font-family:var(--fm);font-size:.52rem;color:var(--muted)}
+.ic-pct span{color:var(--teal)}
+.ic-sum{font-family:var(--fb);font-size:.68rem;color:var(--muted);line-height:1.5;margin-top:.45rem}
+.ic-detail{display:none;font-family:var(--fb);font-size:.68rem;color:var(--muted);line-height:1.6;margin-top:.45rem;padding-top:.45rem;border-top:1px solid var(--border)}
+.ic.exp .ic-detail{display:block}
+.ic-more{font-family:var(--fm);font-size:.52rem;color:var(--teal);margin-top:.35rem;opacity:.65;cursor:pointer;user-select:none}
+.ic-src{font-family:var(--fm);font-size:.52rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border)}
+.ic-src a{color:#3a3a3a;text-decoration:none;border-bottom:1px dotted #333;transition:color .2s}
+.ic-src a:hover{color:var(--teal)}
+.cant-tag{font-family:var(--fm);font-size:.48rem;letter-spacing:.08em;color:var(--red);border:1px solid var(--red-dim);padding:2px 5px;display:inline-block;margin-top:.35rem}
+
+/* VIS */
+.vis-section{padding:2rem 0;width:100%;position:relative;z-index:2;background:var(--black)}
+.vis-header{padding:2rem 2rem .5rem;max-width:1400px;margin:0 auto}
+.vis-layout{display:grid;grid-template-columns:1fr 360px;gap:0;align-items:start;width:100%}
+#flowC{display:block;background:transparent;border:none;flex-shrink:0}
+.vis-issue-panel{display:flex;flex-direction:column;gap:.4rem;height:700px;overflow-y:auto;padding:.75rem 1.5rem .75rem .75rem;border-left:1px solid #111}
+.vis-issue-panel::-webkit-scrollbar{width:3px}
+.vis-issue-panel::-webkit-scrollbar-track{background:#000}
+.vis-issue-panel::-webkit-scrollbar-thumb{background:#1a1a1a}
+.vis-panel-title{font-family:var(--fm);font-size:.55rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;padding:.25rem 0 .5rem;margin-bottom:.25rem;border-bottom:1px solid #111}
+
+/* PANEL ISSUE ROWS — compact tick-list */
+.pic{display:flex;align-items:flex-start;gap:.6rem;padding:.55rem .6rem;cursor:pointer;border:1px solid transparent;transition:border-color .2s,background .2s;position:relative}
+.pic:hover:not(.pcant){background:#0a0a0f;border-color:#1a1a2e}
+.pic.psel{background:#05080f;border-color:var(--teal)}
+.pic.pcant{opacity:.4;cursor:not-allowed}
+.pic-chk{width:14px;height:14px;border:1px solid #333;flex-shrink:0;margin-top:2px;transition:all .2s}
+.pic.psel .pic-chk{background:var(--teal);border-color:var(--teal)}
+.pic-body{flex:1;min-width:0}
+.pic-name{font-family:var(--fd);font-size:1.05rem;color:#fff;line-height:1;margin-bottom:.1rem}
+.pic-cost{font-family:var(--fm);font-size:.62rem;margin-bottom:.15rem;font-weight:500}
+.pic-sum{font-family:var(--fb);font-size:.62rem;color:var(--muted);line-height:1.45;margin-bottom:.2rem}
+.pic-detail{display:none;font-family:var(--fb);font-size:.6rem;color:#444;line-height:1.55;margin-top:.2rem;padding-top:.2rem;border-top:1px solid #111}
+.pic.pexp .pic-detail{display:block}
+.pic-foot{display:flex;align-items:center;justify-content:space-between;margin-top:.2rem}
+.pic-more{font-family:var(--fm);font-size:.5rem;color:var(--teal);opacity:.6;cursor:pointer;user-select:none}
+.pic-src a{font-family:var(--fm);font-size:.5rem;color:#333;text-decoration:none;border-bottom:1px dotted #333;transition:color .2s}
+.pic-src a:hover{color:var(--teal)}
+.pic-pct-bar{height:1.5px;background:#111;margin-top:.3rem;overflow:hidden}
+.pic-pct-fill{height:100%;transition:width .6s cubic-bezier(.16,1,.3,1)}
+
+/* DETAIL SECTION — full cards above vis */
+.detail-section{padding:4rem 2rem;max-width:1400px;margin:0 auto;position:relative;z-index:2}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.875rem;margin-top:1.5rem}
+
+@media(max-width:900px){
+  .vis-layout{grid-template-columns:1fr}
+  .vis-issue-panel{height:auto;max-height:none;flex-direction:row;flex-wrap:wrap;border-left:none;border-top:1px solid #111;padding:1rem}
+  .pic{min-width:200px;flex:1}
+}
+
+/* SUMMARY */
+.summary{padding:5rem 2rem;text-align:center;border-top:1px solid #111;position:relative;z-index:2}
+.sum-big{font-family:var(--fd);font-size:clamp(2rem,5.5vw,4.2rem);line-height:1.05;color:#fff;margin-bottom:1rem}
+.sum-big .g{color:var(--green);text-shadow:0 0 30px rgba(0,255,136,.3)}
+.sum-big .r{color:var(--red)}
+.sum-stmt{font-family:var(--fm);font-size:.72rem;color:var(--muted);max-width:620px;margin:0 auto 2.5rem;line-height:1.9}
+.sum-btns{display:flex;gap:.875rem;justify-content:center;flex-wrap:wrap;margin-bottom:3rem}
+.btn{font-family:var(--fm);font-size:.62rem;letter-spacing:.12em;padding:.7rem 1.5rem;cursor:pointer;transition:all .2s;text-transform:uppercase;border:none}
+.btn-r{color:var(--red);border:1px solid var(--red-dim);background:transparent}
+.btn-r:hover{background:var(--red);color:#000}
+.btn-t{color:var(--teal);border:1px solid var(--teal-dim);background:transparent}
+.btn-t:hover{background:var(--teal);color:#000}
+.btn-w{color:#999;border:1px solid #222;background:transparent}
+.btn-w:hover{background:#fff;color:#000}
+
+/* SHARE */
+.share-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:600;align-items:center;justify-content:center;padding:2rem}
+.share-ov.open{display:flex}
+.share-box{background:var(--near-black);border:1px solid var(--border);padding:2.5rem;max-width:460px;width:100%;text-align:center}
+.share-title{font-family:var(--fd);font-size:2rem;color:#fff;margin-bottom:.75rem}
+.share-sub{font-family:var(--fm);font-size:.62rem;color:var(--muted);line-height:1.7;margin-bottom:1.25rem}
+.share-inp{width:100%;background:#0a0a0f;border:1px solid var(--border);color:#fff;font-family:var(--fm);font-size:.72rem;padding:.7rem 1rem;outline:none;margin-bottom:.6rem;transition:border-color .2s}
+.share-inp:focus{border-color:var(--teal)}
+.share-thanks{display:none;font-family:var(--fm);font-size:.7rem;color:var(--green);padding:.75rem;border:1px solid var(--green-dim);margin-top:.6rem}
+.share-note{font-family:var(--fm);font-size:.52rem;color:var(--muted);margin-top:.6rem;line-height:1.6}
+.share-links-row{display:flex;gap:.6rem;justify-content:center;margin-top:1rem;flex-wrap:wrap}
+.s-lbtn{font-family:var(--fm);font-size:.58rem;padding:.5rem .9rem;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;transition:all .2s}
+.s-lbtn:hover{background:#fff;color:#000}
+.share-close{font-family:var(--fm);font-size:.58rem;color:var(--muted);cursor:pointer;margin-top:1rem;display:block;text-decoration:underline}
+
+/* DISCLAIMER */
+.disclaimer{padding:3rem 2rem;max-width:900px;margin:0 auto;position:relative;z-index:2}
+.disc-box{border:1px solid #2a1500;background:#050200;padding:1.5rem 2rem}
+.disc-title{font-family:var(--fm);font-size:.58rem;letter-spacing:.25em;color:var(--amber);text-transform:uppercase;margin-bottom:.6rem}
+.disc-text{font-family:var(--fb);font-size:.72rem;color:var(--muted);line-height:1.85}
+
+/* STUDIO */
+.studio{padding:4rem 2rem 2rem;text-align:center;border-top:1px solid #0d0d0d;position:relative;z-index:2}
+.st-name{font-family:var(--fd);font-size:clamp(1.5rem,4vw,3rem);color:#fff;letter-spacing:.04em}
+.st-name span{color:var(--red)}
+.st-sub{font-family:var(--fm);font-size:.58rem;color:var(--muted);margin-top:.4rem;letter-spacing:.12em}
+.st-links{display:flex;gap:2rem;justify-content:center;margin-top:1.4rem;flex-wrap:wrap}
+.st-links a{font-family:var(--fm);font-size:.58rem;color:var(--muted);text-decoration:none;border-bottom:1px dotted #333;transition:color .2s}
+.st-links a:hover{color:var(--teal)}
+
+footer{padding:2rem;text-align:center;position:relative;z-index:2}
+footer p{font-family:var(--fm);font-size:.52rem;color:#2a2a2a;line-height:2.2;max-width:900px;margin:0 auto}
+footer a{color:#2a2a2a;text-decoration:none;border-bottom:1px dotted #2a2a2a}
+footer a:hover{color:var(--muted)}
+
+/* ═══ JOURNEY SECTIONS ═══ */
+.journey-section{border-top:1px solid #0d0d0d;position:relative;z-index:2}
+.journey-inner{max-width:900px;margin:0 auto;padding:5rem 2rem}
+.journey-label{font-family:var(--fm);font-size:.5rem;letter-spacing:.3em;color:var(--red);text-transform:uppercase;margin-bottom:.75rem;opacity:.6}
+.journey-desc{font-family:var(--fm);font-size:.68rem;color:var(--muted);line-height:1.85;margin:.75rem 0 2rem;max-width:580px}
+.journey-actions{display:flex;gap:.875rem;flex-wrap:wrap;margin-top:2rem}
+
+/* ═══ RANKING ═══ */
+.rank-ui{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem}
+@media(max-width:680px){.rank-ui{grid-template-columns:1fr}}
+.rank-col-head{font-family:var(--fm);font-size:.5rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:1px solid #111;display:flex;align-items:center;gap:.5rem}
+.rank-counter{color:var(--amber);margin-left:auto}
+.rank-drop{display:flex;flex-direction:column;gap:.35rem;min-height:80px}
+.rank-pool{display:flex;flex-direction:column;gap:.35rem}
+.rank-pill{display:flex;align-items:center;gap:.6rem;padding:.65rem .9rem;background:var(--panel);border:1px solid var(--border);cursor:pointer;transition:border-color .2s,background .2s;user-select:none}
+.rank-pill:hover{border-color:#2a2a4e;background:#0a0a14}
+.rank-pill.in-top{opacity:.3;pointer-events:none}
+.rank-pill.is-ranked{background:#050d05;border-color:var(--amber)}
+.rp-num{font-family:var(--fd);font-size:1.5rem;color:#111;width:26px;flex-shrink:0;transition:color .25s;text-align:center;line-height:1}
+.rank-pill.is-ranked .rp-num{color:var(--amber)}
+.rp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.rp-name{font-family:var(--fd);font-size:1rem;color:#fff;flex:1;line-height:1}
+.rp-cost{font-family:var(--fm);font-size:.5rem;color:var(--muted);white-space:nowrap}
+.rp-rm{font-family:var(--fm);font-size:.5rem;color:var(--red);opacity:0;transition:opacity .2s;margin-left:.25rem;cursor:pointer;flex-shrink:0}
+.rank-pill.is-ranked:hover .rp-rm{opacity:.7}
+.rank-empty-msg{font-family:var(--fm);font-size:.6rem;color:#1a1a1a;padding:1.5rem;border:1px dashed #0f0f0f;text-align:center;line-height:1.6}
+
+/* ═══ COUNTRY ═══ */
+.country-ui{margin-top:1.5rem}
+.country-select{background:#0a0a0f;border:1px solid var(--border);color:#fff;font-family:var(--fm);font-size:.7rem;padding:.75rem 1.25rem;outline:none;transition:border-color .2s;width:100%;max-width:400px;cursor:pointer;-webkit-appearance:none;appearance:none}
+.country-select:focus{border-color:var(--teal)}
+.country-card{background:var(--panel);border:1px solid var(--border);padding:1.75rem 2rem;margin-top:1.25rem}
+.cc-name{font-family:var(--fd);font-size:2.2rem;color:#fff;line-height:1;margin-bottom:.2rem}
+.cc-spend{font-family:var(--fd);font-size:3.5rem;color:var(--red);text-shadow:0 0 20px rgba(255,45,45,.2);line-height:1;margin-bottom:.3rem}
+.cc-meta{font-family:var(--fm);font-size:.58rem;color:var(--muted);line-height:1.8;margin-bottom:1.25rem}
+.cc-meta a{color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal-dim)}
+.cc-bars{display:flex;flex-direction:column;gap:.6rem}
+.cc-bar-row{display:flex;align-items:center;gap:.75rem}
+.cc-bar-lbl{font-family:var(--fm);font-size:.54rem;color:var(--muted);width:170px;flex-shrink:0;line-height:1.3}
+.cc-bar-track{flex:1;height:2px;background:#0f0f0f;overflow:hidden}
+.cc-bar-fill{height:100%;transition:width 1.3s cubic-bezier(.16,1,.3,1)}
+.cc-bar-val{font-family:var(--fm);font-size:.54rem;text-align:right;flex-shrink:0;width:48px}
+.cc-note{font-family:var(--fm);font-size:.58rem;color:var(--teal);padding:.6rem .9rem;border:1px solid var(--teal-dim);background:#00050a;margin-top:1.25rem;line-height:1.7}
+
+/* ═══ LETTER ═══ */
+.letter-fields{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1.5rem 0 1.25rem}
+@media(max-width:600px){.letter-fields{grid-template-columns:1fr}}
+.field-inp{background:#0a0a0f;border:1px solid var(--border);color:#fff;font-family:var(--fm);font-size:.68rem;padding:.75rem 1rem;outline:none;transition:border-color .2s;width:100%}
+.field-inp:focus{border-color:var(--teal)}
+.letter-wrap{border:1px solid var(--border);background:#030303}
+.letter-toolbar{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid #0f0f0f;background:#050505}
+.letter-toolbar-label{font-family:var(--fm);font-size:.48rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.letter-toolbar-actions{display:flex;gap:.4rem}
+.tool-btn{font-family:var(--fm);font-size:.5rem;letter-spacing:.1em;color:var(--muted);border:1px solid #1a1a1a;background:transparent;padding:.3rem .75rem;cursor:pointer;text-transform:uppercase;transition:all .2s}
+.tool-btn:hover{border-color:var(--teal);color:var(--teal)}
+.letter-body{padding:2rem 2.5rem;font-family:var(--fm);font-size:.68rem;color:#555;line-height:2.1;min-height:260px;outline:none;white-space:pre-wrap}
+.letter-body:focus{color:#888}
+.letter-placeholder{color:#1a1a1a;font-style:italic;display:block;text-align:center;padding:2rem 0}
+.letter-contact-note{font-family:var(--fm);font-size:.55rem;color:var(--muted);margin-top:.75rem;line-height:1.8}
+.letter-contact-note a{color:var(--muted);text-decoration:none;border-bottom:1px dotted #333}
+
+/* ═══ COALITION ═══ */
+.coalition-display{margin:1.5rem 0 2rem;text-align:left}
+.coalition-num{font-family:var(--fd);font-size:clamp(4rem,11vw,8rem);color:var(--green);text-shadow:0 0 40px rgba(0,255,136,.18);line-height:1}
+.coalition-suffix{font-family:var(--fm);font-size:.62rem;color:var(--muted);margin:.3rem 0 1rem;letter-spacing:.1em}
+.live-dot{display:inline-block;width:5px;height:5px;background:var(--red);border-radius:50%;margin-right:.35rem;animation:livePulse 1.2s ease infinite;vertical-align:middle}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+.coalition-bar-wrap{max-width:500px;margin-bottom:1.5rem}
+.coalition-bar{height:2px;background:#0a0a0a;overflow:hidden}
+.coalition-bar-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--teal));width:0%;transition:width 2.5s cubic-bezier(.16,1,.3,1)}
+.coalition-top{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:1.5rem}
+.cti{font-family:var(--fm);font-size:.52rem;padding:.22rem .65rem;border:1px solid #0f0f0f;color:#222}
+.cti.hot{border-color:var(--teal-dim);color:var(--teal)}
+.coalition-form{max-width:500px}
+.coalition-thanks{font-family:var(--fm);font-size:.68rem;color:var(--green);padding:.75rem;border:1px solid var(--green-dim);margin-top:.75rem}
+
+/* ═══ SHARE CARD OVERLAY ═══ */
+.sc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:900;align-items:center;justify-content:center;padding:1rem;flex-direction:column;gap:.875rem}
+.sc-overlay.open{display:flex}
+.sc-modal{display:flex;flex-direction:column;align-items:center;gap:.875rem;max-width:480px;width:100%}
+#shareCard{width:100%;background:#000;border:1px solid #111;padding:1.75rem;font-family:'IBM Plex Mono',monospace}
+.sc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem}
+.sc-eyebrow{font-size:.48rem;letter-spacing:.25em;color:var(--red);text-transform:uppercase;line-height:1.6}
+.sc-logo{font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:var(--red);text-align:right;line-height:1.2}
+.sc-headline{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#fff;line-height:1.05;margin-bottom:1.1rem}
+.sc-issues{display:flex;flex-direction:column;gap:.4rem;margin-bottom:.875rem}
+.sc-row{display:flex;align-items:center;gap:.45rem}
+.sc-rn{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#111;width:16px;flex-shrink:0}
+.sc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sc-in{font-size:.6rem;color:var(--text);flex:1}
+.sc-ic{font-size:.55rem}
+.sc-divider{border:none;border-top:1px solid #0f0f0f;margin:.65rem 0}
+.sc-stat-row{display:flex;justify-content:space-between;align-items:flex-end}
+.sc-stat{font-size:.52rem;color:var(--muted);line-height:1.8;flex:1}
+.sc-stat-right{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--green);text-align:right;line-height:1;text-shadow:0 0 12px rgba(0,255,136,.22)}
+.sc-footer-row{display:flex;justify-content:space-between;align-items:flex-end;margin-top:.4rem}
+.sc-footer-left{font-size:.5rem;color:#333;line-height:1.6;flex:1}
+.sc-footer-right{font-size:.46rem;color:#1a1a1a;text-align:right;line-height:1.7}
+.sc-actions{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;width:100%}
+.sc-close{font-family:var(--fm);font-size:.55rem;color:var(--muted);cursor:pointer;text-align:center;text-decoration:underline}
+
+.burst{position:fixed;pointer-events:none;z-index:500;font-family:var(--fd);font-size:1.05rem;animation:burstUp .9s ease forwards;white-space:nowrap}
+@keyframes burstUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-65px) scale(.55)}}
+
+@media(max-width:620px){
+  .tracker-inner,.sum-btns{flex-direction:column;align-items:flex-start;gap:.5rem}
+  .ti-bar-w{width:100%}
+}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="eyebrow">A data art installation · Blueprint × StudioEX · 2026</div>
+  <h1 class="hero-title">THE<br><span>COST OF WAR</span></h1>
+  <p class="hero-sub">Every second, humanity spends approximately $554,000 on armed conflict and its consequences. Scroll down to see what else that money could build.</p>
+  <div class="hero-counters">
+    <div class="hc">
+      <div class="hc-lbl">global defence spending · 2025</div>
+      <div class="hc-num red" id="hDef">—</div>
+      <div class="hc-sub">SIPRI Military Expenditure Database</div>
+    </div>
+    <div class="hc">
+      <div class="hc-lbl">total economic impact of violence · 2024</div>
+      <div class="hc-num amber" id="hTotal">—</div>
+      <div class="hc-sub">IEP Global Peace Index 2024</div>
+    </div>
+  </div>
+  <div class="scroll-cue">▼ &nbsp; scroll to see the full picture &nbsp; ▼</div>
+</section>
+
+<!-- ═══ WAR COSTS ═══ -->
+<div class="section">
+  <div class="sec-title red">The cost of war</div>
+  <p class="sec-desc">What humanity spends on conflict, weapons, and their aftermath — every year. Click any card for more detail.</p>
+  <div class="war-grid" id="warGrid"></div>
+
+</div>
+
+<!-- ═══ DIVIDER ═══ -->
+<div class="divider">
+  <div class="div-line"></div>
+  <div class="div-text">What if we chose differently?</div>
+  <div class="div-sub">$2.9 trillion. Select the issues below and watch the budget redistribute.</div>
+  <div class="div-line"></div>
+</div>
+
+<!-- ═══ STICKY TRACKER ═══ -->
+<div class="tracker">
+  <div class="tracker-inner">
+    <div class="ti">
+      <div class="ti-lbl">budget remaining</div>
+      <div class="ti-val g" id="tiRem">$2.90T</div>
+    </div>
+    <div class="ti-bar-w">
+      <div class="ti-bar"><div class="ti-bar-fill" id="tiBar" style="width:100%"></div></div>
+    </div>
+    <div class="ti">
+      <div class="ti-lbl">allocated</div>
+      <div class="ti-val a" id="tiAlloc">$0</div>
+    </div>
+    <div class="ti">
+      <div class="ti-lbl">issues selected</div>
+      <div class="ti-count" id="tiCount">0 · tap cards below to fund</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCROLL PROGRESS BAR ═══ -->
+<div id="scrollBar" style="position:fixed;right:0;top:0;width:3px;height:0%;background:linear-gradient(180deg,var(--red),var(--amber),var(--teal));z-index:1000;transition:height .1s linear;pointer-events:none"></div>
+<div id="scrollDot" style="position:fixed;right:-3px;top:0;width:9px;height:9px;background:var(--teal);border-radius:50%;z-index:1001;transition:top .1s linear;pointer-events:none;box-shadow:0 0 8px var(--teal)"></div>
+
+<!-- ═══ ISSUE DETAIL SECTION ═══ -->
+<div class="detail-section" id="detailSection">
+  <div class="sec-title teal">What could we fund instead?</div>
+  <p class="sec-desc">Each card represents an annual investment gap — the additional money needed to materially address that global crisis. Click to select for redistribution. Expand for full detail and sources.</p>
+  <div class="detail-grid" id="detailGrid"></div>
+</div>
+
+<!-- ═══ FLOW VIS ═══ -->
+<div class="vis-section" id="visSection">
+  <div class="vis-header">
+    <div class="sec-title amber">Redistribution</div>
+    <p class="sec-desc" style="margin-bottom:0">The large red circle is the global defence budget. Select issues on the right — watch it flow outward. Your top 5 ranking (below) will also update this diagram.</p>
+  </div>
+  <div class="vis-layout">
+    <canvas id="flowC"></canvas>
+    <div class="vis-issue-panel">
+      <div class="vis-panel-title">Select issues to fund</div>
+      <div id="issuesGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SUMMARY ═══ -->
+<div class="summary">
+  <div class="sum-big" id="sumBig">Select issues above<br>to begin redistributing</div>
+  <div class="sum-stmt" id="sumStmt">The money to solve these crises already exists in the world's annual defence budgets. This is not a question of financial capacity. It is a question of political will.</div>
+  <div class="sum-btns">
+    <button class="btn btn-r" onclick="resetAll()">↺ Reset all</button>
+    <button class="btn btn-t" onclick="openShare()">↗ Share this</button>
+    <button class="btn btn-w" onclick="window.open('https://www.thesixdegrees.co','_blank')">The Six Degrees →</button>
+  </div>
+</div>
+
+<!-- ═══ RANK ═══ -->
+<div class="journey-section" id="rankSection">
+  <div class="journey-inner">
+    <div class="journey-label">Step 01</div>
+    <div class="sec-title" style="color:var(--amber)">Rank your priorities</div>
+    <p class="journey-desc">Which five issues do you believe the world must fund first? Your choices will shape the redistribution diagram above, generate your personal letter, and be added to the global coalition data.</p>
+    <div class="rank-ui">
+      <div class="rank-col">
+        <div class="rank-col-head">Your top 5 &nbsp;<span class="rank-counter" id="rankCount">0 / 5</span></div>
+        <div class="rank-drop" id="rankTop"><div class="rank-empty-msg">Select issues from the right →</div></div>
+      </div>
+      <div class="rank-col">
+        <div class="rank-col-head">All issues</div>
+        <div class="rank-pool" id="rankPool"></div>
+      </div>
+    </div>
+    <div class="journey-actions">
+      <button class="btn btn-t" id="rankNextBtn" onclick="goToCountry()" disabled style="opacity:.3">Continue → Your country</button>
+      <button class="btn btn-r" onclick="resetRanking()">↺ Clear</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COUNTRY ═══ -->
+<div class="journey-section" id="countrySection">
+  <div class="journey-inner">
+    <div class="journey-label">Step 02</div>
+    <div class="sec-title" style="color:var(--teal)">Your country</div>
+    <p class="journey-desc">Every nation contributes to the $2.9 trillion annual defence total. See what your country spends — and what that money could fund instead.</p>
+    <div class="country-ui">
+      <div class="country-select-wrap">
+        <select class="country-select" id="countrySelect" onchange="showCountry(this.value)">
+          <option value="">— Select your country —</option>
+        </select>
+      </div>
+      <div class="country-card" id="countryData" style="display:none"></div>
+    </div>
+    <div class="journey-actions" style="margin-top:2rem">
+      <button class="btn btn-t" onclick="goToLetter()" id="countryNextBtn" disabled style="opacity:.3">Continue → Write the letter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LETTER ═══ -->
+<div class="journey-section" id="letterSection">
+  <div class="journey-inner">
+    <div class="journey-label">Step 03</div>
+    <div class="sec-title" style="color:#fff">Write the letter</div>
+    <p class="journey-desc">A personal letter — pre-written from your choices, editable in full. Address it to your head of state. Send it, post it, or screenshot it.</p>
+    <div class="letter-fields">
+      <input class="field-inp" type="text" id="letterName" placeholder="Your name (optional — defaults to 'A concerned citizen')" oninput="generateLetter()">
+      <input class="field-inp" type="text" id="letterTitle" placeholder="Your leader's name / title (e.g. Prime Minister Starmer)" oninput="generateLetter()">
+    </div>
+    <div class="letter-wrap">
+      <div class="letter-toolbar">
+        <span class="letter-toolbar-label">Your letter · editable</span>
+        <div class="letter-toolbar-actions">
+          <button class="tool-btn" onclick="copyLetter()">Copy</button>
+          <button class="tool-btn" onclick="emailLetter()">Email</button>
+          <button class="tool-btn" onclick="tweetLetter()">Post to X</button>
+        </div>
+      </div>
+      <div class="letter-body" id="letterOutput" contenteditable="true" spellcheck="true"><span class="letter-placeholder">Complete your top 5 ranking and select your country — your letter will appear here, ready to edit.</span></div>
+    </div>
+    <div class="letter-contact-note" id="letterContactNote"></div>
+    <div class="journey-actions" style="margin-top:1.5rem">
+      <button class="btn btn-t" onclick="goToCoalition()">Continue → Join the coalition</button>
+      <button class="btn btn-w" onclick="generateShareCard()">Generate shareable card</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COALITION ═══ -->
+<div class="journey-section" id="coalitionSection" style="border-bottom:none">
+  <div class="journey-inner">
+    <div class="journey-label">Step 04</div>
+    <div class="sec-title teal">Join the coalition</div>
+    <p class="journey-desc"><span class="live-dot"></span>People choosing to fund the planet — live, from around the world. Add your voice to the global tally.</p>
+    <div class="coalition-display">
+      <div class="coalition-num" id="coalitionNum">—</div>
+      <div class="coalition-suffix">people have made their choice</div>
+      <div class="coalition-bar-wrap">
+        <div class="coalition-bar"><div class="coalition-bar-fill" id="coalitionBarFill"></div></div>
+      </div>
+      <div class="coalition-top" id="coalitionTopIssues"></div>
+    </div>
+    <div class="coalition-form">
+      <input class="field-inp" type="email" id="coalitionEmail" placeholder="Your email — optional, for Six Degrees waitlist & Blueprint updates">
+      <button class="btn btn-t" style="width:100%;margin-top:.6rem" onclick="submitCoalition()">Submit my priorities + generate shareable card</button>
+      <div id="coalitionThanks" style="display:none" class="coalition-thanks">✓ Added to the coalition. Your card is ready — scroll down to download it.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DISCLAIMER ═══ -->
+<div class="disclaimer">
+  <div class="disc-box">
+    <div class="disc-title">⚠ Important disclaimer</div>
+    <div class="disc-text">
+      This is a work of data art and advocacy, not a policy document. The reality of global defence, conflict, and humanitarian funding is vastly more nuanced than any single visualisation can capture. Defence spending serves multiple purposes — deterrence, disaster response, peacekeeping, and geopolitical stability — and many military personnel serve with genuine dedication and sacrifice. The cost figures for solving global issues are estimates derived from peer-reviewed and UN agency sources, representing the additional investment gaps above current spending. Many of these issues are deeply interrelated and cannot be solved by money alone: governance, political will, institutional capacity, and cultural change are equally critical.
+      <br><br>
+      This visualisation is intended to provoke reflection on the scale of global resource allocation — not to offer simple solutions to complex problems. We have not invented or inflated any figure. We acknowledge the immense complexity faced by policymakers navigating genuine security threats.
+      <br><br>
+      <em>The world is not simple. But some of its choices are starker than we allow ourselves to see.</em>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STUDIO CREDIT ═══ -->
+<div class="studio">
+  <div class="st-name">Blueprint &nbsp;×&nbsp; <span>StudioEX</span></div>
+  <div class="st-sub">An artwork by Blueprint · Produced by StudioEX · 2026</div>
+  <div class="st-links">
+    <a href="https://www.thesixdegrees.co" target="_blank">The Six Degrees Project</a>
+    <a href="https://www.studioex.co" target="_blank">StudioEX</a>
+    <a href="#" onclick="openShare();return false">Share this artwork</a>
+    <a href="mailto:hello@studioex.co">Contact</a>
+  </div>
+</div>
+
+<footer>
+  <p>
+    Sources: <a href="https://sipri.org" target="_blank">SIPRI 2025</a> · <a href="https://www.visionofhumanity.org" target="_blank">IEP Global Peace Index 2024</a> · <a href="https://watson.brown.edu/costsofwar" target="_blank">Brown Univ. Costs of War</a> · <a href="https://icanw.org" target="_blank">ICAN</a> · <a href="https://www.unhcr.org" target="_blank">UNHCR</a> · <a href="https://www.wfp.org" target="_blank">WFP</a> · <a href="https://www.who.int" target="_blank">WHO</a> · <a href="https://www.unesco.org" target="_blank">UNESCO</a> · <a href="https://unhabitat.org" target="_blank">UN-Habitat</a> · <a href="https://iea.org" target="_blank">IEA</a> · <a href="https://www.unwomen.org" target="_blank">UN Women</a> · <a href="https://www.ipcc.ch" target="_blank">IPCC</a> · <a href="https://www.worldbank.org" target="_blank">World Bank</a> · <a href="https://oceanpanel.org" target="_blank">Ocean Panel</a> · <a href="https://ipbes.net" target="_blank">IPBES</a>
+  </p>
+</footer>
+
+<!-- ═══ SHARE OVERLAY (general) ═══ -->
+<div class="share-ov" id="shareOv">
+  <div class="share-box">
+    <div class="share-title">Share The Cost of War</div>
+    <div class="share-sub">Screenshot your allocation and post it. Or send the link to someone who should see it.</div>
+    <input class="share-inp" type="email" id="emailIn" placeholder="Your email — stay connected with Blueprint & StudioEX">
+    <button class="btn btn-t" style="width:100%" onclick="submitEmail()">Keep me informed</button>
+    <div class="share-thanks" id="sThanks">✓ Thank you. We'll be in touch about Blueprint and StudioEX projects.</div>
+    <div class="share-note">We will never sell or share your data.</div>
+    <div class="share-links-row">
+      <button class="s-lbtn" onclick="doShare('twitter')">Twitter / X</button>
+      <button class="s-lbtn" onclick="doShare('linkedin')">LinkedIn</button>
+      <button class="s-lbtn" onclick="doShare('copy')">Copy Link</button>
+      <button class="s-lbtn" onclick="window.open('https://www.thesixdegrees.co','_blank')">The Six Degrees</button>
+    </div>
+    <span class="share-close" onclick="closeShare()">Close</span>
+  </div>
+</div>
+
+<!-- ═══ SHAREABLE CARD OVERLAY ═══ -->
+<div class="sc-overlay" id="scOverlay">
+  <div class="sc-modal">
+    <div id="shareCard">
+      <div class="sc-header">
+        <div class="sc-eyebrow">The Cost of War · 2026</div>
+        <div class="sc-logo">Blueprint × StudioEX</div>
+      </div>
+      <div class="sc-headline" id="scHeadline">I choose to fund the planet.</div>
+      <div class="sc-issues" id="scIssues"></div>
+      <div class="sc-divider"></div>
+      <div class="sc-stat-row">
+        <div class="sc-stat" id="scStatLeft"></div>
+        <div class="sc-stat-right" id="scStatRight"></div>
+      </div>
+      <div class="sc-divider"></div>
+      <div class="sc-footer-row">
+        <div class="sc-footer-left" id="scCountryLine"></div>
+        <div class="sc-footer-right">studioex.co<br>@404blueprint</div>
+      </div>
+    </div>
+    <div class="sc-actions">
+      <button class="btn btn-t" onclick="downloadCard()">↓ Download PNG</button>
+      <button class="btn btn-w" onclick="shareCardTo('twitter')">Post to X</button>
+      <button class="btn btn-w" onclick="shareCardTo('linkedin')">LinkedIn</button>
+      <button class="btn btn-w" onclick="shareCardTo('instagram')">Copy for Instagram</button>
+    </div>
+    <span class="sc-close" onclick="document.getElementById('scOverlay').classList.remove('open')">Close</span>
+  </div>
+</div>
+
+<script>
+// ═══ DATA ═══════════════════════════════════════════════════════
+const DEFENCE = 2900; // $B — the "budget pot"
+
+const warData = [
+  {tag:"Direct Military",amt:"$2.9T",amtB:2900,name:"Global Defence Spending",sum:"The world's annual military expenditure in 2025 — an all-time record and the 11th consecutive year of growth, equal to 2.5% of global GDP.",detail:"The US alone spent $954B. Europe's NATO members spent $559B combined — Germany up 24% year-on-year. China spent $336B, up 7.4%. Russia spent $190B, the highest share of GDP ever recorded. Outside the US, the rest of the world grew spending by 9.2% in a single year.",pct:100,src:"SIPRI Military Expenditure Database 2025",url:"https://sipri.org"},
+  {tag:"Ongoing Conflict",amt:"$500B+",amtB:500,name:"Ukraine War Costs",sum:"Annual estimate of military aid, reconstruction needs, and direct economic damage from the ongoing conflict in Ukraine.",detail:"The World Bank's 2024 Rapid Damage Assessment puts Ukraine's reconstruction needs at $524B. NATO allies have provided over $300B in military support since 2022. The conflict entered its fourth year with no resolution in sight, displacing 10+ million people internally.",pct:17,src:"World Bank Ukraine Rapid Damage Assessment 2024",url:"https://www.worldbank.org/en/country/ukraine"},
+  {tag:"Post-9/11 Legacy",amt:"$130B/yr",amtB:130,name:"US War on Terror",sum:"Brown University's Costs of War project puts total post-9/11 war spending at over $8 trillion. Annualised over 24 years: ~$130B/year.",detail:"This figure excludes $2.2 trillion in future veterans' care costs. Over 900,000 people have died in post-9/11 wars — the vast majority civilians. The conflicts produced the largest refugee crisis since WWII and contributed directly to the rise of new armed groups.",pct:4.5,src:"Brown University Costs of War Project",url:"https://watson.brown.edu/costsofwar"},
+  {tag:"Weapons of Mass Destruction",amt:"$91B",amtB:91,name:"Nuclear Arsenal Maintenance",sum:"Nine nuclear states spend $91B per year — $2,898 every second — maintaining weapons capable of ending human civilisation.",detail:"The US alone spends $51B/year. Under current modernisation plans, global nuclear spending will exceed $130B/year by 2030. There are approximately 12,500 nuclear warheads in existence. A single Trident submarine carries enough destructive capacity to eliminate 40 cities.",pct:3.1,src:"ICAN — Wasted: Global Nuclear Weapons Spending 2023",url:"https://icanw.org/wasted-a-new-report-on-nuclear-weapons-spending/"},
+  {tag:"Arms Trade",amt:"$120B+",amtB:120,name:"Global Arms Transfers",sum:"The international arms trade transferred $120B+ in weapons in 2023 — fuelling virtually every active conflict on Earth.",detail:"The US, France, Russia, Germany, and UK account for 75% of global arms exports. Many weapons sold to nominal allies end up in conflict zones within years. The trade is one of the least regulated global industries, with pervasive corruption and near-zero end-use accountability.",pct:4.1,src:"SIPRI Arms Transfers Database 2024",url:"https://sipri.org/databases/armstransfers"},
+  {tag:"Displacement",amt:"$47B",amtB:47,name:"Refugee Response Budget",sum:"UNHCR's annual operational budget to support 120 million forcibly displaced people — a record almost entirely caused by armed conflict.",detail:"UNHCR faces a chronic $5B+ annual funding gap, leaving millions without adequate support. The true economic cost of displacement — lost labour, host-country strain, multi-generational welfare impacts — runs into hundreds of billions annually.",pct:1.6,src:"UNHCR Global Appeal 2025",url:"https://www.unhcr.org/global-appeal"},
+  {tag:"Military Emissions",amt:"$500B+",amtB:500,name:"Military Carbon Cost",sum:"The global military is estimated to produce 5.5% of global greenhouse gas emissions — with climate damage costs conservatively valued at $500B+ annually.",detail:"The US military alone emits more CO₂ annually than most nations. Military emissions are systematically excluded from international climate agreements. Wars destroy ecosystems, contaminate water sources, and displace communities into environmental vulnerability for generations.",pct:17,src:"Scientists for Global Responsibility / Lancaster University 2022",url:"https://www.sgr.org.uk/resources/hidden-carbon-cost-military"},
+  {tag:"Full Economic Cost",amt:"$17.5T",amtB:17500,name:"Total Impact of Violence",sum:"The Institute for Economics and Peace estimates the full global economic cost of violence at $17.5 trillion — 13% of everything the world produces.",detail:"This comprehensive model covers conflict containment (military, police, courts, prisons), direct losses from conflict, and the opportunity cost of misallocated resources. For every $1 the world earns, 13 cents is consumed or destroyed by violence. This is the true scale of the war economy.",pct:100,src:"IEP Global Peace Index 2024",url:"https://www.visionofhumanity.org/maps/#/"},
+  {tag:"Human Cost",amt:"PRICELESS",amtB:0,name:"Lives Lost",sum:"Over 250,000 people killed in armed conflict in 2023 alone. Since 2001, an estimated 4.5 million have died in post-9/11 wars — including combat deaths, disease, and displacement. No dollar figure captures this cost.",detail:"The Brown University Costs of War project estimates 4.5–4.6 million deaths attributable to post-9/11 wars, including indirect deaths from disease and loss of infrastructure. In 2023 alone, ACLED recorded over 250,000 conflict-related deaths globally. These are not statistics — each represents a life, a family, a community destroyed.",pct:0,src:"Brown Univ. Costs of War / ACLED 2024",url:"https://watson.brown.edu/costsofwar",priceless:true},
+  {tag:"Social Cost",amt:"PRICELESS",amtB:0,name:"Generational Trauma",sum:"120 million people are forcibly displaced — the highest since World War II. PTSD, shattered education systems, broken communities, and the psychological weight carried by entire generations cannot be quantified.",detail:"UNHCR's 2024 data shows 120 million forcibly displaced people — a number that has doubled since 2012. Clinical studies show that children raised in conflict zones carry measurably higher rates of PTSD, anxiety, and developmental delay throughout their lives. The full psychological cost of war propagates across generations and cannot be monetised.",pct:0,src:"UNHCR Global Trends 2024 / Lancet",url:"https://www.unhcr.org/refugee-statistics",priceless:true},
+];
+
+const issueData = [
+  {sdg:"SDG 2",name:"Zero Hunger",cost:90,color:"#f5a623",sum:"735 million people face hunger. Progress toward zero hunger has reversed since 2019.",detail:"WFP estimates $40–90B/year in food system investment ends acute hunger by 2030. Covers agricultural support, supply chain reform, and emergency aid. Hunger is now rising, not falling — driven by conflict, climate shocks, and rising food prices.",src:"UN WFP + FAO World Hunger Report 2024",url:"https://www.fao.org/hunger/en/"},
+  {sdg:"SDG 3",name:"Global Health",cost:371,color:"#00e5ff",sum:"4.6 billion people lack access to essential health services. 2.1 billion face financial hardship accessing care.",detail:"WHO's ambitious UHC scenario requires 23 million new health workers and 415,000 new health facilities. 85% of costs can be met domestically, but 32 of the poorest nations face a combined $54B/year external financing gap.",src:"WHO SDG 3 Financing Study — Stenberg et al. 2017",url:"https://www.who.int/publications/i/item/9789241513326"},
+  {sdg:"SDG 4",name:"Quality Education",cost:100,color:"#b967ff",sum:"250+ million children are out of school. Learning poverty affects 57% of children in low-income nations.",detail:"UNESCO estimates a $100B annual gap to deliver quality education for all children in low-income countries by 2030. Closes the global teacher shortage of 69 million. Educated populations are demonstrably more resistant to radicalisation and conflict.",src:"UNESCO Education Finance Report 2023",url:"https://www.unesco.org/en/education-finance"},
+  {sdg:"SDG 5",name:"Gender Equality",cost:360,color:"#ff67b9",sum:"At current pace, full legal gender parity will not arrive until 2073.",detail:"UN Women estimates $360B/year for meaningful gender equality — covering legal reform, education access, economic inclusion, reproductive health, and ending gender-based violence. Women and girls bear a disproportionate and largely invisible share of every war's costs.",src:"UN Women Beijing+30 Financing Report 2025",url:"https://www.unwomen.org/en"},
+  {sdg:"SDG 6",name:"Clean Water",cost:114,color:"#4488ff",sum:"2 billion people lack safe drinking water. 3.5 billion lack safely managed sanitation.",detail:"OECD and WHO estimate $114B/year in additional investment closes the global water and sanitation gap by 2030. Waterborne disease kills more children annually than armed conflict. Water stress is among the most reliable predictors of future conflict.",src:"OECD/WHO GLAAS Water Financing Report",url:"https://www.who.int/teams/environment-climate-change-and-health/water-sanitation-and-health"},
+  {sdg:"SDG 7",name:"Clean Energy",cost:35,color:"#f5d623",sum:"675 million people have no electricity. Renewables are now the cheapest new power source in most of the world.",detail:"IEA estimates just $35B/year in targeted additional investment achieves universal energy access by 2030. The barrier is not technology — it is finance. Countries without reliable electricity cannot develop the economic base to invest in any other SDG.",src:"IEA World Energy Outlook 2024",url:"https://www.iea.org/reports/world-energy-outlook-2024"},
+  {sdg:"SDG 8",name:"Decent Work",cost:50,color:"#00ff88",sum:"160 million children in child labour. 21 million in forced labour.",detail:"ILO estimates $50B/year in social protection and labour reform ends child labour and forced labour by 2030. Youth unemployment is highest in conflict-affected regions — a direct structural pathway to radicalisation. Decent work is also the most effective long-term conflict prevention.",src:"ILO World Employment and Social Outlook 2024",url:"https://www.ilo.org/global/research/global-reports/weso/en/"},
+  {sdg:"SDG 9",name:"Infrastructure",cost:150,color:"#88aaff",sum:"2.6 billion people lack reliable internet. Billions lack basic transport, energy, and industrial infrastructure.",detail:"UNCTAD estimates $150B+/year in infrastructure investment for developing nations bridges the connectivity gap and enables economic growth. Without infrastructure, no other development goal is achievable at scale.",src:"UNCTAD Technology and Innovation Report 2023",url:"https://unctad.org/publication/technology-and-innovation-report-2023"},
+  {sdg:"SDG 10",name:"Reduce Inequality",cost:150,color:"#a0ff00",sum:"The richest 1% own more wealth than the bottom 50% of humanity combined.",detail:"World Bank and Oxfam models indicate $150B/year in progressive redistribution mechanisms, social protection floors, and tax reform support can materially reduce extreme inequality in developing nations and reduce the conditions that make conflict inevitable.",src:"Oxfam Inequality Report 2024 + World Bank",url:"https://www.worldbank.org/en/topic/poverty/overview"},
+  {sdg:"SDG 11",name:"End Homelessness",cost:200,color:"#00ffcc",sum:"300 million people have no stable shelter. 1.1 billion live in slums or informal settlements.",detail:"UN-Habitat estimates $200B/year for a serious global push on affordable housing — building 100,000 new homes every day. Homelessness and housing precarity are heavily concentrated in post-conflict zones. Stable shelter is the foundation of every other human development indicator.",src:"UN-Habitat World Cities Report 2024",url:"https://unhabitat.org/wcr"},
+  {sdg:"SDG 13",name:"Climate Action",cost:1000,color:"#ff6b35",sum:"2024 was the hottest year ever recorded. The 1.5°C threshold has been breached.",detail:"IPCC estimates $4–6T/year in total climate investment is needed. The public finance gap — what governments must fill — is approximately $1T/year. Climate change is a threat multiplier for every other crisis on this list, particularly hunger, conflict, and displacement.",src:"IPCC AR6 Synthesis Report + IEA Net Zero 2050",url:"https://www.ipcc.ch/report/ar6/syr/"},
+  {sdg:"SDG 14",name:"Ocean Health",cost:50,color:"#0088ff",sum:"30%+ of fish stocks at unsustainable levels. Oceans absorb 90% of excess planetary heat.",detail:"A $50B/year global ocean fund establishes meaningful marine protected areas, ends destructive fishing subsidies, addresses plastic pollution, and funds coral reef restoration. The ocean generates $2.5T/year in economic value and produces 50% of the oxygen we breathe.",src:"High Level Panel for a Sustainable Ocean Economy",url:"https://oceanpanel.org"},
+  {sdg:"SDG 15",name:"Biodiversity",cost:200,color:"#44ff88",sum:"1 million species face extinction. Species are being lost 1,000× faster than natural rates.",detail:"IUCN and IPBES estimate $200B/year halts and begins to reverse biodiversity collapse. Currently, harmful subsidies to nature-destructive industries total $1.8T/year — vastly outweighing conservation spending. Biodiversity collapse undermines every food and water system on Earth.",src:"IPBES Global Assessment + IUCN 2023",url:"https://ipbes.net/global-assessment"},
+  {sdg:"SDG 16",name:"Peace & Justice",cost:80,color:"#cc88ff",sum:"120 million people forcibly displaced. Conflict drives every other crisis on this list.",detail:"Preventing conflict is estimated to be 16× cheaper than responding to it. $80B/year in targeted peacebuilding, institutional reform, anti-corruption, and access to justice would materially reduce new conflicts starting. The cruel irony: money spent here reduces the need for every other investment on this page.",src:"IEP Economics of Peace 2024 + UN Peacebuilding Fund",url:"https://www.visionofhumanity.org"},
+];
+
+// ═══ STATE ══════════════════════════════════════════════════════
+const sel = new Set();
+let allocated = 0;
+
+// ═══ BG CANVAS ══════════════════════════════════════════════════
+const bgEl=document.getElementById('bg'), bgX=bgEl.getContext('2d');
+let bgPs=[];
+function rsz(){bgEl.width=innerWidth;bgEl.height=innerHeight;}
+rsz(); window.addEventListener('resize',()=>{rsz();rszFlow();});
+for(let i=0;i<90;i++)bgPs.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.1+.2,sx:(Math.random()-.5)*.22,sy:(Math.random()-.5)*.22,c:Math.random()>.7?'255,45,45':Math.random()>.5?'0,229,255':'120,80,200',a:Math.random()*.1+.02});
+(function bgL(){bgX.clearRect(0,0,bgEl.width,bgEl.height);bgPs.forEach(p=>{p.x+=p.sx;p.y+=p.sy;if(p.x<0||p.x>bgEl.width||p.y<0||p.y>bgEl.height){p.x=Math.random()*bgEl.width;p.y=Math.random()*bgEl.height;}bgX.beginPath();bgX.arc(p.x,p.y,p.r,0,Math.PI*2);bgX.fillStyle=`rgba(${p.c},${p.a})`;bgX.fill();});requestAnimationFrame(bgL);})();
+
+// ═══ COUNTERS ═══════════════════════════════════════════════════
+function cntTo(el,target,dur){
+  const s=performance.now();
+  (function f(now){
+    const p=Math.min((now-s)/dur,1),v=target*(1-Math.pow(1-p,4));
+    el.textContent='$'+(v>=1000?(v/1000).toFixed(1)+'T':v.toFixed(0)+'B');
+    if(p<1)requestAnimationFrame(f);
+  })(performance.now());
+}
+
+// ═══ FORMAT ═════════════════════════════════════════════════════
+function fmt(b){return b>=1000?'$'+(b/1000).toFixed(2)+'T':'$'+Math.round(b)+'B';}
+
+// ═══ BUILD WAR CARDS ════════════════════════════════════════════
+function buildWar(){
+  const g=document.getElementById('warGrid');
+  warData.forEach((w,i)=>{
+    const d=document.createElement('div');
+    d.className='wc'+(w.priceless?' wc-priceless':'');
+    const barHtml=w.priceless
+      ? `<div class="wc-bar"><div class="wc-bar-fill wc-bar-white" style="width:100%"></div></div>`
+      : `<div class="wc-bar"><div class="wc-bar-fill" id="wb${i}" style="width:0%"></div></div>`;
+    d.innerHTML=`<div class="wc-tag">${w.tag}</div><div class="wc-amt">${w.amt}</div><div class="wc-name">${w.name}</div><div class="wc-sum">${w.sum}</div><div class="wc-expand">${w.detail}</div>${barHtml}<div class="wc-src"><a href="${w.url}" target="_blank" rel="noopener">${w.src} ↗</a></div><div class="wc-more" onclick="event.stopPropagation();const c=this.closest('.wc');c.classList.toggle('open');this.textContent=c.classList.contains('open')?'▲ less':'▼ more'">▼ more</div>`;
+    g.appendChild(d);
+    if(!w.priceless) setTimeout(()=>{const f=document.getElementById('wb'+i);if(f)f.style.width=Math.min(w.pct,100)+'%';},500+i*80);
+  });
+}
+
+// ═══ BUILD ISSUE CARDS (detail section + panel) ══════════════════
+function buildIssues(){
+  const dg=document.getElementById('detailGrid');
+  const pg=document.getElementById('issuesGrid');
+  issueData.forEach((iss,i)=>{
+    const pct=(iss.cost/DEFENCE)*100;
+
+    // ── FULL DETAIL CARD (above vis) ──
+    const dc=document.createElement('div');dc.className='ic';dc.id='ic'+i;
+    dc.innerHTML=`<div class="ic-top"><div class="ic-sdg">${iss.sdg}</div><div class="ic-chk" id="chk${i}"></div></div><div class="ic-name">${iss.name}</div><div class="ic-cost" style="color:${iss.color}">${fmt(iss.cost)}</div><div class="ic-unit">per year · additional investment gap</div><div class="ic-pb"><div id="ipb${i}" style="width:0%;height:100%;background:linear-gradient(90deg,${iss.color}55,${iss.color});transition:width .8s cubic-bezier(.16,1,.3,1)"></div></div><div class="ic-pct"><span>${pct.toFixed(1)}%</span> of the defence budget</div><div class="ic-sum">${iss.sum}</div><div class="ic-detail">${iss.detail}</div><div class="ic-more" onclick="event.stopPropagation();const c=this.closest('.ic');c.classList.toggle('exp');this.textContent=c.classList.contains('exp')?'▲ less':'▼ more detail'">▼ more detail</div><div class="ic-src"><a href="${iss.url}" target="_blank" rel="noopener">${iss.src} ↗</a></div>`;
+    dc.addEventListener('click',()=>toggleIssue(i));
+    dg.appendChild(dc);
+    setTimeout(()=>{const b=document.getElementById('ipb'+i);if(b)b.style.width=Math.min(pct*1.8,100)+'%';},350+i*45);
+
+    // ── COMPACT PANEL ROW (beside vis canvas) ──
+    const pr=document.createElement('div');pr.className='pic';pr.id='pic'+i;
+    pr.innerHTML=`<div class="pic-chk" id="pchk${i}"></div>
+<div class="pic-body">
+  <div class="pic-name">${iss.name}</div>
+  <div class="pic-cost" style="color:${iss.color}">${fmt(iss.cost)}<span style="font-size:.5rem;color:var(--muted);font-weight:400"> /yr</span></div>
+  <div class="pic-sum">${iss.sum}</div>
+  <div class="pic-detail">${iss.detail}</div>
+  <div class="pic-pct-bar"><div id="ppb${i}" style="width:0%;height:100%;background:${iss.color};transition:width .6s cubic-bezier(.16,1,.3,1)"></div></div>
+  <div class="pic-foot">
+    <span class="pic-more" onclick="event.stopPropagation();const p=this.closest('.pic');p.classList.toggle('pexp');this.textContent=p.classList.contains('pexp')?'▲ less':'▼ detail'">▼ detail</span>
+    <span class="pic-src"><a href="${iss.url}" target="_blank" rel="noopener">${iss.src.split(' ')[0]} ↗</a></span>
+  </div>
+</div>`;
+    pr.addEventListener('click',()=>toggleIssue(i));
+    pg.appendChild(pr);
+    setTimeout(()=>{const b=document.getElementById('ppb'+i);if(b)b.style.width=Math.min(pct*1.8,100)+'%';},400+i*40);
+  });
+}
+
+// ═══ TOGGLE ═════════════════════════════════════════════════════
+function toggleIssue(i){
+  const c=document.getElementById('ic'+i);
+  const p=document.getElementById('pic'+i);
+  if((c&&c.classList.contains('cant')||p&&p.classList.contains('pcant'))&&!sel.has(i))return;
+  if(sel.has(i)){
+    sel.delete(i);
+    if(c){c.classList.remove('sel');burst(c,'-'+fmt(issueData[i].cost),'#ff2d2d');}
+    if(p)p.classList.remove('psel');
+  } else {
+    sel.add(i);
+    if(c)c.classList.add('sel');
+    if(p){p.classList.add('psel');burst(p,'+'+fmt(issueData[i].cost),'#00ff88');}
+  }
+  allocated=0; sel.forEach(x=>allocated+=issueData[x].cost);
+  updateTracker(); updateCant(); updateSummary();
+}
+
+function updateCant(){
+  issueData.forEach((_,i)=>{
+    const c=document.getElementById('ic'+i);
+    const p=document.getElementById('pic'+i);
+    if(sel.has(i)){
+      if(c){c.classList.remove('cant');const t=c.querySelector('.cant-tag');if(t)t.remove();}
+      if(p)p.classList.remove('pcant');
+      return;
+    }
+    const over=allocated+issueData[i].cost>DEFENCE;
+    if(over){
+      if(c){c.classList.add('cant');if(!c.querySelector('.cant-tag')){const t=document.createElement('div');t.className='cant-tag';t.textContent='exceeds remaining budget';c.appendChild(t);}}
+      if(p)p.classList.add('pcant');
+    } else {
+      if(c){c.classList.remove('cant');const t=c.querySelector('.cant-tag');if(t)t.remove();}
+      if(p)p.classList.remove('pcant');
+    }
+  });
+}
+
+function updateTracker(){
+  const rem=Math.max(0,DEFENCE-allocated);
+  const pct=Math.max(0,(rem/DEFENCE)*100);
+  document.getElementById('tiRem').textContent=fmt(rem);
+  document.getElementById('tiAlloc').textContent=fmt(allocated);
+  document.getElementById('tiCount').textContent=`${sel.size} issue${sel.size!==1?'s':''} selected`;
+  const bar=document.getElementById('tiBar');bar.style.width=pct+'%';
+  const remEl=document.getElementById('tiRem');
+  if(pct>60){remEl.className='ti-val g';bar.className='ti-bar-fill';}
+  else if(pct>25){remEl.className='ti-val a';bar.className='ti-bar-fill a';}
+  else{remEl.className='ti-val r';bar.className='ti-bar-fill r';}
+}
+
+function updateSummary(){
+  const rem=Math.max(0,DEFENCE-allocated);
+  const pct=(rem/DEFENCE)*100;
+  const sb=document.getElementById('sumBig'),ss=document.getElementById('sumStmt');
+  if(sel.size===0){
+    sb.innerHTML='Select issues above<br>to begin redistributing';
+    ss.textContent='The money to solve these crises already exists in the world\'s annual defence budgets. This is not a question of financial capacity. It is a question of political will.';
+  } else if(pct<=0){
+    sb.innerHTML=`<span class="g">${sel.size} global crises</span><br>fully funded from one year of military spending.`;
+    ss.textContent=`You allocated ${fmt(allocated)}. The defence budget is exhausted. ${sel.size} of humanity's greatest challenges — fully addressable from a single year of weapons spending. The money was always there.`;
+  } else {
+    sb.innerHTML=`<span class="g">${fmt(allocated)}</span> allocated to ${sel.size} issue${sel.size!==1?'s':''}.<br><span class="r">${fmt(rem)}</span> still goes to weapons.`;
+    ss.textContent=`After funding ${sel.size} global crisis${sel.size!==1?'es':''}, ${fmt(rem)} — ${pct.toFixed(0)}% of the defence budget — remains. It continues to flow into weapons. This is the geometry of our current priorities.`;
+  }
+}
+
+// ═══ BURST ══════════════════════════════════════════════════════
+function burst(card,txt,col){
+  const r=card.getBoundingClientRect();
+  const el=document.createElement('div');
+  el.className='burst';el.style.cssText=`left:${r.left+r.width/2-40}px;top:${r.top+8}px;color:${col};text-shadow:0 0 10px ${col}`;
+  el.textContent=txt;document.body.appendChild(el);setTimeout(()=>el.remove(),950);
+}
+
+// ═══ FLOW CANVAS ════════════════════════════════════════════════
+const fC=document.getElementById('flowC'),fX=fC.getContext('2d');
+let fW,fH,fParts=[];
+const dpr=window.devicePixelRatio||1;
+
+function rszFlow(){
+  const panel=fC.parentElement;
+  const availW=panel?panel.getBoundingClientRect().width:window.innerWidth*0.65;
+  // Square canvas: use available width, capped at viewport height
+  const sz=Math.round(Math.min(availW, window.innerHeight*0.9, 800));
+  fW=fC.width=sz*dpr;
+  fH=fC.height=sz*dpr;
+  // Set BOTH css dimensions to the same pixel value — prevents ovals
+  fC.style.width=sz+'px';
+  fC.style.height=sz+'px';
+}
+
+function getNodes(){
+  const cx=fW/2,cy=fH/2;
+  const n=sel.size;
+  const bigR=Math.min(fW,fH)*0.15;
+  const arr=[...sel];
+  const nodes=[];
+  if(n===0) return{cx,cy,bigR,nodes};
+
+  // Each node radius purely proportional to cost (square-root scale for visual clarity)
+  // Largest single item is Climate Action $1T = DEFENCE*0.345; its rawR at scale 0.28 = 0.587*canvas*0.28
+  const scale=Math.min(fW,fH)*0.22;
+  const rawRs=arr.map(idx=>Math.sqrt(issueData[idx].cost/DEFENCE)*scale);
+  const maxRaw=Math.max(...rawRs);
+
+  // Ring distance: centre of node must be far enough that: bigR + maxRaw + padding < ringDist < canvas/2 - maxRaw - margin
+  const margin=Math.min(fW,fH)*0.04;
+  const minRing=bigR+maxRaw*1.1+margin;
+  const maxRing=Math.min(fW,fH)/2-maxRaw-margin;
+  // Also ensure nodes don't overlap each other: angular spacing > 2*maxRaw/ringDist
+  // ringDist > n*maxRaw/Math.PI
+  const packRing=n>1?(n*maxRaw*1.15)/Math.PI:minRing;
+  const ringDist=Math.max(minRing, Math.min(maxRing, packRing));
+
+  arr.forEach((idx,k)=>{
+    const iss=issueData[idx];
+    const angle=(k/n)*Math.PI*2-Math.PI/2;
+    const r=Math.sqrt(iss.cost/DEFENCE)*scale;
+    nodes.push({x:cx+Math.cos(angle)*ringDist,y:cy+Math.sin(angle)*ringDist,r,color:iss.color,idx});
+  });
+  return{cx,cy,bigR,nodes};
+}
+
+function spawnP(cx,cy,tx,ty,col){
+  fParts.push({x:cx,y:cy,tx,ty,col,life:1,spd:.005+Math.random()*.009,ox:cx+(Math.random()-.5)*50*dpr,oy:cy+(Math.random()-.5)*50*dpr});
+}
+
+function drawFlow(){
+  fX.clearRect(0,0,fW,fH);
+  const{cx,cy,bigR,nodes}=getNodes();
+  const rem=Math.max(0,DEFENCE-allocated);
+  const warPct=rem/DEFENCE;
+  const baseF=Math.round(Math.min(fW,fH)*0.013);
+
+  // ambient glow
+  const grd=fX.createRadialGradient(cx,cy,0,cx,cy,bigR*2.5);
+  grd.addColorStop(0,'rgba(255,45,45,0.07)');grd.addColorStop(1,'rgba(0,0,0,0)');
+  fX.fillStyle=grd;fX.beginPath();fX.arc(cx,cy,bigR*2.5,0,Math.PI*2);fX.fill();
+
+  // CENTRAL PIE
+  fX.beginPath();fX.arc(cx,cy,bigR,0,Math.PI*2);fX.fillStyle='rgba(40,0,0,0.6)';fX.fill();
+  if(warPct>0){
+    fX.beginPath();fX.moveTo(cx,cy);
+    fX.arc(cx,cy,bigR,-Math.PI/2,-Math.PI/2+warPct*Math.PI*2);
+    fX.closePath();fX.fillStyle='rgba(255,45,45,0.55)';fX.fill();
+  }
+  const rim=fX.createRadialGradient(cx,cy,bigR*.86,cx,cy,bigR*1.14);
+  rim.addColorStop(0,'rgba(255,45,45,0.38)');rim.addColorStop(1,'rgba(255,45,45,0)');
+  fX.fillStyle=rim;fX.beginPath();fX.arc(cx,cy,bigR*1.14,0,Math.PI*2);fX.fill();
+
+  fX.textAlign='center';fX.textBaseline='middle';
+  fX.fillStyle='rgba(255,255,255,0.45)';
+  fX.font=`${Math.round(baseF*0.85)}px 'IBM Plex Mono',monospace`;
+  fX.fillText('GLOBAL DEFENCE BUDGET',cx,cy-bigR*0.24);
+  const lcol=warPct<.3?'#ff2d2d':warPct<.6?'#f5a623':'#00ff88';
+  fX.fillStyle=lcol;
+  fX.font=`${Math.round(baseF*1.9)}px 'Bebas Neue',sans-serif`;
+  fX.fillText(fmt(rem),cx,cy+bigR*0.06);
+  fX.fillStyle='rgba(255,255,255,0.28)';
+  fX.font=`${Math.round(baseF*0.75)}px 'IBM Plex Mono',monospace`;
+  fX.fillText('remaining',cx,cy+bigR*0.3);
+
+  // OUTER FULL CIRCLES
+  nodes.forEach(n=>{
+    fX.save();fX.setLineDash([2*dpr,4*dpr]);
+    const lg=fX.createLinearGradient(cx,cy,n.x,n.y);
+    lg.addColorStop(0,'rgba(255,45,45,0.25)');lg.addColorStop(1,n.color+'33');
+    fX.strokeStyle=lg;fX.lineWidth=dpr*0.7;fX.beginPath();fX.moveTo(cx,cy);fX.lineTo(n.x,n.y);fX.stroke();fX.restore();
+
+    const ng=fX.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r*2.2);
+    ng.addColorStop(0,n.color+'22');ng.addColorStop(.6,n.color+'0a');ng.addColorStop(1,'transparent');
+    fX.fillStyle=ng;fX.beginPath();fX.arc(n.x,n.y,n.r*2.2,0,Math.PI*2);fX.fill();
+
+    fX.beginPath();fX.arc(n.x,n.y,n.r,0,Math.PI*2);fX.fillStyle=n.color+'65';fX.fill();
+    fX.beginPath();fX.arc(n.x,n.y,n.r,0,Math.PI*2);fX.fillStyle='rgba(0,0,0,0.28)';fX.fill();
+
+    fX.textAlign='center';fX.textBaseline='middle';
+    const fs=Math.max(baseF*0.6, Math.min(baseF*1.15, n.r*0.34));
+    fX.fillStyle='rgba(255,255,255,0.92)';
+    fX.font=`${Math.round(fs)}px 'Bebas Neue',sans-serif`;
+    fX.fillText(issueData[n.idx].name.toUpperCase(),n.x,n.y-fs*0.7);
+    fX.fillStyle=n.color;
+    fX.font=`${Math.round(fs*1.2)}px 'Bebas Neue',sans-serif`;
+    fX.fillText(fmt(issueData[n.idx].cost),n.x,n.y+fs*0.7);
+
+    if(Math.random()<.03)spawnP(cx,cy,n.x,n.y,n.color);
+  });
+
+  fParts=fParts.filter(p=>{
+    p.life-=p.spd;const t=1-p.life;
+    p.x=p.ox+(p.tx-p.ox)*t;p.y=p.oy+(p.ty-p.oy)*t;
+    const alpha=Math.round(p.life*130).toString(16).padStart(2,'0');
+    fX.beginPath();fX.arc(p.x,p.y,1.4*dpr,0,Math.PI*2);fX.fillStyle=p.col+alpha;fX.fill();
+    return p.life>0;
+  });
+
+  if(sel.size===0){
+    fX.textAlign='center';fX.textBaseline='middle';
+    fX.fillStyle='rgba(55,55,55,0.7)';
+    fX.font=`${baseF*1.1}px 'IBM Plex Mono',monospace`;
+    fX.fillText('Select issues on the right →',fW/2,fH*0.88);
+  }
+  requestAnimationFrame(drawFlow);
+}
+
+// ═══ RESET ══════════════════════════════════════════════════════
+function resetAll(){
+  sel.clear();allocated=0;
+  document.querySelectorAll('.ic').forEach(c=>{
+    c.classList.remove('sel','cant');const t=c.querySelector('.cant-tag');if(t)t.remove();
+  });
+  document.querySelectorAll('.pic').forEach(p=>p.classList.remove('psel','pcant'));
+  updateTracker();updateSummary();
+}
+
+// ═══ SHARE ══════════════════════════════════════════════════════
+function openShare(){document.getElementById('shareOv').classList.add('open');}
+function closeShare(){document.getElementById('shareOv').classList.remove('open');}
+function submitEmail(){
+  const v=document.getElementById('emailIn').value.trim();
+  if(!v||!v.includes('@'))return;
+  // Send email collection to greg@studioex.co via a form submission
+  const formData=new FormData();
+  formData.append('email',v);
+  formData.append('source','cost-of-war');
+  // Attempt fetch to a form endpoint; fallback gracefully
+  fetch('https://formsubmit.co/ajax/greg@studioex.co',{method:'POST',body:formData,headers:{'Accept':'application/json'}})
+    .catch(()=>{}); // silent fail — always show thanks
+  document.getElementById('sThanks').style.display='block';
+  document.getElementById('emailIn').disabled=true;
+}
+function doShare(type){
+  const txt=sel.size?`I just found out that ${sel.size} of humanity's biggest crises could be funded for less than the world's annual defence budget. See for yourself: `:'In 2025, the world spent $2.9 trillion on defence. Here is what else that money could do: ';
+  if(type==='twitter')window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(txt+location.href),'_blank');
+  else if(type==='linkedin')window.open('https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent(location.href),'_blank');
+  else if(type==='copy'){navigator.clipboard.writeText(location.href).then(()=>{const b=document.querySelectorAll('.s-lbtn')[2];b.textContent='✓ Copied';setTimeout(()=>b.textContent='Copy Link',2000);});}
+}
+
+// ═══ SCROLL PROGRESS BAR ════════════════════════════════════════
+function initScrollProgress(){
+  const bar=document.getElementById('scrollBar');
+  const dot=document.getElementById('scrollDot');
+  window.addEventListener('scroll',()=>{
+    const h=document.documentElement.scrollHeight-window.innerHeight;
+    const pct=h>0?Math.min(window.scrollY/h,1):0;
+    if(bar){bar.style.height=(pct*100)+'%';}
+    if(dot){dot.style.top=(pct*100)+'vh';}
+  },{passive:true});
+}
+
+// ═══ COUNTRY DATA (SIPRI 2025) ══════════════════════════════════
+const countryData=[["United States","US",954,3.4,335,"https://www.contactingthecongress.org"],["China","CN",336,1.7,1412,"https://www.npc.gov.cn/"],["Russia","RU",190,6.7,145,"https://government.ru/en/"],["India","IN",86,2.4,1417,"https://www.mygov.in/"],["Saudi Arabia","SA",80,6.0,36,"https://www.my.gov.sa/"],["United Kingdom","GB",82,2.3,68,"https://writetothem.com"],["Germany","DE",114,2.1,84,"https://www.bundestag.de/en/members"],["France","FR",56,1.9,68,"https://www.assemblee-nationale.fr/"],["Japan","JP",50,1.0,125,"https://www.shugiin.go.jp/"],["South Korea","KR",46,2.6,52,"https://www.assembly.go.kr/"],["Ukraine","UA",64,37.0,44,"https://www.president.gov.ua/"],["Australia","AU",32,1.9,26,"https://www.aph.gov.au/senators_and_members"],["Israel","IL",27,4.9,9,"https://www.knesset.gov.il/"],["Poland","PL",30,3.9,38,"https://www.sejm.gov.pl/"],["Canada","CA",27,1.3,40,"https://www.ourcommons.ca/"],["Italy","IT",36,1.6,59,"https://www.camera.it/"],["Netherlands","NL",21,1.7,18,"https://www.tweedekamer.nl/"],["Spain","ES",18,1.2,47,"https://www.congreso.es/"],["Brazil","BR",20,1.0,215,"https://www.camara.leg.br/"],["Turkey","TR",22,1.9,85,"https://www.tbmm.gov.tr/"],["Iran","IR",10,2.1,87,"https://en.parliran.ir/"],["Pakistan","PK",11,2.7,231,"https://www.na.gov.pk/"],["Egypt","EG",5,1.2,105,"https://www.parliament.gov.eg/"],["Algeria","DZ",18,5.6,45,"https://www.apn.dz/"],["Singapore","SG",13,3.0,6,"https://www.parliament.gov.sg/"],["Sweden","SE",11,1.4,10,"https://www.riksdagen.se/"],["Norway","NO",10,1.7,5,"https://www.stortinget.no/"],["Greece","GR",7,2.4,11,"https://www.hellenicparliament.gr/"],["Belgium","BE",6,1.2,12,"https://www.dekamer.be/"],["Denmark","DK",7,1.7,6,"https://www.ft.dk/"],["Finland","FI",7,2.3,6,"https://www.eduskunta.fi/"],["Portugal","PT",4,1.5,10,"https://www.parlamento.pt/"],["Czech Republic","CZ",4,1.4,11,"https://www.psp.cz/"],["Romania","RO",7,2.0,19,"https://www.cdep.ro/"],["Hungary","HU",3,1.7,10,"https://www.parlament.hu/"],["Mexico","MX",8,0.6,130,"https://www.diputados.gob.mx/"],["Indonesia","ID",10,0.7,277,"https://www.dpr.go.id/"],["Vietnam","VN",8,2.3,98,"https://quochoi.vn/"],["Thailand","TH",7,1.3,72,"https://www.parliament.go.th/"],["Philippines","PH",4,1.0,115,"https://www.congress.gov.ph/"],["Malaysia","MY",4,1.1,33,"https://www.parlimen.gov.my/"],["Bangladesh","BD",4,1.0,170,"https://www.parliament.gov.bd/"],["Argentina","AR",4,0.6,46,"https://www.congreso.gob.ar/"],["Colombia","CO",4,1.0,52,"https://www.congreso.gov.co/"],["Chile","CL",5,1.8,19,"https://www.congreso.cl/"],["Peru","PE",3,1.2,34,"https://www.congreso.gob.pe/"],["Nigeria","NG",3,0.6,220,"https://www.nassnig.org/"],["South Africa","ZA",3,0.8,60,"https://www.parliament.gov.za/"],["Kenya","KE",1,1.2,56,"https://www.parliament.go.ke/"],["Ethiopia","ET",1,0.7,126,"https://www.parlam.gov.et/"],["Morocco","MA",5,3.7,38,"https://www.chambredesrepresentants.ma/"],["Iraq","IQ",4,1.8,43,"https://parliament.iq/"],["UAE","AE",19,4.5,10,"https://www.uaecabinet.ae/"],["Qatar","QA",5,3.7,3,"https://www.shura.qa/"],["Kuwait","KW",6,5.0,4,"https://www.kna.kw/"],["Oman","OM",5,5.2,5,"https://www.majlisalshura.om/"],["Kazakhstan","KZ",2,0.9,19,"https://www.parlam.kz/"],["Azerbaijan","AZ",3,5.0,10,"https://www.meclis.gov.az/"],["New Zealand","NZ",4,1.3,5,"https://www.parliament.nz/en/"],["Switzerland","CH",6,0.8,9,"https://www.parlament.ch/"],["Austria","AT",4,0.9,9,"https://www.parlament.gv.at/"],["Ireland","IE",2,0.4,5,"https://www.oireachtas.ie/"],["Slovakia","SK",2,1.7,6,"https://www.nrsr.sk/"],["Bulgaria","BG",2,2.0,7,"https://www.parliament.bg/"],["Croatia","HR",1,1.8,4,"https://www.sabor.hr/"],["Serbia","RS",2,3.5,7,"https://www.parlament.rs/"],["Latvia","LV",1,2.5,2,"https://www.saeima.lv/"],["Lithuania","LT",2,2.5,3,"https://www.lrs.lt/"],["Estonia","EE",1,3.0,1,"https://www.riigikogu.ee/"],["Taiwan","TW",19,2.5,23,"https://www.ly.gov.tw/"],["Bolivia","BO",0.7,1.0,12,"https://www.asamblea.gob.bo/"],["Uruguay","UY",1,2.0,4,"https://parlamento.gub.uy/"],["Ecuador","EC",1,0.9,18,"https://www.asambleanacional.gob.ec/"],["Costa Rica","CR",0.4,0.6,5,"https://www.asamblea.go.cr/"],["Ghana","GH",0.3,0.8,33,"https://parliament.gh/"],["Tanzania","TZ",0.6,1.2,65,"https://www.parliament.go.tz/"],["Senegal","SN",0.3,1.0,17,"https://www.assemblee-nationale.sn/"],["Uganda","UG",0.5,1.5,48,"https://www.parliament.go.ug/"],["Rwanda","RW",0.3,1.5,14,"https://www.parliament.gov.rw/"],["Jordan","JO",2,4.5,10,"https://parliament.jo/"],["Georgia","GE",1,2.5,4,"https://parliament.ge/"],["Armenia","AM",0.8,4.0,3,"https://www.parliament.am/"],["Myanmar","MM",2,3.5,54,""],["Sri Lanka","LK",1,1.7,22,"https://www.parliament.lk/"],["Nepal","NP",0.5,1.0,30,"https://www.parliament.gov.np/"],["Mongolia","MN",0.1,0.8,3,"https://www.parliament.mn/"],["Cambodia","KH",0.6,2.0,17,""],["Laos","LA",0.2,1.0,8,""],["Brunei","BN",0.4,3.5,0.5,""],["Papua New Guinea","PG",0.2,0.5,10,"https://www.parliament.gov.pg/"],["Fiji","FJ",0.05,1.0,1,"https://www.parliament.gov.fj/"],["Namibia","NA",0.5,3.0,3,"https://www.parliament.gov.na/"],["Botswana","BW",0.4,2.0,3,"https://www.parliament.gov.bw/"],["Zambia","ZM",0.2,1.0,20,"https://www.parliament.gov.zm/"],["Zimbabwe","ZW",0.3,1.5,16,"https://www.parlzim.gov.zw/"],["Angola","AO",1,1.6,35,""],["Mozambique","MZ",0.2,1.0,33,""],["Madagascar","MG",0.1,0.7,29,""],["Malawi","MW",0.1,0.9,20,"https://www.parliament.gov.mw/"],["Sudan","SD",0.4,1.2,48,""],["Libya","LY",0.6,2.5,7,""],["Tunisia","TN",1,2.5,12,"https://www.arp.tn/"],["DR Congo","CD",0.3,0.6,100,""],["Cameroon","CM",0.5,1.5,27,""],["Ivory Coast","CI",0.7,1.5,27,""],["Burkina Faso","BF",0.4,3.5,22,""],["Mali","ML",0.6,4.0,22,""],["Niger","NE",0.3,2.5,25,""],["Chad","TD",0.3,2.5,17,""],["Mauritania","MR",0.2,2.5,5,""],["Guatemala","GT",0.4,0.5,17,"https://www.congreso.gob.gt/"],["Honduras","HN",0.3,0.9,10,""],["El Salvador","SV",0.2,0.6,7,""],["Nicaragua","NI",0.1,0.4,7,""],["Dominican Republic","DO",0.6,0.7,11,""],["Cuba","CU",0.2,0.5,11,""],["Haiti","HT",0.05,0.3,12,""],["Jamaica","JM",0.1,0.5,3,"https://japarliament.gov.jm/"],["Venezuela","VE",0.8,0.5,28,""],["North Korea","KP",3,20.0,26,""],["Afghanistan","AF",0.1,0.5,40,""],["Yemen","YE",0.6,8.5,35,""],["Syria","SY",1,6.5,21,""],["Somalia","SO",0.1,2.0,18,""],["South Sudan","SS",0.4,8.0,11,""],["Eritrea","ER",0.2,10.0,4,""],["Burundi","BI",0.07,2.0,13,""],["Central African Rep.","CF",0.04,2.0,5,""],["Liberia","LR",0.03,0.6,5,""],["Sierra Leone","SL",0.03,0.5,8,""],["Gambia","GM",0.02,0.8,2,""],["Togo","TG",0.08,1.5,9,""],["Benin","BJ",0.1,1.2,13,""],["Gabon","GA",0.3,2.0,2,""],["Equatorial Guinea","GQ",0.1,1.5,2,""],["Djibouti","DJ",0.05,3.5,1,""],["Bahrain","BH",1,4.0,2,""],["Palestine","PS",0.1,1.5,5,""],["Kyrgyzstan","KG",0.1,1.5,7,""],["Tajikistan","TJ",0.2,2.0,10,""],["Uzbekistan","UZ",1,1.2,36,""],["Belarus","BY",1,2.5,9,""],["Moldova","MD",0.1,0.7,3,"https://www.parlament.md/"],["Suriname","SR",0.02,0.5,0.6,""],["Guyana","GY",0.07,0.8,0.8,""],["Mauritius","MU",0.04,0.4,1.3,""],["Seychelles","SC",0.02,1.2,0.1,""],["Maldives","MV",0.06,1.5,0.5,""],["Bhutan","BT",0.02,0.5,1,""],["Timor-Leste","TL",0.03,1.0,1,""],["Samoa","WS",0.005,0.5,0.2,""],["Vanuatu","VU",0.01,1.0,0.3,""],["Luxembourg","LU",0.4,0.7,1,"https://www.chd.lu/"],["Iceland","IS",0.04,0.1,0.4,"https://www.althingi.is/"],["Cyprus","CY",0.4,1.6,1,""],["Malta","MT",0.1,0.6,0.5,""],["Andorra","AD",0.01,0.5,0.08,""],["Monaco","MC",0.01,0.5,0.04,""],["San Marino","SM",0.01,0.5,0.03,""],["Liechtenstein","LI",0.01,0.5,0.04,""],["Lebanon","LB",0.5,3.2,5,""],["Uzbekistan","UZ",1,1.2,36,""]];
+
+// ═══ RANKING STATE ═══════════════════════════════════════════════
+let ranking=[];
+let selectedCountry=null;
+
+// ═══ BUILD RANKING ═══════════════════════════════════════════════
+function buildRanking(){
+  const pool=document.getElementById('rankPool');
+  const top=document.getElementById('rankTop');
+  if(!pool||!top)return;
+  top.innerHTML='<div class="rank-empty-msg">Select issues from the right to add them here, in order of priority.</div>';
+  pool.innerHTML='';
+  issueData.forEach((iss,i)=>{
+    const d=document.createElement('div');
+    d.className='rank-pill';d.id='rpool'+i;
+    d.innerHTML=`<div class="rp-num">${i+1}</div><div class="rp-dot" style="background:${iss.color}"></div><div class="rp-name">${iss.name}</div><div class="rp-cost">${fmt(iss.cost)}</div>`;
+    d.addEventListener('click',()=>addRank(i));
+    pool.appendChild(d);
+  });
+}
+
+function addRank(i){
+  if(ranking.includes(i)){removeRank(i);return;}
+  if(ranking.length>=5)return;
+  ranking.push(i);renderRanking();
+}
+
+function removeRank(i){
+  ranking=ranking.filter(x=>x!==i);renderRanking();
+}
+
+function renderRanking(){
+  const top=document.getElementById('rankTop');
+  const cnt=document.getElementById('rankCount');
+  const btn=document.getElementById('rankNextBtn');
+  if(!top)return;
+  if(cnt)cnt.textContent=`${ranking.length} / 5`;
+  top.innerHTML='';
+  if(ranking.length===0){
+    top.innerHTML='<div class="rank-empty-msg">Select issues from the right to add them here, in order of priority.</div>';
+  } else {
+    ranking.forEach((idx,pos)=>{
+      const iss=issueData[idx];
+      const d=document.createElement('div');
+      d.className='rank-pill is-ranked';
+      d.innerHTML=`<div class="rp-num">${pos+1}</div><div class="rp-dot" style="background:${iss.color}"></div><div class="rp-name">${iss.name}</div><div class="rp-cost">${fmt(iss.cost)}/yr</div><div class="rp-rm" onclick="event.stopPropagation();removeRank(${idx})">✕</div>`;
+      top.appendChild(d);
+    });
+  }
+  // pool: grey out selected
+  issueData.forEach((_,i)=>{
+    const el=document.getElementById('rpool'+i);
+    if(el){
+      el.classList.toggle('in-top',ranking.includes(i));
+      el.style.pointerEvents=(ranking.length>=5&&!ranking.includes(i))?'none':'auto';
+    }
+  });
+  if(btn){btn.disabled=ranking.length!==5;btn.style.opacity=ranking.length===5?'1':'.3';}
+  // sync vis diagram with ranking
+  if(ranking.length===5){
+    sel.clear();ranking.forEach(i=>sel.add(i));
+    allocated=0;sel.forEach(x=>allocated+=issueData[x].cost);
+    updateTracker();updateSummary();updateCant();
+    // sync detail cards and panel rows
+    issueData.forEach((_,i)=>{
+      const c=document.getElementById('ic'+i);const p=document.getElementById('pic'+i);
+      if(c){c.classList.toggle('sel',sel.has(i));}
+      if(p){p.classList.toggle('psel',sel.has(i));}
+    });
+    generateLetter();
+  }
+}
+
+function resetRanking(){ranking=[];renderRanking();}
+
+// ═══ COUNTRY ═════════════════════════════════════════════════════
+function buildCountrySelect(){
+  const sel=document.getElementById('countrySelect');
+  if(!sel)return;
+  const seen=new Set();
+  countryData.forEach(c=>{
+    if(seen.has(c[0]))return;seen.add(c[0]);
+    const o=document.createElement('option');o.value=c[0];o.textContent=c[0];sel.appendChild(o);
+  });
+  try{
+    const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';
+    const tzMap={'Europe/London':'United Kingdom','America/New_York':'United States','America/Chicago':'United States','America/Los_Angeles':'United States','Europe/Berlin':'Germany','Europe/Paris':'France','Asia/Tokyo':'Japan','Australia/Sydney':'Australia','Australia/Melbourne':'Australia','Asia/Shanghai':'China','Europe/Moscow':'Russia','Asia/Kolkata':'India','Asia/Singapore':'Singapore'};
+    const guess=Object.entries(tzMap).find(([t])=>tz===t||tz.startsWith(t));
+    if(guess){sel.value=guess[1];showCountry(guess[1]);}
+  }catch(e){}
+}
+
+function showCountry(name){
+  const c=countryData.find(x=>x[0]===name);
+  const box=document.getElementById('countryData');
+  const btn=document.getElementById('countryNextBtn');
+  if(!c||!box){if(box)box.style.display='none';return;}
+  selectedCountry=c;
+  if(btn){btn.disabled=false;btn.style.opacity='1';}
+  box.style.display='block';
+  const spend=c[2];
+  const comparisons=issueData.slice(0,6).map(iss=>{
+    const pct=Math.min((spend/iss.cost)*100,100);
+    const covers=(spend/iss.cost*100).toFixed(0);
+    const canFund=spend>=iss.cost;
+    return `<div class="cc-bar-row">
+      <div class="cc-bar-lbl">${iss.name}</div>
+      <div class="cc-bar-track"><div class="cc-bar-fill" style="width:0%;background:${iss.color}" data-w="${pct.toFixed(1)}"></div></div>
+      <div class="cc-bar-val" style="color:${canFund?'var(--green)':'var(--muted)'}">${covers}%</div>
+    </div>`;
+  }).join('');
+  const contactHTML=c[5]?`<a href="${c[5]}" target="_blank" rel="noopener">Contact your representative ↗</a>`:'';
+  box.innerHTML=`<div class="cc-name">${c[0]}</div>
+<div class="cc-spend">$${spend}B</div>
+<div class="cc-meta">${c[3]}% of GDP · SIPRI 2025 · Population ~${c[4]}M${contactHTML?' · '+contactHTML:''}</div>
+<div class="cc-bars">${comparisons}</div>
+<div class="cc-note">Your country contributes ${(spend/2900*100).toFixed(2)}% of the $2.9T global defence total. This is the scale of your nation's stake in how the world chooses to spend its resources.</div>`;
+  setTimeout(()=>{box.querySelectorAll('.cc-bar-fill').forEach(el=>{el.style.transition='width 1.3s cubic-bezier(.16,1,.3,1)';el.style.width=el.dataset.w+'%';});},100);
+  generateLetter();
+  // update contact note in letter section
+  const note=document.getElementById('letterContactNote');
+  if(note&&c[5])note.innerHTML=`Find your representative: <a href="${c[5]}" target="_blank">${c[0]} government contact page ↗</a>`;
+}
+
+// ═══ LETTER GENERATOR ════════════════════════════════════════════
+function generateLetter(){
+  const out=document.getElementById('letterOutput');
+  if(!out)return;
+  if(ranking.length<5){
+    out.innerHTML='<span class="letter-placeholder">Complete your top 5 ranking and select your country — your letter will appear here, ready to edit.</span>';
+    return;
+  }
+  const name=(document.getElementById('letterName')?.value||'').trim()||'A concerned citizen';
+  const leaderRaw=(document.getElementById('letterTitle')?.value||'').trim();
+  const leader=leaderRaw||(selectedCountry?`Prime Minister / President of ${selectedCountry[0]}`:'[Your Head of State]');
+  const country=selectedCountry?selectedCountry[0]:'our shared world';
+  const spend=selectedCountry?`$${selectedCountry[2]} billion`:'billions in public funds';
+  const gdpPct=selectedCountry?selectedCountry[3]:null;
+  const top5=ranking.map((idx,i)=>`  ${i+1}. ${issueData[idx].name} — ${fmt(issueData[idx].cost)} per year`).join('\n');
+  const totalNeeded=fmt(ranking.reduce((s,i)=>s+issueData[i].cost,0));
+
+  const letter=`Dear ${leader},
+
+My name is ${name}. I am writing to you not as a partisan voice, not as an ideologue, and not from a place of anger — but as a human being who has sat with some uncomfortable numbers, and who can no longer stay quiet about what they mean.
+
+In 2025, the world spent $2.9 trillion on defence. ${country?country+' contributed '+spend+' to that total'+(gdpPct?' — '+gdpPct+'% of our national GDP':'')+'.':''} I do not write to question the sincerity of those who serve, or to pretend that the threats governments face are not real. I understand complexity. I understand that the world is not safe.
+
+But I have come to believe that the world is also not as safe as it could be — precisely because of how we are choosing to spend.
+
+This year, 735 million people went hungry. 4.6 billion lacked access to essential healthcare. 250 million children could not go to school. The climate is warming faster than our institutions are responding. And one million species edge toward extinction. These are not abstract statistics. They are the compounding conditions of a planet in genuine distress — one that will produce more conflict, more instability, and more suffering the longer we leave them unaddressed.
+
+The United Nations' own agencies have calculated what it would cost to make material progress on these crises. The figures are significant — but they are dwarfed by what we already spend on weapons.
+
+I have thought carefully about where I believe the world must focus its resources. My five priorities are:
+
+${top5}
+
+To fund all five of these causes at the levels needed would cost ${totalNeeded} per year. That is less than half of one year of global military spending. Not a utopian fantasy — a budget question.
+
+I am not naive. I know that reallocation at this scale requires political courage that is rarely rewarded in short electoral cycles. I know that competing interests, alliances, and genuine security threats make this harder than any one letter can resolve. But I also know that the trajectory we are on — ever-increasing defence budgets in a warming, hungering, fractured world — is not making any of us safer. It is buying time, not peace.
+
+I am asking you to think across a longer horizon. To build alliances not only of military capability but of shared human survival. To consider that the greatest security threat facing your citizens in the coming decades is not a rival army, but a planet that can no longer sustain the conditions of civilised life.
+
+We are not separate nations with separate interests. We are one species, sharing one atmosphere, drinking from the same water cycles, and feeding from the same soils. The decisions made in the coming years about how to allocate this planet's resources will shape whether our children inherit a liveable world.
+
+I am choosing to believe you share that goal. And I am asking you, respectfully but urgently, to act like it.
+
+Yours sincerely,
+
+${name}
+${country}
+
+—
+This letter was generated at studioex.co · The Cost of War · An artwork by Blueprint × StudioEX`;
+
+  // Set as text content (editable div)
+  out.innerText=letter;
+  out.dataset.plain=letter;
+}
+
+function copyLetter(){
+  const out=document.getElementById('letterOutput');
+  const txt=out?.innerText||out?.dataset?.plain||'';
+  navigator.clipboard.writeText(txt).then(()=>{
+    const b=document.querySelector('.tool-btn');
+    if(b){const o=b.textContent;b.textContent='✓ Copied';setTimeout(()=>b.textContent=o,2000);}
+  });
+}
+
+function emailLetter(){
+  const out=document.getElementById('letterOutput');
+  const txt=out?.innerText||out?.dataset?.plain||'';
+  const sub=encodeURIComponent('On the allocation of our national budget — a citizen\'s priorities');
+  window.open(`mailto:?subject=${sub}&body=${encodeURIComponent(txt)}`,'_blank');
+}
+
+function tweetLetter(){
+  const r5=ranking.slice(0,5).map(i=>issueData[i].name).join(', ');
+  const txt=`My top 5 priorities for planetary funding:\n${r5}\nCost: ${fmt(ranking.reduce((s,i)=>s+issueData[i].cost,0))}/yr vs the world's $2.9T defence budget\nstudioex.co #CostOfWar @404blueprint @studioex.co`;
+  window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(txt),'_blank');
+}
+
+function goToCountry(){document.getElementById('countrySection')?.scrollIntoView({behavior:'smooth',block:'start'});}
+function goToLetter(){document.getElementById('letterSection')?.scrollIntoView({behavior:'smooth',block:'start'});}
+function goToCoalition(){document.getElementById('coalitionSection')?.scrollIntoView({behavior:'smooth',block:'start'});}
+
+// ═══ COALITION ═══════════════════════════════════════════════════
+const SUPABASE_URL=null;
+const SUPABASE_KEY=null;
+const SEED_COUNT=2847;
+
+function getLocalSubs(){try{return JSON.parse(localStorage.getItem('cow_subs')||'[]');}catch(e){return[];}}
+function saveLocalSub(d){const a=getLocalSubs();a.push(d);try{localStorage.setItem('cow_subs',JSON.stringify(a.slice(-500)));}catch(e){}}
+
+function getTally(){
+  const local=getLocalSubs();
+  const tally={};
+  local.forEach(s=>{if(s.ranking)s.ranking.forEach(i=>{tally[i]=(tally[i]||0)+1;});});
+  return{count:SEED_COUNT+local.length,tally};
+}
+
+function initCoalition(){
+  const{count,tally}=getTally();
+  animCoalitionNum(count);
+  const topDiv=document.getElementById('coalitionTopIssues');
+  if(topDiv){
+    topDiv.innerHTML='';
+    issueData.forEach((_,i)=>{
+      const div=document.createElement('div');
+      div.className='cti'+(tally[i]?' hot':'');
+      div.textContent=issueData[i].name;
+      topDiv.appendChild(div);
+    });
+  }
+  setTimeout(()=>{const f=document.getElementById('coalitionBarFill');if(f)f.style.width=Math.min(count/10000*100,100)+'%';},700);
+}
+
+function animCoalitionNum(target){
+  const el=document.getElementById('coalitionNum');if(!el)return;
+  const s=performance.now(),from=SEED_COUNT,dur=1800;
+  (function f(now){const p=Math.min((now-s)/dur,1),v=Math.round(from+(target-from)*(1-Math.pow(1-p,4)));el.textContent=v.toLocaleString();if(p<1)requestAnimationFrame(f);})(s);
+}
+
+function submitCoalition(){
+  if(ranking.length<5){alert('Please complete your top 5 ranking first (above).');return;}
+  const email=(document.getElementById('coalitionEmail')?.value||'').trim();
+  const country=selectedCountry?selectedCountry[0]:'Unknown';
+  const data={ranking:[...ranking],country,email,ts:Date.now()};
+  saveLocalSub(data);
+  if(SUPABASE_URL&&SUPABASE_KEY){fetch(`${SUPABASE_URL}/rest/v1/submissions`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(data)}).catch(()=>{});}
+  if(email){const fd=new FormData();fd.append('email',email);fd.append('country',country);fd.append('priorities',ranking.map(i=>issueData[i].name).join(', '));fd.append('source','coalition');fetch('https://formsubmit.co/ajax/greg@studioex.co',{method:'POST',body:fd,headers:{'Accept':'application/json'}}).catch(()=>{});}
+  const thanks=document.getElementById('coalitionThanks');if(thanks)thanks.style.display='block';
+  const btn=document.querySelector('.coalition-form .btn-t');if(btn)btn.disabled=true;
+  const emailEl=document.getElementById('coalitionEmail');if(emailEl)emailEl.disabled=true;
+  const{count}=getTally();animCoalitionNum(count);initCoalition();
+  setTimeout(()=>generateShareCard(),500);
+}
+
+// ═══ SHARE CARD ══════════════════════════════════════════════════
+function generateShareCard(){
+  if(ranking.length<5)return;
+  const country=selectedCountry?selectedCountry[0]:'the world';
+  const spend=selectedCountry?`$${selectedCountry[2]}B`:'$2.9T';
+  const total=fmt(ranking.reduce((s,i)=>s+issueData[i].cost,0));
+  const{count}=getTally();
+
+  const hed=document.getElementById('scHeadline');
+  if(hed)hed.textContent=`I choose to fund the planet.`;
+
+  const issDiv=document.getElementById('scIssues');
+  if(issDiv){
+    issDiv.innerHTML='';
+    ranking.slice(0,5).forEach((idx,pos)=>{
+      const iss=issueData[idx];
+      const row=document.createElement('div');row.className='sc-row';
+      row.innerHTML=`<div class="sc-rn">${pos+1}</div><div class="sc-dot" style="background:${iss.color}"></div><div class="sc-in">${iss.name}</div><div class="sc-ic" style="color:${iss.color}">${fmt(iss.cost)}/yr</div>`;
+      issDiv.appendChild(row);
+    });
+  }
+
+  const statL=document.getElementById('scStatLeft');
+  if(statL)statL.innerHTML=`Total annual cost:<br>${total}<br><br>${(ranking.reduce((s,i)=>s+issueData[i].cost,0)/2900*100).toFixed(0)}% of the global defence budget`;
+  const statR=document.getElementById('scStatRight');
+  if(statR)statR.textContent=`${count.toLocaleString()}\npeople\nhave chosen`;
+
+  const cl=document.getElementById('scCountryLine');
+  if(cl)cl.textContent=`From ${country} · ${spend} annual defence spend`;
+
+  const footer=document.getElementById('scFooterRight');
+  if(footer)footer.textContent=`studioex.co\n@404blueprint\n@studioex.co`;
+
+  document.getElementById('scOverlay')?.classList.add('open');
+}
+
+function downloadCard(){
+  if(window.html2canvas){
+    html2canvas(document.getElementById('shareCard'),{backgroundColor:'#000',scale:2}).then(c=>{
+      const a=document.createElement('a');a.download='cost-of-war-my-priorities.png';a.href=c.toDataURL('image/png');a.click();
+    });
+  } else {
+    const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=()=>downloadCard();document.head.appendChild(s);
+  }
+}
+
+function shareCardTo(type){
+  const r5=ranking.slice(0,5).map(i=>issueData[i].name).join(' · ');
+  const txt=`My top 5 priorities if we redirected the world's $2.9T defence budget:\n${r5}\nTotal: ${fmt(ranking.reduce((s,i)=>s+issueData[i].cost,0))}/yr\nstudioex.co  #CostOfWar @404blueprint @studioex.co`;
+  if(type==='twitter')window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(txt),'_blank');
+  else if(type==='linkedin')window.open('https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent(location.href),'_blank');
+  else if(type==='instagram')navigator.clipboard.writeText(txt).then(()=>alert('Caption copied — paste into Instagram. Screenshot your card first!'));
+}
+
+// ═══ INIT ════════════════════════════════════════════════════════
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    cntTo(document.getElementById('hDef'),2900,2200);
+    cntTo(document.getElementById('hTotal'),17500,3000);
+  },450);
+  buildWar();
+  buildIssues();
+  buildRanking();
+  buildCountrySelect();
+  initCoalition();
+  initScrollProgress();
+  rszFlow();
+  drawFlow();
+  updateTracker();
+  updateSummary();
+});
+</script>
+</body>
+</html>
