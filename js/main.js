@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   THE COST OF WAR — APP LOGIC
+   THE COST OF WAR — APP LOGIC  (2026 revision)
    ═══════════════════════════════════════════════════════════════════ */
 
 // ═══ STATE ══════════════════════════════════════════════════════
@@ -92,12 +92,10 @@ function initReveal() {
       entries.forEach((e) => {
         if (e.isIntersecting) {
           e.target.classList.add("on");
-          // trigger any data-w bars inside
           e.target.querySelectorAll?.("[data-w]").forEach((b) => {
             b.style.width = b.dataset.w + "%";
           });
-          if (e.target.dataset.w)
-            e.target.style.width = e.target.dataset.w + "%";
+          if (e.target.dataset.w) e.target.style.width = e.target.dataset.w + "%";
           io.unobserve(e.target);
         }
       });
@@ -105,7 +103,6 @@ function initReveal() {
     { threshold: 0.15 },
   );
   document.querySelectorAll(".rv").forEach((el) => io.observe(el));
-  // gap bars (inside non-.rv containers too)
   const io2 = new IntersectionObserver(
     (entries) => {
       entries.forEach((e) => {
@@ -122,107 +119,214 @@ function initReveal() {
   document.querySelectorAll(".gap-box").forEach((el) => io2.observe(el));
 }
 
-// ═══ COST CARDS (machine + destruction) ═════════════════════════
-function buildCostGrid(gridId, data, prefix) {
-  const g = document.getElementById(gridId);
-  if (!g) return;
-  data.forEach((w, i) => {
-    const d = document.createElement("div");
-    d.className = "wc";
-    d.innerHTML = `<div class="wc-tag">${w.tag}</div><div class="wc-amt">${w.amt}</div><div class="wc-name">${w.name}</div><div class="wc-sum">${w.sum}</div><div class="wc-expand">${w.detail}</div><div class="wc-bar"><div class="wc-bar-fill" id="${prefix}${i}" style="width:0%"></div></div><div class="wc-src"><a href="${w.url}" target="_blank" rel="noopener">${w.src} ↗</a></div><div class="wc-more" onclick="event.stopPropagation();const c=this.closest('.wc');c.classList.toggle('open');this.textContent=c.classList.contains('open')?'▲ less':'▼ more'">▼ more</div>`;
-    d.addEventListener("click", (e) => {
-      if (e.target.closest("a") || e.target.closest(".wc-more")) return;
-      d.classList.toggle("open");
-      const m = d.querySelector(".wc-more");
-      if (m) m.textContent = d.classList.contains("open") ? "▲ less" : "▼ more";
-    });
-    g.appendChild(d);
-    setTimeout(
-      () => {
-        const f = document.getElementById(prefix + i);
-        if (f) f.style.width = Math.min(w.pct, 100) + "%";
-      },
-      500 + i * 120,
-    );
-  });
-}
+// ═══ SPEND DONUT (SVG) ══════════════════════════════════════════
+function buildSpendDonut() {
+  const svg = document.getElementById("spendDonut");
+  const legend = document.getElementById("spendLegend");
+  if (!svg || !legend) return;
+  const total = spendBreakdown.reduce((s, x) => s + x.amtB, 0);
+  const cx = 50,
+    cy = 50,
+    r = 37,
+    sw = 15;
+  const C = 2 * Math.PI * r;
+  const NS = "http://www.w3.org/2000/svg";
 
-// ═══ TOP SPENDERS CHART ═════════════════════════════════════════
-function buildSpenders() {
-  const wrap = document.getElementById("spendersChart");
-  if (!wrap) return;
-  const max = topSpenders[0].amt;
-  topSpenders.forEach((s, i) => {
+  // track
+  const track = document.createElementNS(NS, "circle");
+  track.setAttribute("cx", cx);
+  track.setAttribute("cy", cy);
+  track.setAttribute("r", r);
+  track.setAttribute("fill", "none");
+  track.setAttribute("stroke", "#0d0d12");
+  track.setAttribute("stroke-width", sw);
+  svg.appendChild(track);
+
+  // rotating group so segments start at 12 o'clock (avoids CSS transform bug)
+  const g = document.createElementNS(NS, "g");
+  g.setAttribute("transform", `rotate(-90 ${cx} ${cy})`);
+  svg.appendChild(g);
+
+  let offset = 0;
+  spendBreakdown.forEach((s, i) => {
+    const frac = s.amtB / total;
+    const seg = document.createElementNS(NS, "circle");
+    seg.setAttribute("class", "donut-seg");
+    seg.setAttribute("data-i", i);
+    seg.setAttribute("cx", cx);
+    seg.setAttribute("cy", cy);
+    seg.setAttribute("r", r);
+    seg.setAttribute("fill", "none");
+    seg.setAttribute("stroke", s.color);
+    seg.setAttribute("stroke-width", sw);
+    seg.setAttribute("stroke-dasharray", `0 ${C}`);
+    seg.style.strokeDashoffset = -offset * C;
+    g.appendChild(seg);
+    // animate dash in
+    setTimeout(() => {
+      seg.style.transition = "stroke-dasharray 1.1s cubic-bezier(.16,1,.3,1)";
+      seg.setAttribute(
+        "stroke-dasharray",
+        `${frac * C - 0.6} ${C - frac * C + 0.6}`,
+      );
+    }, 300 + i * 110);
+    offset += frac;
+
+    // legend row
     const row = document.createElement("div");
-    row.className = "sp-row";
-    const up = s.change.startsWith("+");
-    row.innerHTML = `<div class="sp-name">${s.name}</div><div class="sp-track"><div class="sp-fill" data-w="${((s.amt / max) * 100).toFixed(1)}"></div></div><div class="sp-amt">$${s.amt >= 100 ? Math.round(s.amt) : s.amt}B</div><div class="sp-chg ${up ? "up" : "down"}">${s.change}</div>`;
-    wrap.appendChild(row);
-    if (s.note) {
-      const n = document.createElement("div");
-      // n.className='sp-note';n.textContent=s.note;
-      wrap.appendChild(n);
-    }
+    row.className = "dleg";
+    row.dataset.i = i;
+    row.innerHTML = `<span class="dleg-sw" style="background:${s.color}"></span>${s.label}<span class="dleg-amt">${fmt(s.amtB)}</span>`;
+    const dim = () =>
+      svg
+        .querySelectorAll(".donut-seg")
+        .forEach((e) =>
+          e.classList.toggle("dim", e.getAttribute("data-i") !== String(i)),
+        );
+    const undim = () =>
+      svg.querySelectorAll(".donut-seg").forEach((e) => e.classList.remove("dim"));
+    row.addEventListener("mouseenter", dim);
+    row.addEventListener("mouseleave", undim);
+    seg.addEventListener("mouseenter", dim);
+    seg.addEventListener("mouseleave", undim);
+    legend.appendChild(row);
   });
-  const io = new IntersectionObserver(
-    (es) => {
-      es.forEach((e) => {
-        if (e.isIntersecting) {
-          wrap
-            .querySelectorAll("[data-w]")
-            .forEach((b, k) =>
-              setTimeout(() => (b.style.width = b.dataset.w + "%"), k * 90),
-            );
-          io.disconnect();
-        }
-      });
-    },
-    { threshold: 0.2 },
-  );
-  io.observe(wrap);
+
+  // centre label
+  const v = document.createElementNS(NS, "text");
+  v.setAttribute("class", "donut-center-v");
+  v.setAttribute("x", cx);
+  v.setAttribute("y", cy - 1);
+  v.setAttribute("text-anchor", "middle");
+  v.setAttribute("font-size", "13");
+  v.textContent = "$2.89T";
+  svg.appendChild(v);
+  const l = document.createElementNS(NS, "text");
+  l.setAttribute("class", "donut-center-l");
+  l.setAttribute("x", cx);
+  l.setAttribute("y", cy + 8);
+  l.setAttribute("text-anchor", "middle");
+  l.setAttribute("font-size", "4.4");
+  l.textContent = "MILITARY · 2025";
+  svg.appendChild(l);
 }
 
-// ═══ DISPLACED DOT FIELD ════════════════════════════════════════
+// ═══ EMISSIONS MINI GRID ════════════════════════════════════════
+function buildEmissions() {
+  const g = document.getElementById("emGrid");
+  if (!g) return;
+  for (let i = 0; i < 100; i++) {
+    const c = document.createElement("div");
+    c.className = "em-cell" + (i < 6 ? " on" : "");
+    g.appendChild(c);
+  }
+}
+
+// ═══ DUAL SPENDER BARS ══════════════════════════════════════════
+function buildDualSpenders() {
+  const abs = document.getElementById("spendersAbs");
+  const gdp = document.getElementById("spendersGdp");
+  if (!abs || !gdp) return;
+  const maxAbs = Math.max(...topSpenders.map((s) => s.amt));
+  const maxGdp = Math.max(...topSpenders.map((s) => s.gdp));
+  topSpenders.forEach((s) => {
+    const a = document.createElement("div");
+    a.className = "b2-row";
+    a.innerHTML = `<div class="b2-name">${s.name}</div><div class="b2-track"><div class="b2-fill red" data-w="${((s.amt / maxAbs) * 100).toFixed(1)}"></div></div><div class="b2-val">$${s.amt >= 100 ? Math.round(s.amt) : s.amt}B</div>`;
+    abs.appendChild(a);
+  });
+  // GDP sorted descending for a different shape
+  [...topSpenders]
+    .sort((x, y) => y.gdp - x.gdp)
+    .forEach((s) => {
+      const peak = s.gdp === maxGdp;
+      const g = document.createElement("div");
+      g.className = "b2-row" + (peak ? " peak" : "");
+      g.innerHTML = `<div class="b2-name">${s.name}</div><div class="b2-track"><div class="b2-fill amber" data-w="${((s.gdp / maxGdp) * 100).toFixed(1)}"></div></div><div class="b2-val">${s.gdp}%</div>`;
+      gdp.appendChild(g);
+    });
+}
+
+// ═══ DISPLACEMENT DOT FIELD (multi-colour) ══════════════════════
 function drawDotField() {
   const c = document.getElementById("dotField");
   if (!c) return;
   const dpr = window.devicePixelRatio || 1;
   const w = c.parentElement.getBoundingClientRect().width;
   if (w <= 0) return;
-  const totalDots = Math.round(displacedStats.displaced * 10); // 1 dot = 100k people
-  const refDots = Math.round((displacedStats.refugees + 9) * 10); // refugees + asylum seekers crossed a border
-  const cols = Math.floor(w / 9);
-  const rows = Math.ceil(totalDots / cols);
-  const h = rows * 9 + 4;
+  // build ordered colour list, 1 dot = 100k people
+  const dots = [];
+  displacementBreakdown.forEach((cat) => {
+    const n = Math.round(cat.millions * 10);
+    for (let i = 0; i < n; i++) dots.push(cat.color);
+  });
+  const cols = Math.floor(w / 8);
+  const rows = Math.ceil(dots.length / cols);
+  const h = rows * 8 + 4;
   c.width = w * dpr;
   c.height = h * dpr;
   c.style.width = w + "px";
   c.style.height = h + "px";
   const x = c.getContext("2d");
   x.scale(dpr, dpr);
-  for (let i = 0; i < totalDots; i++) {
-    const col = i % cols,
-      row = Math.floor(i / cols);
-    const crossed = i < refDots;
+  dots.forEach((col, i) => {
+    const cx = (i % cols) * 8 + 4,
+      cy = Math.floor(i / cols) * 8 + 4;
     x.beginPath();
-    x.arc(col * 9 + 4, row * 9 + 4, 1.7, 0, Math.PI * 2);
-    x.fillStyle = crossed ? "rgba(0,229,255,.75)" : "rgba(0,229,255,.18)";
+    x.arc(cx, cy, 1.7, 0, Math.PI * 2);
+    x.fillStyle = col;
+    x.globalAlpha = 0.8;
     x.fill();
-  }
-}
-
-// ═══ HUMAN COST ═════════════════════════════════════════════════
-function buildHuman() {
-  const wrap = document.getElementById("humanStats");
-  if (!wrap) return;
-  humanData.forEach((h) => {
-    const d = document.createElement("div");
-    d.className = "hstat rv";
-    d.innerHTML = `<div class="hstat-num">${h.num}</div><div class="hstat-unit">${h.unit}</div><div class="hstat-body">${h.body}</div><div class="hstat-src"><a href="${h.url}" target="_blank" rel="noopener">${h.src} ↗</a></div>`;
-    wrap.appendChild(d);
   });
+  x.globalAlpha = 1;
 }
 
+function buildDotLegend() {
+  const el = document.getElementById("dotLegend");
+  if (!el) return;
+  el.innerHTML = displacementBreakdown
+    .map(
+      (c) =>
+        `<span class="dot-leg"><i style="background:${c.color}"></i>${c.label} · ${c.millions}M</span>`,
+    )
+    .join("");
+}
+
+// ═══ HUMAN STAT STRIP (condensed) ═══════════════════════════════
+function buildHumanStrip() {
+  const wrap = document.getElementById("humanStrip");
+  if (!wrap) return;
+  const strip = [
+    {
+      num: "244,700",
+      lbl: "people killed in armed conflict in the last year, one every two minutes",
+      url: "https://acleddata.com/series/acled-conflict-index",
+    },
+    {
+      num: "11,967",
+      lbl: "children killed or maimed in a single year, the highest ever recorded",
+      url: "https://news.un.org/en/story/2025/06/1164646",
+    },
+    {
+      num: "1 in 6",
+      lbl: "people on Earth were exposed to conflict in 2025",
+      url: "https://acleddata.com/series/acled-conflict-index",
+    },
+    {
+      num: "4.5M+",
+      lbl: "deaths from the post-9/11 wars alone, including disease and collapse",
+      url: "https://watson.brown.edu/costsofwar",
+    },
+  ];
+  wrap.innerHTML = strip
+    .map(
+      (s) =>
+        `<div class="hsc"><div class="hsc-num">${s.num}</div><div class="hsc-lbl">${s.lbl}</div><div class="hsc-src"><a href="${s.url}" target="_blank" rel="noopener">source ↗</a></div></div>`,
+    )
+    .join("");
+}
+
+// ═══ LIVES PIXEL FIELD ══════════════════════════════════════════
 function drawLives() {
   const c = document.getElementById("livesCanvas");
   if (!c) return;
@@ -231,7 +335,7 @@ function drawLives() {
     c.parentElement.getBoundingClientRect().width -
     (window.innerWidth <= 620 ? 40 : 64);
   if (w <= 0) return;
-  const total = DEATHS_PER_YEAR; // one point per person
+  const total = DEATHS_PER_YEAR;
   const spacing = 2;
   const cols = Math.floor(w / spacing);
   const rows = Math.ceil(total / cols);
@@ -242,7 +346,6 @@ function drawLives() {
   c.style.height = h + "px";
   const x = c.getContext("2d");
   x.scale(dpr, dpr);
-  x.fillStyle = "#000";
   for (let i = 0; i < total; i++) {
     const col = i % cols,
       row = Math.floor(i / cols);
@@ -252,82 +355,60 @@ function drawLives() {
   }
 }
 
-// ═══ ISSUE CARDS ════════════════════════════════════════════════
+// ═══ ISSUE CARDS (two columns, compact) ═════════════════════════
 function buildIssues() {
-  const dg = document.getElementById("detailGrid");
-  const pg = document.getElementById("issuesGrid");
+  const colL = document.getElementById("issueColL");
+  const colR = document.getElementById("issueColR");
+  if (!colL || !colR) return;
+  const half = Math.ceil(issueData.length / 2);
   issueData.forEach((iss, i) => {
-    const pct = (iss.cost / DEFENCE) * 100;
-    const dc = document.createElement("div");
-    dc.className = "ic";
-    dc.id = "ic" + i;
-    dc.innerHTML = `<div class="ic-top"><div class="ic-sdg">${iss.sdg}</div><div class="ic-chk" id="chk${i}"></div></div><div class="ic-name">${iss.name}</div><div class="ic-cost" style="color:${iss.color}">${fmt(iss.cost)}</div><div class="ic-unit">per year · additional investment gap</div><div class="ic-pb"><div id="ipb${i}" style="width:0%;height:100%;background:linear-gradient(90deg,${iss.color}55,${iss.color});transition:width .8s cubic-bezier(.16,1,.3,1)"></div></div><div class="ic-pct"><span>${pct.toFixed(1)}%</span> of the military budget</div><div class="ic-sum">${iss.sum}</div><div class="ic-detail">${iss.detail}</div><div class="ic-more" onclick="event.stopPropagation();const c=this.closest('.ic');c.classList.toggle('exp');this.textContent=c.classList.contains('exp')?'▲ less':'▼ more detail'">▼ more detail</div><div class="ic-src"><a href="${iss.url}" target="_blank" rel="noopener">${iss.src} ↗</a></div>`;
-    dc.addEventListener("click", (e) => {
+    const pct = ((iss.cost / DEFENCE) * 100).toFixed(1);
+    const card = document.createElement("div");
+    card.className = "ix";
+    card.id = "ix" + i;
+    card.innerHTML = `
+      <div class="ix-top">
+        <div class="ix-chk"></div>
+        <div class="ix-name">${iss.name}</div>
+        <div class="ix-cost" style="color:${iss.color}">${fmt(iss.cost)}/yr</div>
+      </div>
+      <div class="ix-sum">${iss.sum}</div>
+      <div class="ix-detail">${iss.detail}</div>
+      <div class="ix-foot">
+        <span class="ix-more">▾ detail · ${pct}% of budget</span>
+        <span class="ix-src"><a href="${iss.url}" target="_blank" rel="noopener">${iss.src.split(" ")[0]} ↗</a></span>
+      </div>`;
+    card.addEventListener("click", (e) => {
       if (e.target.closest("a")) return;
+      if (e.target.closest(".ix-more")) {
+        card.classList.toggle("ix-exp");
+        const m = card.querySelector(".ix-more");
+        m.textContent = card.classList.contains("ix-exp")
+          ? `▴ less · ${pct}% of budget`
+          : `▾ detail · ${pct}% of budget`;
+        return;
+      }
       toggleIssue(i);
     });
-    dg.appendChild(dc);
-    setTimeout(
-      () => {
-        const b = document.getElementById("ipb" + i);
-        if (b) b.style.width = Math.min(pct * 1.8, 100) + "%";
-      },
-      350 + i * 45,
-    );
-
-    const pr = document.createElement("div");
-    pr.className = "pic";
-    pr.id = "pic" + i;
-    pr.innerHTML = `<div class="pic-chk" id="pchk${i}"></div>
-<div class="pic-body">
-  <div class="pic-name">${iss.name}</div>
-  <div class="pic-cost" style="color:${iss.color}">${fmt(iss.cost)}<span style="font-size:.5rem;color:var(--muted);font-weight:400"> /yr</span></div>
-  <div class="pic-sum">${iss.sum}</div>
-  <div class="pic-detail">${iss.detail}</div>
-  <div class="pic-pct-bar"><div id="ppb${i}" style="width:0%;height:100%;background:${iss.color};transition:width .6s cubic-bezier(.16,1,.3,1)"></div></div>
-  <div class="pic-foot">
-    <span class="pic-more" onclick="event.stopPropagation();const p=this.closest('.pic');p.classList.toggle('pexp');this.textContent=p.classList.contains('pexp')?'▲ less':'▼ detail'">▼ detail</span>
-    <span class="pic-src"><a href="${iss.url}" target="_blank" rel="noopener">${iss.src.split(" ")[0]} ↗</a></span>
-  </div>
-</div>`;
-    pr.addEventListener("click", (e) => {
-      if (e.target.closest("a")) return;
-      toggleIssue(i);
-    });
-    pg.appendChild(pr);
-    setTimeout(
-      () => {
-        const b = document.getElementById("ppb" + i);
-        if (b) b.style.width = Math.min(pct * 1.8, 100) + "%";
-      },
-      400 + i * 40,
-    );
+    (i < half ? colL : colR).appendChild(card);
   });
 }
 
 // ═══ TOGGLE ═════════════════════════════════════════════════════
 function toggleIssue(i) {
-  const c = document.getElementById("ic" + i);
-  const p = document.getElementById("pic" + i);
-  if (
-    ((c && c.classList.contains("cant")) ||
-      (p && p.classList.contains("pcant"))) &&
-    !sel.has(i)
-  )
-    return;
+  const card = document.getElementById("ix" + i);
+  if (card && card.classList.contains("ix-cant") && !sel.has(i)) return;
   if (sel.has(i)) {
     sel.delete(i);
-    if (c) {
-      c.classList.remove("sel");
-      burst(c, "-" + fmt(issueData[i].cost), "#ff2d2d");
+    if (card) {
+      card.classList.remove("ix-sel");
+      burst(card, "-" + fmt(issueData[i].cost), "#ff2d2d");
     }
-    if (p) p.classList.remove("psel");
   } else {
     sel.add(i);
-    if (c) c.classList.add("sel");
-    if (p) {
-      p.classList.add("psel");
-      burst(p, "+" + fmt(issueData[i].cost), "#00ff88");
+    if (card) {
+      card.classList.add("ix-sel");
+      burst(card, "+" + fmt(issueData[i].cost), "#f5c542");
     }
   }
   allocated = 0;
@@ -335,40 +416,32 @@ function toggleIssue(i) {
   updateTracker();
   updateCant();
   updateSummary();
+  updateGate();
 }
 
 function updateCant() {
   issueData.forEach((_, i) => {
-    const c = document.getElementById("ic" + i);
-    const p = document.getElementById("pic" + i);
+    const card = document.getElementById("ix" + i);
+    if (!card) return;
     if (sel.has(i)) {
-      if (c) {
-        c.classList.remove("cant");
-        const t = c.querySelector(".cant-tag");
-        if (t) t.remove();
-      }
-      if (p) p.classList.remove("pcant");
+      card.classList.remove("ix-cant");
+      const t = card.querySelector(".ix-cant-tag");
+      if (t) t.remove();
       return;
     }
     const over = allocated + issueData[i].cost > DEFENCE;
     if (over) {
-      if (c) {
-        c.classList.add("cant");
-        if (!c.querySelector(".cant-tag")) {
-          const t = document.createElement("div");
-          t.className = "cant-tag";
-          t.textContent = "exceeds remaining budget";
-          c.appendChild(t);
-        }
+      card.classList.add("ix-cant");
+      if (!card.querySelector(".ix-cant-tag")) {
+        const t = document.createElement("div");
+        t.className = "ix-cant-tag";
+        t.textContent = "exceeds remaining budget";
+        card.appendChild(t);
       }
-      if (p) p.classList.add("pcant");
     } else {
-      if (c) {
-        c.classList.remove("cant");
-        const t = c.querySelector(".cant-tag");
-        if (t) t.remove();
-      }
-      if (p) p.classList.remove("pcant");
+      card.classList.remove("ix-cant");
+      const t = card.querySelector(".ix-cant-tag");
+      if (t) t.remove();
     }
   });
 }
@@ -379,20 +452,15 @@ function updateTracker() {
   document.getElementById("tiRem").textContent = fmt(rem);
   document.getElementById("tiAlloc").textContent = fmt(allocated);
   document.getElementById("tiCount").textContent =
-    `${sel.size} issue${sel.size !== 1 ? "s" : ""} selected`;
+    sel.size === 0
+      ? "0 · select issues to begin"
+      : `${sel.size} issue${sel.size !== 1 ? "s" : ""} funded`;
   const bar = document.getElementById("tiBar");
   bar.style.width = pct + "%";
   const remEl = document.getElementById("tiRem");
-  if (pct > 60) {
-    remEl.className = "ti-val g";
-    bar.className = "ti-bar-fill";
-  } else if (pct > 25) {
-    remEl.className = "ti-val a";
-    bar.className = "ti-bar-fill a";
-  } else {
-    remEl.className = "ti-val r";
-    bar.className = "ti-bar-fill r";
-  }
+  if (pct > 60) remEl.className = "ti-val g";
+  else if (pct > 25) remEl.className = "ti-val a";
+  else remEl.className = "ti-val r";
 }
 
 function updateSummary() {
@@ -401,15 +469,35 @@ function updateSummary() {
   const sb = document.getElementById("sumBig"),
     ss = document.getElementById("sumStmt");
   if (sel.size === 0) {
-    sb.innerHTML = "Select issues above<br>to begin redistributing";
+    sb.innerHTML = "Select issues to begin<br>redistributing the budget";
     ss.textContent =
       "The money to solve these crises already exists in the world's annual military budgets. This is not a question of financial capacity. It is a question of political will.";
   } else if (pct <= 0) {
     sb.innerHTML = `<span class="g">${sel.size} global crises</span><br>fully funded from one year of military spending.`;
-    ss.textContent = `You allocated ${fmt(allocated)}. The military budget is exhausted. ${sel.size} of humanity's greatest challenges — fully addressable from a single year of weapons spending. The money was always there.`;
+    ss.textContent = `You allocated ${fmt(allocated)}. The military budget is exhausted, and ${sel.size} of humanity's greatest challenges are addressed from a single year of weapons spending. The money was always there.`;
   } else {
-    sb.innerHTML = `<span class="g">${fmt(allocated)}</span> allocated to ${sel.size} issue${sel.size !== 1 ? "s" : ""}.<br><span class="r">${fmt(rem)}</span> still goes to weapons.`;
-    ss.textContent = `After funding ${sel.size} global crisis${sel.size !== 1 ? "es" : ""}, ${fmt(rem)} — ${pct.toFixed(0)}% of the military budget — remains. It continues to flow into weapons. This is the geometry of our current priorities.`;
+    sb.innerHTML = `<span class="g">${fmt(allocated)}</span> redirected to ${sel.size} issue${sel.size !== 1 ? "s" : ""}.<br><span class="r">${fmt(rem)}</span> still goes to weapons.`;
+    ss.textContent = `After funding ${sel.size} global crisis${sel.size !== 1 ? "es" : ""}, ${fmt(rem)}, ${pct.toFixed(0)}% of the military budget, remains. It continues to flow into weapons. This is the geometry of our current priorities.`;
+  }
+}
+
+// ═══ GATE (unlock journey once user engages) ════════════════════
+function updateGate() {
+  const gate = document.getElementById("journeyGate");
+  const prompt = document.getElementById("redistPrompt");
+  if (!gate) return;
+  if (sel.size >= 1) {
+    gate.classList.remove("locked");
+    if (prompt) {
+      prompt.textContent = "✓ Unlocked. Now rank your priorities below ▾";
+      prompt.classList.add("go");
+    }
+  } else {
+    gate.classList.add("locked");
+    if (prompt) {
+      prompt.textContent = "Select issues on either side to fund them";
+      prompt.classList.remove("go");
+    }
   }
 }
 
@@ -436,8 +524,8 @@ function rszFlow() {
   const panel = fC.parentElement;
   const availW = panel
     ? panel.getBoundingClientRect().width
-    : window.innerWidth * 0.65;
-  const sz = Math.round(Math.min(availW, window.innerHeight * 0.9, 800));
+    : window.innerWidth * 0.5;
+  const sz = Math.round(Math.min(availW, window.innerHeight * 0.7, 520));
   fW = fC.width = sz * dpr;
   fH = fC.height = sz * dpr;
   fC.style.width = sz + "px";
@@ -453,9 +541,7 @@ function getNodes() {
   const nodes = [];
   if (n === 0) return { cx, cy, bigR, nodes };
   const scale = Math.min(fW, fH) * 0.22;
-  const rawRs = arr.map(
-    (idx) => Math.sqrt(issueData[idx].cost / DEFENCE) * scale,
-  );
+  const rawRs = arr.map((idx) => Math.sqrt(issueData[idx].cost / DEFENCE) * scale);
   const maxRaw = Math.max(...rawRs);
   const margin = Math.min(fW, fH) * 0.04;
   const minRing = bigR + maxRaw * 1.1 + margin;
@@ -604,7 +690,7 @@ function drawFlow() {
     fX.textBaseline = "middle";
     fX.fillStyle = "rgba(112,128,144,0.7)";
     fX.font = `${baseF * 1.1}px 'IBM Plex Mono',monospace`;
-    fX.fillText("Select issues on the right →", fW / 2, fH * 0.88);
+    fX.fillText("Select issues to fund", fW / 2, fH * 0.9);
   }
   requestAnimationFrame(drawFlow);
 }
@@ -613,16 +699,14 @@ function drawFlow() {
 function resetAll() {
   sel.clear();
   allocated = 0;
-  document.querySelectorAll(".ic").forEach((c) => {
-    c.classList.remove("sel", "cant");
-    const t = c.querySelector(".cant-tag");
+  document.querySelectorAll(".ix").forEach((c) => {
+    c.classList.remove("ix-sel", "ix-cant");
+    const t = c.querySelector(".ix-cant-tag");
     if (t) t.remove();
   });
-  document
-    .querySelectorAll(".pic")
-    .forEach((p) => p.classList.remove("psel", "pcant"));
   updateTracker();
   updateSummary();
+  updateGate();
 }
 
 // ═══ SHARE ══════════════════════════════════════════════════════
@@ -680,12 +764,8 @@ function initScrollProgress() {
     () => {
       const h = document.documentElement.scrollHeight - window.innerHeight;
       const pct = h > 0 ? Math.min(window.scrollY / h, 1) : 0;
-      if (bar) {
-        bar.style.height = pct * 100 + "%";
-      }
-      if (dot) {
-        dot.style.top = pct * 100 + "vh";
-      }
+      if (bar) bar.style.height = pct * 100 + "%";
+      if (dot) dot.style.top = pct * 100 + "vh";
     },
     { passive: true },
   );
@@ -697,7 +777,7 @@ function buildRanking() {
   const top = document.getElementById("rankTop");
   if (!pool || !top) return;
   top.innerHTML =
-    '<div class="rank-empty-msg">Select issues from the right to add them here, in order of priority.</div>';
+    '<div class="rank-empty-msg">Select issues from the list to add them here, in order of priority.</div>';
   pool.innerHTML = "";
   issueData.forEach((iss, i) => {
     const d = document.createElement("div");
@@ -733,7 +813,7 @@ function renderRanking() {
   top.innerHTML = "";
   if (ranking.length === 0) {
     top.innerHTML =
-      '<div class="rank-empty-msg">Select issues from the right to add them here, in order of priority.</div>';
+      '<div class="rank-empty-msg">Select issues from the list to add them here, in order of priority.</div>';
   } else {
     ranking.forEach((idx, pos) => {
       const iss = issueData[idx];
@@ -755,6 +835,7 @@ function renderRanking() {
     btn.disabled = ranking.length !== 5;
     btn.style.opacity = ranking.length === 5 ? "1" : ".3";
   }
+  // once 5 ranked, those become the funded set and drive the diagram
   if (ranking.length === 5) {
     sel.clear();
     ranking.forEach((i) => sel.add(i));
@@ -763,18 +844,13 @@ function renderRanking() {
     updateTracker();
     updateSummary();
     updateCant();
+    updateGate();
     issueData.forEach((_, i) => {
-      const c = document.getElementById("ic" + i);
-      const p = document.getElementById("pic" + i);
-      if (c) {
-        c.classList.toggle("sel", sel.has(i));
-      }
-      if (p) {
-        p.classList.toggle("psel", sel.has(i));
-      }
+      const card = document.getElementById("ix" + i);
+      if (card) card.classList.toggle("ix-sel", sel.has(i));
     });
-    generateLetter();
   }
+  generateLetter();
 }
 
 function resetRanking() {
@@ -871,77 +947,82 @@ function showCountry(name) {
     note.innerHTML = `Find your representative: <a href="${c[5]}" target="_blank">${c[0]} government contact page ↗</a>`;
 }
 
-// ═══ LETTER ═════════════════════════════════════════════════════
+// ═══ LETTER (with red placeholders when incomplete) ═════════════
 function generateLetter() {
   const out = document.getElementById("letterOutput");
+  const note = document.getElementById("letterNote");
   if (!out) return;
-  if (ranking.length < 5) {
-    out.innerHTML =
-      '<span class="letter-placeholder">Complete your top 5 ranking and select your country — your letter will appear here, ready to edit.</span>';
-    return;
-  }
+
+  const rankDone = ranking.length === 5;
+  const countryDone = !!selectedCountry;
+  const complete = rankDone && countryDone;
+  if (note) note.classList.toggle("show", !complete);
+
+  const RED = (t) => `<span class="letter-redfill">${t}</span>`;
+
   const name =
     (document.getElementById("letterName")?.value || "").trim() ||
     "A concerned citizen";
-  const leaderRaw = (
-    document.getElementById("letterTitle")?.value || ""
-  ).trim();
+  const leaderRaw = (document.getElementById("letterTitle")?.value || "").trim();
   const leader =
     leaderRaw ||
-    (selectedCountry
+    (countryDone
       ? `Prime Minister / President of ${selectedCountry[0]}`
-      : "[Your Head of State]");
-  const country = selectedCountry ? selectedCountry[0] : "our shared world";
-  const spend = selectedCountry
-    ? `$${selectedCountry[2]} billion`
-    : "billions in public funds";
-  const gdpPct = selectedCountry ? selectedCountry[3] : null;
-  const top5 = ranking
-    .map(
-      (idx, i) =>
-        `  ${i + 1}. ${issueData[idx].name} — ${fmt(issueData[idx].cost)} per year`,
-    )
-    .join("\n");
-  const totalB = ranking.reduce((s, i) => s + issueData[i].cost, 0);
-  const totalNeeded = fmt(totalB);
-  const shareOfBudget = Math.round((totalB / DEFENCE) * 100);
+      : RED("[your head of state]"));
+  const country = countryDone ? selectedCountry[0] : RED("[your country]");
+  const contributionLine = countryDone
+    ? `${selectedCountry[0]} contributed $${selectedCountry[2]} billion to that total, ${selectedCountry[3]}% of our national GDP.`
+    : RED("[Step 02: choose your country to show what it spends.]");
+
+  const top5 = rankDone
+    ? ranking
+        .map(
+          (idx, i) =>
+            `  ${i + 1}. ${issueData[idx].name} (${fmt(issueData[idx].cost)} per year)`,
+        )
+        .join("\n")
+    : RED(
+        "[Go back to Step 01 and rank your top 5 priorities. They will appear here.]",
+      );
+  const totalB = rankDone
+    ? ranking.reduce((s, i) => s + issueData[i].cost, 0)
+    : 0;
+  const totalLine = rankDone
+    ? `To fund all five at the levels needed would cost ${fmt(totalB)} per year, about ${Math.round((totalB / DEFENCE) * 100)}% of one year of global military spending. Not a utopian fantasy. A budget question.`
+    : RED(
+        "[Once you have ranked your priorities, the total cost of your choices will be calculated here.]",
+      );
 
   const letter = `Dear ${leader},
 
-My name is ${name}. I am writing to you not as a partisan voice, not as an ideologue, and not from a place of anger — but as a human being who has sat with some uncomfortable numbers, and who can no longer stay quiet about what they mean.
+My name is ${name}. I am writing to you not as a partisan voice, not as an ideologue, and not from a place of anger, but as a human being who has sat with some uncomfortable numbers and can no longer stay quiet about what they mean.
 
-In 2025, the world spent $2.89 trillion on its militaries — the eleventh consecutive annual record. ${country !== "our shared world" ? country + " contributed " + spend + " to that total" + (gdpPct ? " — " + gdpPct + "% of our national GDP" : "") + "." : ""} I do not write to question the sincerity of those who serve, or to pretend that the threats governments face are not real. I understand complexity. I understand that the world is not safe.
+In 2025, the world spent $2.89 trillion on its militaries, the eleventh consecutive annual record. ${contributionLine} I do not write to question the sincerity of those who serve, or to pretend that the threats governments face are not real. I understand that the world is not safe.
 
-But I have come to believe that the world is also not as safe as it could be — precisely because of how we are choosing to spend.
+But I have come to believe that the world is also not as safe as it could be, precisely because of how we are choosing to spend.
 
-This year, 673 million people went hungry. 272 million children could not go to school. 117.8 million people remain displaced from their homes. The UN's humanitarian appeal received barely a third of what it asked for — while spending on nuclear weapons alone rose 19% to a record $119 billion. The climate is warming faster than our institutions are responding. These are not abstract statistics. They are the compounding conditions of a planet in genuine distress — one that will produce more conflict, more instability, and more suffering the longer we leave them unaddressed.
-
-The United Nations' own agencies have calculated what it would cost to make material progress on these crises. The figures are significant — but they are dwarfed by what we already spend on weapons.
+This year, 673 million people went hungry. 272 million children could not go to school. 117.8 million people remain displaced from their homes. The UN's humanitarian appeal received barely a third of what it asked for, while spending on nuclear weapons alone rose 19% to a record $119 billion. These are the compounding conditions of a planet in genuine distress, one that will produce more conflict the longer we leave them unaddressed.
 
 I have thought carefully about where I believe the world must focus its resources. My five priorities are:
 
 ${top5}
 
-To fund all five of these causes at the levels needed would cost ${totalNeeded} per year — about ${shareOfBudget}% of one year of global military spending. Not a utopian fantasy. A budget question.
+${totalLine}
 
-I am not naive. I know that reallocation at this scale requires political courage that is rarely rewarded in short electoral cycles. I know that competing interests, alliances, and genuine security threats make this harder than any one letter can resolve. But I also know that the trajectory we are on — ever-increasing military budgets in a warming, hungering, fractured world — is not making any of us safer. It is buying time, not peace.
+I am not naive. I know reallocation at this scale requires political courage that is rarely rewarded in short electoral cycles. But the trajectory we are on, ever-increasing military budgets in a warming, hungering, fractured world, is not making any of us safer. It is buying time, not peace.
 
-I am asking you to think across a longer horizon. To build alliances not only of military capability but of shared human survival. To consider that the greatest security threat facing your citizens in the coming decades is not a rival army, but a planet that can no longer sustain the conditions of civilised life.
-
-We are not separate nations with separate interests. We are one species, sharing one atmosphere, drinking from the same water cycles, and feeding from the same soils. The decisions made in the coming years about how to allocate this planet's resources will shape whether our children inherit a liveable world.
+We are not separate nations with separate interests. We are one species, sharing one atmosphere, drinking from the same water, feeding from the same soil. The decisions made now about how to allocate this planet's resources will shape whether our children inherit a liveable world.
 
 I am choosing to believe you share that goal. And I am asking you, respectfully but urgently, to act like it.
 
 Yours sincerely,
 
 ${name}
-${country}
+${country}`;
 
-—
-This letter was generated at studioex.co · The Cost of War · An artwork by Blueprint × StudioEX`;
-
-  out.innerText = letter;
-  out.dataset.plain = letter;
+  // contenteditable: render HTML so red prompts show; copy uses innerText
+  out.innerHTML = letter.replace(/\n/g, "<br>");
+  out.dataset.plain = out.innerText;
 }
 
 function copyLetter() {
@@ -961,15 +1042,16 @@ function emailLetter() {
   const out = document.getElementById("letterOutput");
   const txt = out?.innerText || out?.dataset?.plain || "";
   const sub = encodeURIComponent(
-    "On the allocation of our national budget — a citizen's priorities",
+    "On the allocation of our national budget, a citizen's priorities",
   );
-  window.open(
-    `mailto:?subject=${sub}&body=${encodeURIComponent(txt)}`,
-    "_blank",
-  );
+  window.open(`mailto:?subject=${sub}&body=${encodeURIComponent(txt)}`, "_blank");
 }
 
 function tweetLetter() {
+  if (ranking.length < 5) {
+    alert("Rank your top 5 priorities first, so your letter is complete.");
+    return;
+  }
   const r5 = ranking
     .slice(0, 5)
     .map((i) => issueData[i].name)
@@ -981,6 +1063,22 @@ function tweetLetter() {
   );
 }
 
+function goToRank() {
+  if (sel.size === 0) {
+    document
+      .getElementById("redistribute")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const p = document.getElementById("redistPrompt");
+    if (p) {
+      p.textContent = "← Select at least one issue first";
+      p.classList.add("go");
+    }
+    return;
+  }
+  document
+    .getElementById("rankSection")
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 function goToCountry() {
   document
     .getElementById("countrySection")
@@ -999,7 +1097,7 @@ function goToCoalition() {
 
 // ═══ COALITION ══════════════════════════════════════════════════
 // NOTE FOR BACKEND DEV: replace localStorage with a real store (e.g.
-// Supabase table `submissions` — see README). Set SUPABASE_URL/KEY.
+// Supabase table `submissions`, see README). Set SUPABASE_URL/KEY.
 const SUPABASE_URL = null;
 const SUPABASE_KEY = null;
 const SEED_COUNT = 2847;
@@ -1066,7 +1164,7 @@ function animCoalitionNum(target) {
 
 function submitCoalition() {
   if (ranking.length < 5) {
-    alert("Please complete your top 5 ranking first (above).");
+    alert("Please complete your top 5 ranking first (Step 01).");
     return;
   }
   const email = (document.getElementById("coalitionEmail")?.value || "").trim();
@@ -1111,7 +1209,10 @@ function submitCoalition() {
 
 // ═══ SHARE CARD ═════════════════════════════════════════════════
 function generateShareCard() {
-  if (ranking.length < 5) return;
+  if (ranking.length < 5) {
+    alert("Rank your top 5 priorities first to generate your card.");
+    return;
+  }
   const country = selectedCountry ? selectedCountry[0] : "the world";
   const spend = selectedCountry ? `$${selectedCountry[2]}B` : "$2.89T";
   const totalB = ranking.reduce((s, i) => s + issueData[i].cost, 0);
@@ -1137,8 +1238,7 @@ function generateShareCard() {
   if (statL)
     statL.innerHTML = `Total annual cost:<br>${total}<br><br>${Math.round((totalB / DEFENCE) * 100)}% of the global military budget`;
   const statR = document.getElementById("scStatRight");
-  if (statR)
-    statR.textContent = `${count.toLocaleString()}\npeople\nhave chosen`;
+  if (statR) statR.textContent = `${count.toLocaleString()}\npeople\nhave chosen`;
 
   const cl = document.getElementById("scCountryLine");
   if (cl) cl.textContent = `From ${country} · ${spend} annual military spend`;
@@ -1188,7 +1288,7 @@ function shareCardTo(type) {
       .writeText(txt)
       .then(() =>
         alert(
-          "Caption copied — paste into Instagram. Screenshot your card first!",
+          "Caption copied, paste into Instagram. Screenshot your card first!",
         ),
       );
 }
@@ -1200,11 +1300,12 @@ window.addEventListener("load", () => {
     cntTo(document.getElementById("hTotal"), 21810, 3000);
   }, 450);
   tickLiveSpend();
-  buildCostGrid("machineGrid", machineData, "mb");
-  buildCostGrid("destructionGrid", destructionData, "db");
-  buildSpenders();
+  buildSpendDonut();
+  buildEmissions();
+  buildDualSpenders();
   drawDotField();
-  buildHuman();
+  buildDotLegend();
+  buildHumanStrip();
   drawLives();
   buildIssues();
   buildRanking();
@@ -1216,4 +1317,22 @@ window.addEventListener("load", () => {
   drawFlow();
   updateTracker();
   updateSummary();
+  updateGate();
+  generateLetter();
+  // animate impact GDP bar when scrolled into view
+  const igf = document.getElementById("impactGdpFill");
+  if (igf) {
+    const io = new IntersectionObserver(
+      (es) => {
+        es.forEach((e) => {
+          if (e.isIntersecting) {
+            igf.style.width = igf.dataset.w + "%";
+            io.disconnect();
+          }
+        });
+      },
+      { threshold: 0.3 },
+    );
+    io.observe(igf);
+  }
 });
