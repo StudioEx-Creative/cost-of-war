@@ -384,7 +384,7 @@ function drawFlow(){
 
   if(sel.size===0){
     fX.textAlign='center';fX.textBaseline='middle';
-    fX.fillStyle='rgba(55,55,55,0.7)';
+    fX.fillStyle='rgba(112,128,144,0.7)';
     fX.font=`${baseF*1.1}px 'IBM Plex Mono',monospace`;
     fX.fillText('Select issues on the right →',fW/2,fH*0.88);
   }
