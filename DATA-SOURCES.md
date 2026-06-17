@@ -53,7 +53,7 @@ Countries outside the top 10 in `countryData` are SIPRI Military Expenditure Dat
 
 | Issue | $B/yr | Source | Note |
 |---|---|---|---|
-| Zero Hunger | 90 | FAO [SOFI 2025](https://www.fao.org/publications/fao-flagship-publications/the-state-of-food-security-and-nutrition-in-the-world/en) + WFP | 673M hungry 2024 (638–720M range), declining globally, rising in Africa |
+| Zero Hunger | 40 | FAO [SOFI](https://www.fao.org/3/cd1254en/online/state-food-security-and-nutrition-2024/cost-policies-end-malnutrition.html) + [Ceres2030](https://www.iisd.org/articles/iisd-news/ending-world-hunger-2030-would-cost-330bn-study-finds) + WFP | Corrected June 2026 from $90B → $40B. Additional investment to end hunger by 2030 is ~$37–50B/yr (Ceres2030; D. Beasley/WFP cited $40B). 673M hungry 2024 (638–720M range) |
 | Global Health | 371 | [WHO Stenberg et al.](https://www.who.int/publications/i/item/9789241513326) | ambitious UHC scenario |
 | Quality Education | 100 | [UNESCO](https://www.unesco.org/en/articles/more-children-out-school-7th-year-row-273-million) | 272M out of school (2025, 7th year rising) |
 | Gender Equality | 360 | UN Women Beijing+30 | |

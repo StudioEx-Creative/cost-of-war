@@ -14,6 +14,29 @@ const NUKE_PER_SECOND = 3768; // ICAN 2026
 const DEATHS_PER_YEAR = 244700; // ACLED, Dec 2024–Nov 2025
 const SECONDS_PER_DEATH = 31536000 / DEATHS_PER_YEAR; // ≈ 129 s
 
+/* ── GLOBAL CONTEXT (for GDP-share visualisations) ──────────────── */
+const globalContext = {
+  worldGDP: 110000, // $B, approx world GDP 2025 (IMF, ~$110T)
+  milPctGDP: 2.5, // % of global GDP spent on militaries (SIPRI 2026)
+  violencePctGDP: 10.5, // % of global GDP consumed by violence (IEP GPI 2026)
+  violencePerPerson: 2650, // $ per person alive (IEP GPI 2026)
+  armsTradeGrowth: 9.2, // % growth in major-arms transfers 2021-25 (SIPRI)
+};
+
+/* ── MILITARY SPEND BY CATEGORY ($2,887B) ──────────────────────────
+   The total and the nuclear figure are precise (SIPRI / ICAN). The
+   category split is indicative, modelled on typical national
+   defence-budget compositions (personnel / operations / procurement /
+   R&D), since SIPRI does not publish one global category breakdown. */
+const spendBreakdown = [
+  { label: "Personnel & pay", amtB: 1010, color: "#ff2d2d" },
+  { label: "Operations & upkeep", amtB: 780, color: "#ff5a36" },
+  { label: "Arms & equipment", amtB: 578, color: "#f5852a" },
+  { label: "Research & development", amtB: 260, color: "#f5a623" },
+  { label: "Bases & infrastructure", amtB: 140, color: "#9c4a1a" },
+  { label: "Nuclear forces", amtB: 119, color: "#ffd23f" },
+];
+
 /* ── CHAPTER 01 · THE MACHINE — direct military spending ─────────── */
 const machineData = [
   {
@@ -23,7 +46,7 @@ const machineData = [
     name: "Global Military Spending",
     sum: "World military expenditure in 2025, the 11th consecutive year of growth, now 2.5% of global GDP, the highest burden since 2009.",
     detail:
-      "The US spent $954B (down 7.5%, yet still a third of the world total). Europe surged 14% to $864B as rearmament accelerated: Germany hit $114B, up 24%, crossing 2% of GDP for the first time since 1990. China spent $336B, up 7.4%. Russia spent $190B — 7.5% of its GDP. Ukraine spent $84B: 40% of everything its economy produces.",
+      "The US spent $954B (down 7.5%, yet still a third of the world total). Europe surged 14% to $864B as rearmament accelerated: Germany hit $114B, up 24%, crossing 2% of GDP for the first time since 1990. China spent $336B, up 7.4%. Russia spent $190B, 7.5% of its GDP. Ukraine spent $84B: 40% of everything its economy produces.",
     pct: 100,
     src: "SIPRI Trends in World Military Expenditure 2025 (April 2026)",
     url: "https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-world-military-expenditure-2025",
@@ -37,7 +60,7 @@ const machineData = [
     detail:
       "The United States spent $69.2B, more than all eight other nuclear-armed states combined. China spent $13.5B; the UK ($12.6B) overtook Russia ($9.5B). Roughly 12,200 warheads remain in existence. Every nuclear-armed state is currently modernising or expanding its arsenal.",
     pct: 90,
-    src: "ICAN — Premeditated: 2025 Global Nuclear Weapons Spending (June 2026)",
+    src: "ICAN · Premeditated: 2025 Global Nuclear Weapons Spending (June 2026)",
     url: "https://www.icanw.org/premeditated_2025_global_nuclear_weapons_spending",
   },
   {
@@ -68,36 +91,16 @@ const machineData = [
 
 /* ── TOP MILITARY SPENDERS 2025 (SIPRI, April 2026) ──────────────── */
 const topSpenders = [
-  {
-    name: "United States",
-    amt: 954,
-    change: "−7.5%",
-    note: "33% of the world total",
-  },
-  {
-    name: "China",
-    amt: 336,
-    change: "+7.4%",
-    note: "31 consecutive years of growth",
-  },
-  { name: "Russia", amt: 190, change: "+5.9%", note: "7.5% of GDP" },
-  {
-    name: "Germany",
-    amt: 114,
-    change: "+24%",
-    note: "largest in Western Europe",
-  },
-  { name: "India", amt: 92.1, change: "+8.9%", note: "" },
-  { name: "United Kingdom", amt: 89, change: "−2.0%", note: "" },
-  { name: "Ukraine", amt: 84.1, change: "+20%", note: "40% of its entire GDP" },
-  { name: "Saudi Arabia", amt: 83.2, change: "+1.4%", note: "" },
-  { name: "France", amt: 68, change: "+1.5%", note: "" },
-  {
-    name: "Japan",
-    amt: 62.2,
-    change: "+9.7%",
-    note: "largest rise since 1952",
-  },
+  { name: "United States", amt: 954, gdp: 3.2, change: "−7.5%" },
+  { name: "China", amt: 336, gdp: 1.7, change: "+7.4%" },
+  { name: "Russia", amt: 190, gdp: 7.5, change: "+5.9%" },
+  { name: "Germany", amt: 114, gdp: 2.3, change: "+24%" },
+  { name: "India", amt: 92.1, gdp: 2.3, change: "+8.9%" },
+  { name: "United Kingdom", amt: 89, gdp: 2.3, change: "−2.0%" },
+  { name: "Ukraine", amt: 84.1, gdp: 40.0, change: "+20%" },
+  { name: "Saudi Arabia", amt: 83.2, gdp: 6.5, change: "+1.4%" },
+  { name: "France", amt: 68, gdp: 2.1, change: "+1.5%" },
+  { name: "Japan", amt: 62.2, gdp: 1.4, change: "+9.7%" },
 ];
 
 /* ── CHAPTER 02 · THE DESTRUCTION — what war breaks ──────────────── */
@@ -111,7 +114,7 @@ const destructionData = [
     detail:
       "The Fifth Rapid Damage and Needs Assessment (World Bank / UN / EU / Ukraine, February 2026) records over $195B in direct physical damage. Reconstruction needs: transport $96B, energy $91B, housing $90B, commerce and industry $63B, agriculture $55B. Ukraine was also the world's deadliest conflict in 2025, with almost 78,000 fatalities recorded.",
     pct: 20,
-    src: "Ukraine RDNA5 — World Bank / UN / EU (February 2026)",
+    src: "Ukraine RDNA5 · World Bank / UN / EU (February 2026)",
     url: "https://www.worldbank.org/en/news/press-release/2026/02/23/updated-ukraine-recovery-and-reconstruction-needs-assessment-released",
   },
   {
@@ -123,7 +126,7 @@ const destructionData = [
     detail:
       "The final Gaza Rapid Damage and Needs Assessment (EU / UN / World Bank, April 2026): 371,888 housing units destroyed or damaged, more than half of hospitals non-functional, nearly every school destroyed or damaged, the economy contracted by 84%. $26.3B is needed in the first 18 months alone to restore essential services.",
     pct: 2.5,
-    src: "Gaza RDNA — EU / UN / World Bank (April 2026)",
+    src: "Gaza RDNA · EU / UN / World Bank (April 2026)",
     url: "https://news.un.org/en/story/2026/04/1167336",
   },
   {
@@ -165,12 +168,27 @@ const displacedStats = {
   targetPeople: 135, // million people the 2026 appeal aims to reach
 };
 
+/* Categories for the multi-colour displacement field (UNHCR, end 2025).
+   Splits the 117.8M total into who fled abroad vs who is trapped at home. */
+const displacementBreakdown = [
+  {
+    label: "Fled their country (refugees & asylum-seekers)",
+    millions: 49.1,
+    color: "#00e5ff",
+  },
+  {
+    label: "Displaced inside their own country",
+    millions: 68.7,
+    color: "#4f7cff",
+  },
+];
+
 /* ── CHAPTER 04 · THE HUMAN COST — what no budget can hold ───────── */
 const humanData = [
   {
     num: "244,700",
     unit: "people killed in armed conflict in the last year",
-    body: "ACLED recorded over 205,400 violent events between November 2024 and November 2025 — the deadliest year in its records. Deaths from conflict have risen six-fold since 2008. That is one life ended by war roughly every two minutes.",
+    body: "ACLED recorded over 205,400 violent events between November 2024 and November 2025, the deadliest year in its records. Deaths from conflict have risen six-fold since 2008. That is one life ended by war roughly every two minutes.",
     src: "ACLED Conflict Index 2025",
     url: "https://acleddata.com/series/acled-conflict-index",
   },
@@ -184,14 +202,14 @@ const humanData = [
   {
     num: "11,967",
     unit: "children killed or maimed in a single year",
-    body: "The UN verified 41,370 grave violations against children in 2024 — a 25% increase, the third consecutive record year. Recruitment as soldiers, sexual violence, attacks on their schools and hospitals. These are only the cases the UN could verify. The real numbers are higher.",
+    body: "The UN verified 41,370 grave violations against children in 2024, a 25% increase, the third consecutive record year. Recruitment as soldiers, sexual violence, attacks on their schools and hospitals. These are only the cases the UN could verify. The real numbers are higher.",
     src: "UN Children and Armed Conflict Report 2025",
     url: "https://news.un.org/en/story/2025/06/1164646",
   },
   {
     num: "117.8M",
     unit: "people forcibly displaced from their homes",
-    body: "One in every 70 human beings is displaced by persecution, conflict, or violence. 2025 brought the first decline in ten years as 14.7 million people finally went home — many to rubble. Displacement does not end when the moving stops; it echoes through generations.",
+    body: "One in every 70 human beings is displaced by persecution, conflict, or violence. 2025 brought the first decline in ten years as 14.7 million people finally went home, many to rubble. Displacement does not end when the moving stops; it echoes through generations.",
     src: "UNHCR Global Trends 2026",
     url: "https://www.unhcr.org/global-trends",
   },
@@ -209,12 +227,12 @@ const issueData = [
   {
     sdg: "SDG 2",
     name: "Zero Hunger",
-    cost: 90,
+    cost: 40,
     color: "#f5a623",
-    sum: "673 million people faced hunger in 2024. Global hunger is finally declining — but rising sharply across Africa and western Asia.",
+    sum: "673 million people faced hunger in 2024. Around $40 billion a year would end it by 2030.",
     detail:
-      "The FAO's SOFI 2025 report estimates 638–720 million people undernourished. In Africa, more than 1 in 5 people face hunger. WFP and FAO estimate $40–90B/year in food-system investment would end acute hunger by 2030 — covering agricultural support, supply-chain reform, and emergency aid.",
-    src: "FAO SOFI 2025 + UN WFP",
+      "The FAO's SOFI report estimates 638 to 720 million people undernourished. UN/FAO and Ceres2030 research puts the additional investment needed to end hunger by 2030 at roughly $37 to 50 billion a year, covering agricultural support, social protection and emergency aid. Former WFP head David Beasley named $40 billion. Hunger is rising sharply across Africa and western Asia.",
+    src: "FAO SOFI + Ceres2030 + UN WFP",
     url: "https://www.fao.org/publications/fao-flagship-publications/the-state-of-food-security-and-nutrition-in-the-world/en",
   },
   {
@@ -233,9 +251,9 @@ const issueData = [
     name: "Quality Education",
     cost: 100,
     color: "#b967ff",
-    sum: "272 million children and youth are out of school — rising for the seventh year in a row.",
+    sum: "272 million children and youth are out of school, rising for the seventh year in a row.",
     detail:
-      "UNESCO's 2025 dashboard counts 272 million out-of-school children, up 21 million on the previous estimate. Low-income countries spend $55 per learner per year; high-income countries spend $8,543. UNESCO estimates educational gaps cost the global economy $10 trillion a year — and a ~$100B/year investment gap to deliver quality education for all.",
+      "UNESCO's 2025 dashboard counts 272 million out-of-school children, up 21 million on the previous estimate. Low-income countries spend $55 per learner per year; high-income countries spend $8,543. UNESCO estimates educational gaps cost the global economy $10 trillion a year, and a ~$100B/year investment gap to deliver quality education for all.",
     src: "UNESCO Global Education Monitoring 2025",
     url: "https://www.unesco.org/en/articles/more-children-out-school-7th-year-row-273-million",
   },
@@ -246,7 +264,7 @@ const issueData = [
     color: "#ff67b9",
     sum: "At the current pace, full legal gender parity will not arrive until the 2070s.",
     detail:
-      "UN Women estimates $360B/year for meaningful gender equality — legal reform, education access, economic inclusion, reproductive health, and ending gender-based violence. Women and girls bear a disproportionate and largely invisible share of every war's costs.",
+      "UN Women estimates $360B/year for meaningful gender equality, legal reform, education access, economic inclusion, reproductive health, and ending gender-based violence. Women and girls bear a disproportionate and largely invisible share of every war's costs.",
     src: "UN Women Beijing+30 Financing Report",
     url: "https://www.unwomen.org/en",
   },
@@ -268,7 +286,7 @@ const issueData = [
     color: "#f5d623",
     sum: "~675 million people have no electricity. Renewables are now the cheapest new power source in most of the world.",
     detail:
-      "The IEA estimates just $35B/year in targeted additional investment achieves universal energy access by 2030. The barrier is not technology — it is finance. Countries without reliable electricity cannot build the economic base to invest in any other goal.",
+      "The IEA estimates just $35B/year in targeted additional investment achieves universal energy access by 2030. The barrier is not technology, it is finance. Countries without reliable electricity cannot build the economic base to invest in any other goal.",
     src: "IEA World Energy Outlook",
     url: "https://www.iea.org/reports/world-energy-outlook-2024",
   },
@@ -279,7 +297,7 @@ const issueData = [
     color: "#00ff88",
     sum: "160 million children remain in child labour. 21 million people in forced labour.",
     detail:
-      "The ILO estimates $50B/year in social protection and labour reform would end child labour and forced labour by 2030. Youth unemployment is highest in conflict-affected regions — a direct structural pathway to radicalisation. Decent work is the most effective long-term conflict prevention.",
+      "The ILO estimates $50B/year in social protection and labour reform would end child labour and forced labour by 2030. Youth unemployment is highest in conflict-affected regions, a direct structural pathway to radicalisation. Decent work is the most effective long-term conflict prevention.",
     src: "ILO World Employment and Social Outlook",
     url: "https://www.ilo.org/global/research/global-reports/weso/en/",
   },
@@ -301,7 +319,7 @@ const issueData = [
     color: "#a0ff00",
     sum: "The richest 1% own more wealth than the bottom 50% of humanity combined.",
     detail:
-      "World Bank and Oxfam models indicate $150B/year in social protection floors, progressive redistribution mechanisms, and tax-reform support can materially reduce extreme inequality in developing nations — and the conditions that make conflict inevitable.",
+      "World Bank and Oxfam models indicate $150B/year in social protection floors, progressive redistribution mechanisms, and tax-reform support can materially reduce extreme inequality in developing nations, and the conditions that make conflict inevitable.",
     src: "Oxfam Inequality Report + World Bank",
     url: "https://www.worldbank.org/en/topic/poverty/overview",
   },
@@ -312,7 +330,7 @@ const issueData = [
     color: "#00ffcc",
     sum: "300 million people have no stable shelter. 1.1 billion live in slums or informal settlements.",
     detail:
-      "UN-Habitat estimates $200B/year for a serious global push on affordable housing — building 100,000 new homes every day. Housing precarity is heavily concentrated in post-conflict zones. Stable shelter is the foundation of every other human development indicator.",
+      "UN-Habitat estimates $200B/year for a serious global push on affordable housing, building 100,000 new homes every day. Housing precarity is heavily concentrated in post-conflict zones. Stable shelter is the foundation of every other human development indicator.",
     src: "UN-Habitat World Cities Report",
     url: "https://unhabitat.org/wcr",
   },
@@ -321,9 +339,9 @@ const issueData = [
     name: "Climate Action",
     cost: 1000,
     color: "#ff6b35",
-    sum: "The 1.5°C threshold has been breached. Developing nations need $1.3T/year in external climate finance by 2035 — they received $116B.",
+    sum: "The 1.5°C threshold has been breached. Developing nations need $1.3T/year in external climate finance by 2035, they received $116B.",
     detail:
-      "At COP29, nations agreed developed countries should mobilise $300B/year by 2035 — less than a quarter of what developing countries say they need. The public-finance gap governments must fill is approximately $1T/year. Climate change is a threat multiplier for every other crisis on this list — hunger, conflict, and displacement most of all.",
+      "At COP29, nations agreed developed countries should mobilise $300B/year by 2035, less than a quarter of what developing countries say they need. The public-finance gap governments must fill is approximately $1T/year. Climate change is a threat multiplier for every other crisis on this list, hunger, conflict, and displacement most of all.",
     src: "IPCC AR6 + COP29 NCQG + WRI",
     url: "https://www.wri.org/insights/ncqg-climate-finance-goals-explained",
   },
@@ -345,7 +363,7 @@ const issueData = [
     color: "#44ff88",
     sum: "1 million species face extinction. Species are being lost up to 1,000× faster than natural rates.",
     detail:
-      "IUCN and IPBES estimate $200B/year halts and begins to reverse biodiversity collapse. Meanwhile, harmful subsidies to nature-destructive industries total $1.8T/year — nine times what conservation receives. Biodiversity collapse undermines every food and water system on Earth.",
+      "IUCN and IPBES estimate $200B/year halts and begins to reverse biodiversity collapse. Meanwhile, harmful subsidies to nature-destructive industries total $1.8T/year, nine times what conservation receives. Biodiversity collapse undermines every food and water system on Earth.",
     src: "IPBES Global Assessment + IUCN",
     url: "https://ipbes.net/global-assessment",
   },
