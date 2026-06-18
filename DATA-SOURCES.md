@@ -68,6 +68,19 @@ Countries outside the top 10 in `countryData` are SIPRI Military Expenditure Dat
 | Biodiversity | 200 | IPBES/IUCN | harmful subsidies $1.8T/yr |
 | Peace & Justice | 80 | IEP + UN PBF | prevention 16× cheaper than response |
 
+## Revision 3 additions (June 2026)
+
+| Figure | Value | Source |
+|---|---|---|
+| $21.8T violence breakdown | Military 45% · internal security 29% · private security 8% · homicide 6% · suicide 4% · conflict/terrorism & other 8% | [IEP GPI economic-impact model](https://www.visionofhumanity.org/economic-impact-of-violence/) |
+| Conflict reconstruction/damage | Ukraine $588B · Syria ~$400B · Iraq $88B · Gaza $71.4B · Yemen ~$90B · Sudan ~$100B | World Bank / UN / ESCWA / UNDP (mix of reconstruction-need and cumulative-loss estimates; framed in UI) |
+| Children displaced | 45M (38% of 117.8M) | [UNHCR Global Trends 2026](https://www.unhcr.org/global-trends) |
+| Civilian casualty share | ~90% of dead/wounded from explosive weapons in populated areas | [AOAV](https://aoav.org.uk/explosiveviolence/) / UN |
+| Military emissions exemption | ~0% mandatory reporting under Paris Agreement | [CEOBS](https://ceobs.org/) |
+| Per-country spend trend | YoY % change 2025, sourced for ~30 major spenders | SIPRI 2026; others show world ex-US average (+9.4%) |
+
+**Placeholder data (until backend):** the coalition "most-chosen priorities" — global and per-country — use `seededPriorityWeights` in `js/data.js` plus any live localStorage votes. Replace with real aggregates once the submissions backend is wired (see README).
+
 ## Refresh calendar
 
 - **March** — SIPRI arms transfers

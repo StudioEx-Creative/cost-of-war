@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/style.css?v=2026r4" />
   </head>
   <body>
     <canvas id="bg"></canvas>
@@ -48,6 +48,11 @@
             IEP Global Peace Index 2026 · 10.5% of global GDP
           </div>
         </div>
+        <div class="hc">
+          <div class="hc-lbl">people who have chosen differently</div>
+          <div class="hc-num say" id="hCoalition">—</div>
+          <div class="hc-sub">and added their voice to the coalition</div>
+        </div>
       </div>
       <div class="live-spend">
         Since you opened this page, the world has spent<br /><b id="liveSpend"
@@ -68,51 +73,92 @@
         everything it produces on its militaries, the highest share since 2009.
       </p>
 
-      <!-- spend donut + impact figure -->
-      <div class="machine-viz">
-        <div class="donut-card rv">
-          <div class="viz-h">Where the $2.89T goes · annual military spend</div>
-          <div class="donut-layout">
-            <svg
-              class="donut-svg"
-              id="spendDonut"
-              viewBox="0 0 100 100"
-            ></svg>
-            <div class="donut-legend" id="spendLegend"></div>
+      <!-- two info cards, each with its own pie below -->
+      <div class="machine-cols">
+        <!-- LEFT: what we spend -->
+        <div class="mcol">
+          <div class="figcard rv">
+            <div class="viz-h">What the world spends on its militaries</div>
+            <div class="impact-fig red" id="spendFig">$2.89T</div>
+            <div class="impact-sub">
+              in 2025: an all-time record, and the eleventh straight year of
+              growth. The US alone spent $954B; Europe surged 14%.
+            </div>
+            <div class="impact-cta" style="color: var(--ink-soft) !important; font-weight: 400">
+              The breakdown below shows where it goes.
+            </div>
           </div>
-          <div
-            class="recon-src"
-            style="margin-top: 1.1rem; padding-top: 0.8rem; border-top: 1px solid #15151c"
-          >
-            <a
-              href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-world-military-expenditure-2025"
-              target="_blank"
-              rel="noopener"
-              >SIPRI 2026 · category split indicative; nuclear figure ICAN ↗</a
-            >
+          <div class="piecard rv">
+            <div class="viz-h">Where the $2.89T goes · by sector</div>
+            <div class="pie-layout">
+              <svg class="pie-svg" id="spendDonut" viewBox="0 0 100 100"></svg>
+              <div class="donut-legend" id="spendLegend"></div>
+            </div>
+            <div class="pie-srcs">
+              <a
+                href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-world-military-expenditure-2025"
+                target="_blank"
+                rel="noopener"
+                >SIPRI Military Expenditure 2026 ↗</a
+              >
+              <a
+                href="https://www.icanw.org/premeditated_2025_global_nuclear_weapons_spending"
+                target="_blank"
+                rel="noopener"
+                >ICAN nuclear spending 2026 ↗</a
+              >
+              <a
+                href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-international-arms-transfers-2025"
+                target="_blank"
+                rel="noopener"
+                >SIPRI arms transfers 2026 ↗</a
+              >
+            </div>
           </div>
         </div>
 
-        <div
-          class="impact-card rv rv-d1"
-          onclick="document.getElementById('impact').scrollIntoView({behavior:'smooth'})"
-        >
-          <div class="viz-h">The bill keeps growing past the budget</div>
-          <div class="impact-fig" id="impactFig">$21.8T</div>
-          <div class="impact-sub">
-            total economic impact of violence in 2025, about $2,650 for every
-            person alive
-          </div>
-          <div class="impact-gdp">
-            <div class="impact-gdp-track">
-              <div class="impact-gdp-fill" id="impactGdpFill" data-w="10.5"></div>
+        <!-- RIGHT: the full impact -->
+        <div class="mcol">
+          <div
+            class="figcard clickable rv rv-d1"
+            onclick="document.getElementById('impact').scrollIntoView({behavior:'smooth'})"
+          >
+            <div class="viz-h">The full bill, once you count the damage</div>
+            <div class="impact-fig" id="impactFig">$21.8T</div>
+            <div class="impact-sub">
+              total economic impact of violence in 2025, about $2,650 for every
+              person alive
             </div>
-            <div class="impact-gdp-cap">
-              <span>10.5% of the entire world economy</span>
-              <span>$110T global GDP</span>
+            <div class="impact-gdp">
+              <div class="impact-gdp-track">
+                <div
+                  class="impact-gdp-fill"
+                  id="impactGdpFill"
+                  data-w="10.5"
+                ></div>
+              </div>
+              <div class="impact-gdp-cap">
+                <span>10.5% of the entire world economy</span>
+                <span>$110T global GDP</span>
+              </div>
+            </div>
+            <div class="impact-cta">▽ Tap to see the impact in full</div>
+          </div>
+          <div class="piecard rv rv-d1">
+            <div class="viz-h">What the $21.8T is made of · IEP model</div>
+            <div class="pie-layout">
+              <svg class="pie-svg" id="violencePie" viewBox="0 0 100 100"></svg>
+              <div class="donut-legend" id="violenceLegend"></div>
+            </div>
+            <div class="pie-srcs">
+              <a
+                href="https://www.visionofhumanity.org/economic-impact-of-violence/"
+                target="_blank"
+                rel="noopener"
+                >IEP Global Peace Index 2026 · economic impact model ↗</a
+              >
             </div>
           </div>
-          <div class="impact-cta">▽ Tap to see the impact in full</div>
         </div>
       </div>
 
@@ -168,99 +214,38 @@
       </div>
       <div class="sec-title amber rv">Where the $21.8 trillion goes</div>
       <p class="sec-desc rv rv-d1">
-        Military budgets are only the entry fee. The true cost is paid in broken
-        cities, scattered families, and lives that no budget can hold.
+        That $21.8 trillion is the Institute for Economics &amp; Peace's full
+        accounting of violence: military and internal-security spending,
+        homicide, and the direct losses of armed conflict. The pie in Chapter
+        01 shows its make-up. Below is what it looks like on the ground.
       </p>
 
       <!-- ── DESTRUCTION ── -->
-      <div class="subhead amber rv">Destruction · the economic wreckage</div>
+      <div class="rv">
+        <span class="bigsub-tag">The economic wreckage</span>
+        <div class="bigsub amber">Destruction</div>
+      </div>
       <div class="impact-grid">
         <div class="rv">
-          <div class="recon-row">
-            <div class="recon-top">
-              <div class="recon-name">Rebuilding Ukraine</div>
-              <div class="recon-amt">$588B</div>
-            </div>
-            <div class="recon-track">
-              <div class="recon-fill" data-w="100"></div>
-            </div>
-            <div class="recon-note">
-              Nearly three times Ukraine's entire annual GDP. The world's
-              deadliest conflict of 2025.
-            </div>
-          </div>
-          <div class="recon-row">
-            <div class="recon-top">
-              <div class="recon-name">Rebuilding Gaza</div>
-              <div class="recon-amt">$71.4B</div>
-            </div>
-            <div class="recon-track">
-              <div class="recon-fill" data-w="12.1"></div>
-            </div>
-            <div class="recon-note">
-              Human development set back 77 years. The economy contracted 84%.
-            </div>
-          </div>
-          <div class="recon-row">
-            <div class="recon-top">
-              <div class="recon-name">Post-9/11 wars (US)</div>
-              <div class="recon-amt">$8T+</div>
-            </div>
-            <div class="recon-track">
-              <div class="recon-fill" data-w="100" style="opacity: 0.55"></div>
-            </div>
-            <div class="recon-note">
-              Bar truncated: $8 trillion would run off the page 13 times. Plus
-              $2.2T in future veterans' care.
-            </div>
-          </div>
-          <div class="recon-src">
-            <a
-              href="https://www.worldbank.org/en/news/press-release/2026/02/23/updated-ukraine-recovery-and-reconstruction-needs-assessment-released"
-              target="_blank"
-              rel="noopener"
-              >Ukraine RDNA5 ↗</a
-            >
-            &nbsp;
-            <a
-              href="https://news.un.org/en/story/2026/04/1167336"
-              target="_blank"
-              rel="noopener"
-              >Gaza RDNA ↗</a
-            >
-            &nbsp;
-            <a
-              href="https://watson.brown.edu/costsofwar"
-              target="_blank"
-              rel="noopener"
-              >Brown Costs of War ↗</a
-            >
-          </div>
+          <div class="viz-h">Rebuilding what war destroys · $bn needed</div>
+          <div class="conflict-bars" id="conflictBars"></div>
         </div>
         <div class="rv rv-d1">
-          <div class="bigstat">
-            <div class="bigstat-num amber">5.5%</div>
-            <div class="bigstat-lbl">
-              of all global greenhouse-gas emissions come from the world's
-              militaries: more than civil aviation and shipping combined. If the
-              military were a country, it would be the 4th-largest emitter on
-              Earth.
-            </div>
-            <div class="emissions-mini" id="emGrid"></div>
-          </div>
-          <div class="recon-src">
-            <a
-              href="https://www.sgr.org.uk/resources/hidden-carbon-cost-military"
-              target="_blank"
-              rel="noopener"
-              >Scientists for Global Responsibility / CEOBS ↗</a
-            >
+          <div class="viz-h">War and the planet</div>
+          <div class="env-grid" id="envGrid"></div>
+          <div class="emissions-mini" id="emGrid" style="margin-top: 1rem"></div>
+          <div class="recon-note" style="margin-top: 0.6rem">
+            Each square ≈ 1% of global emissions; the lit squares are the
+            military's share.
           </div>
         </div>
       </div>
 
       <!-- ── DISPLACEMENT ── -->
-      <div class="subhead teal rv">Displacement · the people scattered</div>
+      <div class="rv">
+        <span class="bigsub-tag">The people scattered</span>
+        <div class="bigsub blue">Displacement</div>
+      </div>
       <div class="disp-wrap">
         <div class="rv">
           <div class="disp-big" id="dispNum">117.8M</div>
@@ -270,13 +255,36 @@
             ten years the number fell, as 14.7 million people went home. Many
             returned to rubble.
           </div>
+          <div class="children-wrap">
+            <div class="children-top">
+              <div class="children-num" id="childrenNum">45M</div>
+              <div class="children-lbl">
+                are children · 38% of everyone displaced
+              </div>
+            </div>
+            <div class="children-track">
+              <div class="children-fill" data-w="38"></div>
+            </div>
+            <div class="recon-note" style="margin-top: 0.5rem">
+              Nearly half of the displaced have not finished growing up. Source:
+              <a
+                href="https://www.unhcr.org/global-trends"
+                target="_blank"
+                rel="noopener"
+                style="color: var(--link)"
+                >UNHCR Global Trends 2026 ↗</a
+              >
+            </div>
+          </div>
           <canvas id="dotField" style="margin-top: 1.2rem"></canvas>
           <div class="dot-legend" id="dotLegend"></div>
           <div class="dot-cap">Each dot represents 100,000 people.</div>
         </div>
         <div class="rv rv-d1">
           <div class="gap-box">
-            <div class="gap-title">The funding the world walked away from</div>
+            <div class="gap-title">
+              Humanitarian funding: what was asked, what arrived
+            </div>
             <div class="gap-row">
               <div class="gap-lbl">
                 UN humanitarian appeal 2026 <span>$33B asked</span>
@@ -326,10 +334,14 @@
       </div>
 
       <!-- ── HUMAN IMPACT ── -->
-      <div class="subhead white rv">The human impact · what no budget holds</div>
+      <div class="rv">
+        <span class="bigsub-tag">What no budget holds</span>
+        <div class="bigsub white">The Human Impact</div>
+      </div>
       <p class="sec-desc rv" style="margin-top: 0">
         Everything above can be counted in dollars. What follows cannot.
       </p>
+      <div class="hi-pies rv" id="hiPies"></div>
       <div class="human-strip rv" id="humanStrip"></div>
 
       <canvas id="livesCanvas"></canvas>
@@ -363,11 +375,6 @@
         <b>already exists</b> inside one year of military spending. This is not
         a question of capacity. It is a question of will.
       </p>
-      <p class="hys-garden">
-        What if this was <span>your back garden?</span> Your family in the
-        rubble, your children out of school? We share one planet and one
-        future. So take the $2.89 trillion, and decide.
-      </p>
     </div>
 
     <!-- sticky tracker (green) -->
@@ -395,18 +402,18 @@
 
     <!-- ═══ REDISTRIBUTION (combined) ═══ -->
     <div class="redist" id="redistribute">
-      <p class="redist-instruct">
-        Below sits the documented annual price of solving humanity's greatest
-        crises. <b>Select the ones you would fund</b> and watch the military
-        budget in the centre drain in real time. Your choices unlock the rest of
-        the experience.
+      <div class="fund-cta">Click what to fund with global defence</div>
+      <p class="fund-cta-sub">
+        Tap any cause below. The military budget in the centre drains as you
+        spend it on the world instead. Fund as many as the $2.89 trillion will
+        cover, then save your choices.
       </p>
       <div class="redist-layout">
         <div class="issue-col" id="issueColL"></div>
         <div class="redist-canvas-col">
           <canvas id="flowC"></canvas>
           <div class="redist-prompt" id="redistPrompt">
-            Select issues on either side to fund them →
+            ← Click a cause to fund it →
           </div>
         </div>
         <div class="issue-col" id="issueColR"></div>
@@ -423,12 +430,32 @@
         </div>
         <div class="sum-btns">
           <button class="btn btn-r" onclick="resetAll()">↺ Reset</button>
-          <button class="btn btn-t" onclick="openShare()">↗ Share this</button>
+          <button class="btn-cta-out" onclick="openShare()">↗ Share this</button>
         </div>
         <div class="continue-wrap" style="padding-top: 0.5rem">
-          <button class="continue-btn say" id="toRankBtn" onclick="goToRank()">
-            Rank your priorities <span class="ar">▾</span>
+          <button class="continue-btn" id="toRankBtn" onclick="openRankModal()">
+            Save my choices &amp; rank them <span class="ar">▾</span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ RANKING OVERLAY (modal) ═══ -->
+    <div class="rank-ov" id="rankOv">
+      <div class="rank-modal">
+        <h3>Rank your priorities</h3>
+        <p class="rm-sub">
+          Click your funded causes in order of importance, most urgent first.
+          Your top 5 become your message: they write your letter and join the
+          global coalition. <span class="rm-count" id="rmCount">0 of 5 ranked</span>
+        </p>
+        <div class="rm-list" id="rmList"></div>
+        <div class="rm-actions">
+          <button class="continue-btn" id="rmSaveBtn" onclick="saveRanking()">
+            Save &amp; continue to your country →
+          </button>
+          <button class="btn-cta-out" onclick="clearRankModal()">↺ Clear</button>
+          <span class="rm-close" onclick="closeRankModal()">Close</span>
         </div>
       </div>
     </div>
@@ -451,54 +478,11 @@
         </div>
       </div>
       <div class="gated-content">
-        <!-- STEP 01 · RANK -->
-        <div class="journey-section" id="rankSection">
-          <div class="journey-inner">
-            <div class="journey-label">Step 01</div>
-            <div class="sec-title" style="color: var(--gold)">
-              Rank your priorities
-            </div>
-            <p class="journey-desc">
-              Which five issues must the world fund first? Your order shapes the
-              diagram above, writes your letter, and joins the global coalition.
-              Your top five highlight in gold.
-            </p>
-            <div class="rank-ui">
-              <div class="rank-col">
-                <div class="rank-col-head">
-                  Your top 5 &nbsp;<span class="rank-counter" id="rankCount"
-                    >0 / 5</span
-                  >
-                </div>
-                <div class="rank-drop" id="rankTop">
-                  <div class="rank-empty-msg">Select issues from the list →</div>
-                </div>
-              </div>
-              <div class="rank-col">
-                <div class="rank-col-head">All issues</div>
-                <div class="rank-pool" id="rankPool"></div>
-              </div>
-            </div>
-            <div class="journey-actions">
-              <button
-                class="btn btn-t"
-                id="rankNextBtn"
-                onclick="goToCountry()"
-                disabled
-                style="opacity: 0.3"
-              >
-                Continue → Your country
-              </button>
-              <button class="btn btn-r" onclick="resetRanking()">↺ Clear</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- STEP 02 · COUNTRY -->
+        <!-- STEP 01 · COUNTRY -->
         <div class="journey-section" id="countrySection">
           <div class="journey-inner">
-            <div class="journey-label">Step 02</div>
-            <div class="sec-title" style="color: var(--teal)">Your country</div>
+            <div class="journey-label">Step 01</div>
+            <div class="sec-title teal">Your country</div>
             <p class="journey-desc">
               Every nation feeds the $2.89 trillion total. See what yours
               spends, and what that money could fund instead.
@@ -536,7 +520,7 @@
         <!-- STEP 03 · LETTER -->
         <div class="journey-section" id="letterSection">
           <div class="journey-inner">
-            <div class="journey-label">Step 03</div>
+            <div class="journey-label">Step 02</div>
             <div class="sec-title" style="color: #fff">Write the letter</div>
             <p class="journey-desc">
               A personal letter, pre-written from your choices and editable in
@@ -600,10 +584,11 @@
           style="border-bottom: none"
         >
           <div class="journey-inner">
-            <div class="journey-label">Step 04</div>
+            <div class="journey-label">Step 03</div>
             <div class="sec-title" style="color: var(--say)">
               Join the coalition
             </div>
+            <div class="global-prio" id="globalPrio"></div>
             <p class="journey-desc">
               <span class="live-dot"></span>People choosing to fund the planet,
               from around the world. Add your voice to the global tally.
@@ -832,7 +817,7 @@
       </div>
     </div>
 
-    <script src="js/data.js?v=2026r3"></script>
-    <script src="js/main.js?v=2026r3"></script>
+    <script src="js/data.js?v=2026r4"></script>
+    <script src="js/main.js?v=2026r4"></script>
   </body>
 </html>

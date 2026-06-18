@@ -222,6 +222,134 @@ function buildEmissions() {
   }
 }
 
+// ═══ FILLED PIE (generic) ═══════════════════════════════════════
+// items: [{label, color, value}] · draws solid wedges + a legend with %
+function buildFilledPie(svgId, legendId, items, valueKey) {
+  const svg = document.getElementById(svgId);
+  const legend = document.getElementById(legendId);
+  if (!svg || !legend) return;
+  const NS = "http://www.w3.org/2000/svg";
+  const cx = 50,
+    cy = 50,
+    r = 46;
+  const total = items.reduce((s, x) => s + x[valueKey], 0);
+  let a0 = -Math.PI / 2;
+  items.forEach((it, i) => {
+    const frac = it[valueKey] / total;
+    const a1 = a0 + frac * Math.PI * 2;
+    const large = a1 - a0 > Math.PI ? 1 : 0;
+    const x1 = cx + r * Math.cos(a0),
+      y1 = cy + r * Math.sin(a0);
+    const x2 = cx + r * Math.cos(a1),
+      y2 = cy + r * Math.sin(a1);
+    const path = document.createElementNS(NS, "path");
+    path.setAttribute("class", "pie-seg");
+    path.setAttribute("data-i", i);
+    path.setAttribute(
+      "d",
+      `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`,
+    );
+    path.setAttribute("fill", it.color);
+    path.setAttribute("stroke", "#050507");
+    path.setAttribute("stroke-width", "0.6");
+    svg.appendChild(path);
+    a0 = a1;
+
+    const row = document.createElement("div");
+    row.className = "dleg";
+    row.innerHTML = `<span class="dleg-sw" style="background:${it.color}"></span>${it.label}<span class="dleg-amt">${Math.round(frac * 100)}%</span>`;
+    const dim = () =>
+      svg
+        .querySelectorAll(".pie-seg")
+        .forEach((e) =>
+          e.classList.toggle("dim", e.getAttribute("data-i") !== String(i)),
+        );
+    const undim = () =>
+      svg.querySelectorAll(".pie-seg").forEach((e) => e.classList.remove("dim"));
+    row.addEventListener("mouseenter", dim);
+    row.addEventListener("mouseleave", undim);
+    path.addEventListener("mouseenter", dim);
+    path.addEventListener("mouseleave", undim);
+    legend.appendChild(row);
+  });
+}
+
+function buildViolencePie() {
+  buildFilledPie("violencePie", "violenceLegend", violenceBreakdown, "pct");
+}
+
+// ═══ CONFLICT COST BARS ═════════════════════════════════════════
+function buildConflictBars() {
+  const wrap = document.getElementById("conflictBars");
+  if (!wrap) return;
+  const max = Math.max(...conflictCosts.map((c) => c.amtB));
+  conflictCosts.forEach((c) => {
+    const row = document.createElement("div");
+    row.className = "cf-row";
+    row.innerHTML = `
+      <div class="cf-top"><div class="cf-name">${c.name}</div><div class="cf-amt">${fmt(c.amtB)}</div></div>
+      <div class="cf-track"><div class="cf-fill" data-w="${((c.amtB / max) * 100).toFixed(1)}"></div></div>
+      <div class="cf-note">${c.note} · <a href="${c.url}" target="_blank" rel="noopener">${c.src} ↗</a></div>`;
+    wrap.appendChild(row);
+  });
+}
+
+// ═══ ENVIRONMENTAL FACT CARDS ═══════════════════════════════════
+function buildEnvFacts() {
+  const g = document.getElementById("envGrid");
+  if (!g) return;
+  g.innerHTML = envFacts
+    .map(
+      (f) =>
+        `<div class="envc"><div class="envc-fig">${f.fig}</div><div class="envc-lbl">${f.lbl}</div><div class="envc-src"><a href="${f.url}" target="_blank" rel="noopener">${f.src} ↗</a></div></div>`,
+    )
+    .join("");
+}
+
+// ═══ HUMAN-IMPACT MINI PIES ═════════════════════════════════════
+function miniPieSVG(pct, color) {
+  const r = 42,
+    cx = 50,
+    cy = 50,
+    C = 2 * Math.PI * r;
+  const on = (pct / 100) * C;
+  return `<svg viewBox="0 0 100 100">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#15151c" stroke-width="14"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="14"
+      stroke-dasharray="${on.toFixed(1)} ${(C - on).toFixed(1)}" transform="rotate(-90 ${cx} ${cy})"
+      stroke-linecap="butt"/>
+    <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="22" fill="#fff">${pct}%</text>
+  </svg>`;
+}
+function buildHiPies() {
+  const wrap = document.getElementById("hiPies");
+  if (!wrap) return;
+  const items = [
+    {
+      pct: humanImpactExtra.civilianShare,
+      color: "#ff2d2d",
+      big: "~90%",
+      lbl: "of those killed and wounded by explosive weapons in towns and cities are civilians, not combatants.",
+      src: "AOAV / UN",
+      url: "https://aoav.org.uk/explosiveviolence/",
+    },
+    {
+      pct: humanImpactExtra.childrenPct,
+      color: "#00e5ff",
+      big: "38%",
+      lbl: "of the 117.8 million people displaced by war and persecution are children: about 45 million.",
+      src: "UNHCR Global Trends 2026",
+      url: "https://www.unhcr.org/global-trends",
+    },
+  ];
+  wrap.innerHTML = items
+    .map(
+      (it) =>
+        `<div class="hi-pie">${miniPieSVG(it.pct, it.color)}<div class="hi-pie-txt"><div class="hi-pie-big">${it.big}</div><div class="hi-pie-lbl">${it.lbl}</div><div class="hi-pie-src"><a href="${it.url}" target="_blank" rel="noopener">${it.src} ↗</a></div></div></div>`,
+    )
+    .join("");
+}
+
 // ═══ DUAL SPENDER BARS ══════════════════════════════════════════
 function buildDualSpenders() {
   const abs = document.getElementById("spendersAbs");
@@ -368,14 +496,15 @@ function buildIssues() {
     card.id = "ix" + i;
     card.innerHTML = `
       <div class="ix-top">
+        <div class="ix-sdg">${iss.sdg}</div>
         <div class="ix-chk"></div>
         <div class="ix-name">${iss.name}</div>
-        <div class="ix-cost" style="color:${iss.color}">${fmt(iss.cost)}/yr</div>
+        <div class="ix-cost" style="color:${iss.color}">${fmt(iss.cost)}<span class="yr">/yr</span></div>
       </div>
       <div class="ix-sum">${iss.sum}</div>
       <div class="ix-detail">${iss.detail}</div>
       <div class="ix-foot">
-        <span class="ix-more">▾ detail · ${pct}% of budget</span>
+        <span class="ix-more">▾ Read more &amp; sources · <span class="ix-pct">${pct}% of the budget</span></span>
         <span class="ix-src"><a href="${iss.url}" target="_blank" rel="noopener">${iss.src.split(" ")[0]} ↗</a></span>
       </div>`;
     card.addEventListener("click", (e) => {
@@ -383,9 +512,9 @@ function buildIssues() {
       if (e.target.closest(".ix-more")) {
         card.classList.toggle("ix-exp");
         const m = card.querySelector(".ix-more");
-        m.textContent = card.classList.contains("ix-exp")
-          ? `▴ less · ${pct}% of budget`
-          : `▾ detail · ${pct}% of budget`;
+        m.innerHTML = card.classList.contains("ix-exp")
+          ? `▴ Show less · <span class="ix-pct">${pct}% of the budget</span>`
+          : `▾ Read more &amp; sources · <span class="ix-pct">${pct}% of the budget</span>`;
         return;
       }
       toggleIssue(i);
@@ -525,7 +654,7 @@ function rszFlow() {
   const availW = panel
     ? panel.getBoundingClientRect().width
     : window.innerWidth * 0.5;
-  const sz = Math.round(Math.min(availW, window.innerHeight * 0.7, 520));
+  const sz = Math.round(Math.min(availW, window.innerHeight * 0.82, 620));
   fW = fC.width = sz * dpr;
   fH = fC.height = sz * dpr;
   fC.style.width = sz + "px";
@@ -582,7 +711,7 @@ function drawFlow() {
   const { cx, cy, bigR, nodes } = getNodes();
   const rem = Math.max(0, DEFENCE - allocated);
   const warPct = rem / DEFENCE;
-  const baseF = Math.round(Math.min(fW, fH) * 0.013);
+  const baseF = Math.round(Math.min(fW, fH) * 0.017);
 
   const grd = fX.createRadialGradient(cx, cy, 0, cx, cy, bigR * 2.5);
   grd.addColorStop(0, "rgba(255,45,45,0.07)");
@@ -772,90 +901,73 @@ function initScrollProgress() {
 }
 
 // ═══ RANKING ════════════════════════════════════════════════════
-function buildRanking() {
-  const pool = document.getElementById("rankPool");
-  const top = document.getElementById("rankTop");
-  if (!pool || !top) return;
-  top.innerHTML =
-    '<div class="rank-empty-msg">Select issues from the list to add them here, in order of priority.</div>';
-  pool.innerHTML = "";
-  issueData.forEach((iss, i) => {
-    const d = document.createElement("div");
-    d.className = "rank-pill";
-    d.id = "rpool" + i;
-    d.innerHTML = `<div class="rp-num">${i + 1}</div><div class="rp-dot" style="background:${iss.color}"></div><div class="rp-name">${iss.name}</div><div class="rp-cost">${fmt(iss.cost)}</div>`;
-    d.addEventListener("click", () => addRank(i));
-    pool.appendChild(d);
-  });
-}
-
-function addRank(i) {
-  if (ranking.includes(i)) {
-    removeRank(i);
+// ═══ RANKING MODAL ══════════════════════════════════════════════
+// Ranks the funded (selected) issues, in priority order, up to 5.
+function openRankModal() {
+  if (sel.size === 0) {
+    document
+      .getElementById("redistribute")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const p = document.getElementById("redistPrompt");
+    if (p) {
+      p.textContent = "← Fund at least one cause first";
+      p.classList.add("go");
+    }
     return;
   }
-  if (ranking.length >= 5) return;
-  ranking.push(i);
-  renderRanking();
+  // keep only ranks that are still funded
+  ranking = ranking.filter((i) => sel.has(i));
+  buildRankModalList();
+  document.getElementById("rankOv").classList.add("open");
 }
 
-function removeRank(i) {
-  ranking = ranking.filter((x) => x !== i);
-  renderRanking();
+function closeRankModal() {
+  document.getElementById("rankOv").classList.remove("open");
 }
 
-function renderRanking() {
-  const top = document.getElementById("rankTop");
-  const cnt = document.getElementById("rankCount");
-  const btn = document.getElementById("rankNextBtn");
-  if (!top) return;
-  if (cnt) cnt.textContent = `${ranking.length} / 5`;
-  top.innerHTML = "";
-  if (ranking.length === 0) {
-    top.innerHTML =
-      '<div class="rank-empty-msg">Select issues from the list to add them here, in order of priority.</div>';
-  } else {
-    ranking.forEach((idx, pos) => {
-      const iss = issueData[idx];
-      const d = document.createElement("div");
-      d.className = "rank-pill is-ranked";
-      d.innerHTML = `<div class="rp-num">${pos + 1}</div><div class="rp-dot" style="background:${iss.color}"></div><div class="rp-name">${iss.name}</div><div class="rp-cost">${fmt(iss.cost)}/yr</div><div class="rp-rm" onclick="event.stopPropagation();removeRank(${idx})">✕</div>`;
-      top.appendChild(d);
-    });
-  }
-  issueData.forEach((_, i) => {
-    const el = document.getElementById("rpool" + i);
-    if (el) {
-      el.classList.toggle("in-top", ranking.includes(i));
-      el.style.pointerEvents =
-        ranking.length >= 5 && !ranking.includes(i) ? "none" : "auto";
-    }
+function buildRankModalList() {
+  const list = document.getElementById("rmList");
+  if (!list) return;
+  const funded = [...sel];
+  list.innerHTML = "";
+  funded.forEach((idx) => {
+    const iss = issueData[idx];
+    const pos = ranking.indexOf(idx);
+    const item = document.createElement("div");
+    item.className = "rm-item" + (pos > -1 ? " picked" : "");
+    item.innerHTML = `<div class="rm-rank">${pos > -1 ? pos + 1 : "·"}</div><div class="rm-dot" style="background:${iss.color}"></div><div class="rm-name">${iss.name}</div><div class="rm-cost">${fmt(iss.cost)}/yr</div>`;
+    item.addEventListener("click", () => toggleRank(idx));
+    list.appendChild(item);
   });
+  const cap = Math.min(5, funded.length);
+  const cnt = document.getElementById("rmCount");
+  if (cnt) cnt.textContent = `${ranking.length} of ${cap} ranked`;
+  const btn = document.getElementById("rmSaveBtn");
   if (btn) {
-    btn.disabled = ranking.length !== 5;
-    btn.style.opacity = ranking.length === 5 ? "1" : ".3";
+    btn.disabled = ranking.length === 0;
+    btn.style.opacity = ranking.length === 0 ? ".4" : "1";
   }
-  // once 5 ranked, those become the funded set and drive the diagram
-  if (ranking.length === 5) {
-    sel.clear();
-    ranking.forEach((i) => sel.add(i));
-    allocated = 0;
-    sel.forEach((x) => (allocated += issueData[x].cost));
-    updateTracker();
-    updateSummary();
-    updateCant();
-    updateGate();
-    issueData.forEach((_, i) => {
-      const card = document.getElementById("ix" + i);
-      if (card) card.classList.toggle("ix-sel", sel.has(i));
-    });
-  }
-  generateLetter();
 }
 
-function resetRanking() {
+function toggleRank(idx) {
+  if (ranking.includes(idx)) ranking = ranking.filter((x) => x !== idx);
+  else if (ranking.length < 5) ranking.push(idx);
+  buildRankModalList();
+}
+
+function clearRankModal() {
   ranking = [];
-  renderRanking();
+  buildRankModalList();
+}
+
+function saveRanking() {
+  if (ranking.length === 0) return;
+  closeRankModal();
+  generateLetter();
+  buildGlobalPriorities();
+  document
+    .getElementById("countrySection")
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // ═══ COUNTRY ════════════════════════════════════════════════════
@@ -930,13 +1042,42 @@ function showCountry(name) {
   const contactHTML = c[5]
     ? `<a href="${c[5]}" target="_blank" rel="noopener">Contact your representative ↗</a>`
     : "";
+
+  // ── spending trend indicator ──
+  const trendVal = countryTrend[c[0]];
+  const tv = trendVal === undefined ? GLOBAL_TREND : trendVal;
+  const known = trendVal !== undefined;
+  const rising = tv >= 0;
+  const trendHTML = `<div class="trend-ind">
+      <div class="trend-arrow ${rising ? "up" : "down"}">${rising ? "▲" : "▼"}</div>
+      <div>
+        <div class="trend-val ${rising ? "up" : "down"}">${rising ? "+" : ""}${tv}%</div>
+        <div class="trend-cap">${known ? "change in " + c[0] + "'s military spend, 2024 to 2025" : "no national figure; shown is the world average (ex-US), which rose " + GLOBAL_TREND + "%"}. ${rising ? "Spending is climbing." : "Spending is falling."}</div>
+      </div>
+    </div>`;
+
+  // ── most-chosen priorities among people in this country (seeded + live) ──
+  const cTally = countryPriorityTally(c[0]);
+  const cMax = Math.max(...cTally.map((t) => t.w));
+  const prioHTML = cTally
+    .slice(0, 6)
+    .map(
+      (t) =>
+        `<div class="prio-bar-row"><div class="prio-bar-name">${issueData[t.i].name}</div><div class="prio-bar-track"><div class="prio-bar-fill" style="background:${issueData[t.i].color};width:0%" data-w="${((t.w / cMax) * 100).toFixed(0)}"></div></div><div class="prio-bar-pct">${Math.round((t.w / cTally.reduce((s, x) => s + x.w, 0)) * 100)}%</div></div>`,
+    )
+    .join("");
+
   box.innerHTML = `<div class="cc-name">${c[0]}</div>
 <div class="cc-spend">$${spend}B</div>
 <div class="cc-meta">${c[3]}% of GDP · SIPRI 2025 · Population ~${c[4]}M${contactHTML ? " · " + contactHTML : ""}</div>
 <div class="cc-bars">${comparisons}</div>
-<div class="cc-note">Your country contributes ${((spend / DEFENCE) * 100).toFixed(2)}% of the $2.89T global military total. This is the scale of your nation's stake in how the world chooses to spend its resources.</div>`;
+<div class="cc-note">Your country contributes ${((spend / DEFENCE) * 100).toFixed(2)}% of the $2.89T global military total. This is the scale of your nation's stake in how the world chooses to spend its resources.</div>
+<div class="cc-extra">
+  <div><div class="cc-extra-h">Where ${c[0]} is heading</div>${trendHTML}</div>
+  <div><div class="cc-extra-h">What people in ${c[0]} would fund first</div>${prioHTML}</div>
+</div>`;
   setTimeout(() => {
-    box.querySelectorAll(".cc-bar-fill").forEach((el) => {
+    box.querySelectorAll(".cc-bar-fill, .prio-bar-fill").forEach((el) => {
       el.style.transition = "width 1.3s cubic-bezier(.16,1,.3,1)";
       el.style.width = el.dataset.w + "%";
     });
@@ -953,12 +1094,13 @@ function generateLetter() {
   const note = document.getElementById("letterNote");
   if (!out) return;
 
-  const rankDone = ranking.length === 5;
+  const rankDone = ranking.length >= 1;
   const countryDone = !!selectedCountry;
   const complete = rankDone && countryDone;
   if (note) note.classList.toggle("show", !complete);
 
   const RED = (t) => `<span class="letter-redfill">${t}</span>`;
+  const n = ranking.length;
 
   const name =
     (document.getElementById("letterName")?.value || "").trim() ||
@@ -972,7 +1114,7 @@ function generateLetter() {
   const country = countryDone ? selectedCountry[0] : RED("[your country]");
   const contributionLine = countryDone
     ? `${selectedCountry[0]} contributed $${selectedCountry[2]} billion to that total, ${selectedCountry[3]}% of our national GDP.`
-    : RED("[Step 02: choose your country to show what it spends.]");
+    : RED("[Pick your country in Step 01 to show what it spends.]");
 
   const top5 = rankDone
     ? ranking
@@ -982,13 +1124,13 @@ function generateLetter() {
         )
         .join("\n")
     : RED(
-        "[Go back to Step 01 and rank your top 5 priorities. They will appear here.]",
+        "[Go back, fund some causes and rank them. Your priorities will appear here.]",
       );
   const totalB = rankDone
     ? ranking.reduce((s, i) => s + issueData[i].cost, 0)
     : 0;
   const totalLine = rankDone
-    ? `To fund all five at the levels needed would cost ${fmt(totalB)} per year, about ${Math.round((totalB / DEFENCE) * 100)}% of one year of global military spending. Not a utopian fantasy. A budget question.`
+    ? `To fund ${n === 1 ? "this priority" : "all " + n} at the levels needed would cost ${fmt(totalB)} per year, about ${Math.round((totalB / DEFENCE) * 100)}% of one year of global military spending. Not a utopian fantasy. A budget question.`
     : RED(
         "[Once you have ranked your priorities, the total cost of your choices will be calculated here.]",
       );
@@ -1003,7 +1145,7 @@ But I have come to believe that the world is also not as safe as it could be, pr
 
 This year, 673 million people went hungry. 272 million children could not go to school. 117.8 million people remain displaced from their homes. The UN's humanitarian appeal received barely a third of what it asked for, while spending on nuclear weapons alone rose 19% to a record $119 billion. These are the compounding conditions of a planet in genuine distress, one that will produce more conflict the longer we leave them unaddressed.
 
-I have thought carefully about where I believe the world must focus its resources. My five priorities are:
+I have thought carefully about where I believe the world must focus its resources. My priorities are:
 
 ${top5}
 
@@ -1048,8 +1190,8 @@ function emailLetter() {
 }
 
 function tweetLetter() {
-  if (ranking.length < 5) {
-    alert("Rank your top 5 priorities first, so your letter is complete.");
+  if (ranking.length < 1) {
+    alert("Fund some causes and rank them first, so your letter is complete.");
     return;
   }
   const r5 = ranking
@@ -1063,22 +1205,6 @@ function tweetLetter() {
   );
 }
 
-function goToRank() {
-  if (sel.size === 0) {
-    document
-      .getElementById("redistribute")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    const p = document.getElementById("redistPrompt");
-    if (p) {
-      p.textContent = "← Select at least one issue first";
-      p.classList.add("go");
-    }
-    return;
-  }
-  document
-    .getElementById("rankSection")
-    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 function goToCountry() {
   document
     .getElementById("countrySection")
@@ -1129,6 +1255,71 @@ function getTally() {
   return { count: SEED_COUNT + local.length, tally };
 }
 
+// simple deterministic hash so a country always gets the same variation
+function strHash(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+// global priorities = seeded weights + everyone's live votes, sorted desc
+function globalPriorityTally() {
+  const { tally } = getTally();
+  return seededPriorityWeights
+    .map((w, i) => ({ i, w: w + (tally[i] || 0) }))
+    .sort((a, b) => b.w - a.w);
+}
+
+// per-country priorities = seeded weights nudged by a country hash + that
+// country's live votes. Placeholder until the backend serves real data.
+function countryPriorityTally(name) {
+  const { count } = { count: 0 };
+  const local = getLocalSubs().filter((s) => s.country === name);
+  const live = {};
+  local.forEach((s) =>
+    (s.ranking || []).forEach((i) => (live[i] = (live[i] || 0) + 3)),
+  );
+  const h = strHash(name);
+  return seededPriorityWeights
+    .map((w, i) => {
+      const nudge = ((h >> (i % 12)) & 7) * 4 - 12; // -12..+16, stable per country
+      return { i, w: Math.max(5, w + nudge + (live[i] || 0)) };
+    })
+    .sort((a, b) => b.w - a.w);
+}
+
+function buildGlobalPriorities() {
+  const wrap = document.getElementById("globalPrio");
+  if (!wrap) return;
+  const tally = globalPriorityTally();
+  const total = tally.reduce((s, t) => s + t.w, 0);
+  const max = tally[0].w;
+  wrap.innerHTML =
+    `<div class="global-prio-h">What the coalition would fund first · globally</div>` +
+    tally
+      .slice(0, 8)
+      .map(
+        (t) =>
+          `<div class="prio-bar-row"><div class="prio-bar-name">${issueData[t.i].name}</div><div class="prio-bar-track"><div class="prio-bar-fill" style="background:${issueData[t.i].color};width:0%" data-w="${((t.w / max) * 100).toFixed(0)}"></div></div><div class="prio-bar-pct">${Math.round((t.w / total) * 100)}%</div></div>`,
+      )
+      .join("");
+  // animate when visible
+  const io = new IntersectionObserver(
+    (es) => {
+      es.forEach((e) => {
+        if (e.isIntersecting) {
+          wrap
+            .querySelectorAll(".prio-bar-fill")
+            .forEach((b) => (b.style.width = b.dataset.w + "%"));
+          io.disconnect();
+        }
+      });
+    },
+    { threshold: 0.2 },
+  );
+  io.observe(wrap);
+}
+
 function initCoalition() {
   const { count, tally } = getTally();
   animCoalitionNum(count);
@@ -1162,9 +1353,22 @@ function animCoalitionNum(target) {
   })(s);
 }
 
+function animHeroCoalition(target) {
+  const el = document.getElementById("hCoalition");
+  if (!el) return;
+  const s = performance.now(),
+    dur = 2400;
+  (function f(now) {
+    const p = Math.min((now - s) / dur, 1),
+      v = Math.round(target * (1 - Math.pow(1 - p, 4)));
+    el.textContent = v.toLocaleString();
+    if (p < 1) requestAnimationFrame(f);
+  })(s);
+}
+
 function submitCoalition() {
-  if (ranking.length < 5) {
-    alert("Please complete your top 5 ranking first (Step 01).");
+  if (ranking.length < 1) {
+    alert("Fund some causes and rank them first, then add your voice.");
     return;
   }
   const email = (document.getElementById("coalitionEmail")?.value || "").trim();
@@ -1204,13 +1408,14 @@ function submitCoalition() {
   const { count } = getTally();
   animCoalitionNum(count);
   initCoalition();
+  buildGlobalPriorities();
   setTimeout(() => generateShareCard(), 500);
 }
 
 // ═══ SHARE CARD ═════════════════════════════════════════════════
 function generateShareCard() {
-  if (ranking.length < 5) {
-    alert("Rank your top 5 priorities first to generate your card.");
+  if (ranking.length < 1) {
+    alert("Fund some causes and rank them first to generate your card.");
     return;
   }
   const country = selectedCountry ? selectedCountry[0] : "the world";
@@ -1295,22 +1500,28 @@ function shareCardTo(type) {
 
 // ═══ INIT ═══════════════════════════════════════════════════════
 window.addEventListener("load", () => {
+  const { count: coCount } = getTally();
   setTimeout(() => {
     cntTo(document.getElementById("hDef"), 2887, 2200);
     cntTo(document.getElementById("hTotal"), 21810, 3000);
+    animHeroCoalition(coCount);
   }, 450);
   tickLiveSpend();
   buildSpendDonut();
+  buildViolencePie();
   buildEmissions();
+  buildEnvFacts();
+  buildConflictBars();
   buildDualSpenders();
   drawDotField();
   buildDotLegend();
   buildHumanStrip();
+  buildHiPies();
   drawLives();
   buildIssues();
-  buildRanking();
   buildCountrySelect();
   initCoalition();
+  buildGlobalPriorities();
   initScrollProgress();
   initReveal();
   rszFlow();

@@ -554,3 +554,68 @@ const countryData = [
   ["Malta", "MT", 0.1, 0.6, 0.5, ""],
   ["Samoa", "WS", 0.005, 0.5, 0.2, ""],
 ];
+
+/* ═══════════════════════════════════════════════════════════════════
+   REVISION 3 DATASETS
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── WHERE THE $21.8T COMES FROM — IEP model components ────────────
+   Percentages from the IEP Global Peace Index economic-impact model
+   (military 45%, internal security 29%, etc.), applied to the $21.81T
+   total. This is what the figure is actually made of. */
+const violenceBreakdown = [
+  { label: "Military expenditure", pct: 45, color: "#ff2d2d" },
+  { label: "Internal security (police, justice, prisons)", pct: 29, color: "#ff6b35" },
+  { label: "Private security", pct: 8, color: "#f5852a" },
+  { label: "Homicide", pct: 6, color: "#f5a623" },
+  { label: "Suicide", pct: 4, color: "#b9606a" },
+  { label: "Armed conflict, terrorism & losses", pct: 8, color: "#8b0000" },
+];
+
+/* ── CONFLICT COSTS — reconstruction / damage estimates ($B) ───────
+   Strongest available sourced figures. Mix of damage and reconstruction
+   needs, framed clearly in the UI. */
+const conflictCosts = [
+  { name: "Ukraine", amtB: 588, note: "10-yr reconstruction need · ~3× its GDP", src: "World Bank RDNA5 2026", url: "https://www.worldbank.org/en/news/press-release/2026/02/23/updated-ukraine-recovery-and-reconstruction-needs-assessment-released" },
+  { name: "Syria", amtB: 400, note: "Reconstruction estimate after 14 years of war", src: "UN / ESCWA", url: "https://www.unescwa.org/" },
+  { name: "Iraq", amtB: 88, note: "Post-ISIS reconstruction need (2018)", src: "World Bank", url: "https://www.worldbank.org/en/country/iraq" },
+  { name: "Gaza", amtB: 71.4, note: "Recovery & reconstruction · development set back 77 yrs", src: "EU / UN / World Bank RDNA 2026", url: "https://news.un.org/en/story/2026/04/1167336" },
+  { name: "Yemen", amtB: 90, note: "Cumulative economic loss from a decade of war", src: "UNDP", url: "https://www.undp.org/yemen" },
+  { name: "Sudan", amtB: 100, note: "Estimated damage since the 2023 war · world's largest displacement crisis", src: "UN / World Bank", url: "https://www.unocha.org/sudan" },
+];
+
+/* ── ENVIRONMENTAL & SYSTEMIC FACTS OF WAR ─────────────────────────── */
+const envFacts = [
+  { fig: "5.5%", lbl: "of all global greenhouse-gas emissions come from the world's militaries, more than civil aviation and shipping combined.", src: "SGR / CEOBS", url: "https://www.sgr.org.uk/resources/hidden-carbon-cost-military" },
+  { fig: "4th", lbl: "if the world's militaries were a single country, they would be the fourth-largest carbon emitter on Earth.", src: "CEOBS", url: "https://ceobs.org/" },
+  { fig: "~0%", lbl: "of military emissions are subject to mandatory reporting under the Paris Agreement. They are largely exempt.", src: "CEOBS / UNFCCC", url: "https://ceobs.org/" },
+];
+
+/* ── EXTRA HUMAN-IMPACT FIGURES (visualised) ───────────────────────── */
+const humanImpactExtra = {
+  civilianShare: 90, // % of casualties from explosive weapons in populated areas that are civilians (AOAV/UN)
+  childrenDisplaced: 45, // million children among the 117.8M displaced (UNHCR, 38%)
+  childrenPct: 38,
+};
+
+/* ── PER-COUNTRY MILITARY-SPENDING TREND (YoY % change, 2025) ───────
+   Sourced for major spenders (SIPRI 2026). Used for the country trend
+   indicator; countries without an entry show the global trend (rising). */
+const countryTrend = {
+  "United States": -7.5, China: 7.4, Russia: 5.9, Germany: 24, India: 8.9,
+  "United Kingdom": -2.0, Ukraine: 20, "Saudi Arabia": 1.4, France: 1.5,
+  Japan: 9.7, Poland: 31, Taiwan: 14, "South Korea": 4, Italy: 8,
+  Australia: 6, Israel: 9, Netherlands: 18, Sweden: 12, Spain: 12,
+  Canada: 9, Belgium: 11, Romania: 15, Lithuania: 20, Estonia: 18,
+  Latvia: 19, Finland: 10, Denmark: 15, Norway: 10, Greece: 5,
+};
+const GLOBAL_TREND = 9.4; // world ex-US grew 9.2-9.4% (SIPRI 2026)
+
+/* ── SEEDED COALITION PRIORITY DATA (placeholder until backend) ─────
+   A plausible global distribution of how people prioritise the 14 issues,
+   as share of votes. Replaced by live data once the backend is wired
+   (see README). issueData index → weight. */
+const seededPriorityWeights = [
+  82, 74, 88, 41, 69, 47, 35, 38, 44, 52, 95, 33, 58, 71,
+]; // by issueData index: hunger, health, education, gender, water, energy, work, infra, inequality, homeless, climate, ocean, biodiversity, peace
+
