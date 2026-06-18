@@ -7,6 +7,7 @@ const sel = new Set();
 let allocated = 0;
 let ranking = [];
 let selectedCountry = null;
+let rankPrompted = false; // auto-open rank modal once the budget is full
 
 // ═══ FORMAT ═════════════════════════════════════════════════════
 function fmt(b) {
@@ -120,11 +121,12 @@ function initReveal() {
 }
 
 // ═══ SPEND DONUT (SVG) ══════════════════════════════════════════
-function buildSpendDonut() {
-  const svg = document.getElementById("spendDonut");
-  const legend = document.getElementById("spendLegend");
+// Reusable donut: items [{label,color}], valueKey gives the magnitude.
+function buildDonut(svgId, legendId, items, valueKey, centerVal, centerLabel) {
+  const svg = document.getElementById(svgId);
+  const legend = document.getElementById(legendId);
   if (!svg || !legend) return;
-  const total = spendBreakdown.reduce((s, x) => s + x.amtB, 0);
+  const total = items.reduce((s, x) => s + x[valueKey], 0);
   const cx = 50,
     cy = 50,
     r = 37,
@@ -132,7 +134,6 @@ function buildSpendDonut() {
   const C = 2 * Math.PI * r;
   const NS = "http://www.w3.org/2000/svg";
 
-  // track
   const track = document.createElementNS(NS, "circle");
   track.setAttribute("cx", cx);
   track.setAttribute("cy", cy);
@@ -142,14 +143,13 @@ function buildSpendDonut() {
   track.setAttribute("stroke-width", sw);
   svg.appendChild(track);
 
-  // rotating group so segments start at 12 o'clock (avoids CSS transform bug)
   const g = document.createElementNS(NS, "g");
   g.setAttribute("transform", `rotate(-90 ${cx} ${cy})`);
   svg.appendChild(g);
 
   let offset = 0;
-  spendBreakdown.forEach((s, i) => {
-    const frac = s.amtB / total;
+  items.forEach((s, i) => {
+    const frac = s[valueKey] / total;
     const seg = document.createElementNS(NS, "circle");
     seg.setAttribute("class", "donut-seg");
     seg.setAttribute("data-i", i);
@@ -162,7 +162,6 @@ function buildSpendDonut() {
     seg.setAttribute("stroke-dasharray", `0 ${C}`);
     seg.style.strokeDashoffset = -offset * C;
     g.appendChild(seg);
-    // animate dash in
     setTimeout(() => {
       seg.style.transition = "stroke-dasharray 1.1s cubic-bezier(.16,1,.3,1)";
       seg.setAttribute(
@@ -172,11 +171,12 @@ function buildSpendDonut() {
     }, 300 + i * 110);
     offset += frac;
 
-    // legend row
+    const amtTxt =
+      valueKey === "pct" ? Math.round(frac * 100) + "%" : fmt(s[valueKey]);
     const row = document.createElement("div");
     row.className = "dleg";
     row.dataset.i = i;
-    row.innerHTML = `<span class="dleg-sw" style="background:${s.color}"></span>${s.label}<span class="dleg-amt">${fmt(s.amtB)}</span>`;
+    row.innerHTML = `<span class="dleg-sw" style="background:${s.color}"></span>${s.label}<span class="dleg-amt">${amtTxt}</span>`;
     const dim = () =>
       svg
         .querySelectorAll(".donut-seg")
@@ -192,14 +192,13 @@ function buildSpendDonut() {
     legend.appendChild(row);
   });
 
-  // centre label
   const v = document.createElementNS(NS, "text");
   v.setAttribute("class", "donut-center-v");
   v.setAttribute("x", cx);
   v.setAttribute("y", cy - 1);
   v.setAttribute("text-anchor", "middle");
   v.setAttribute("font-size", "13");
-  v.textContent = "$2.89T";
+  v.textContent = centerVal;
   svg.appendChild(v);
   const l = document.createElementNS(NS, "text");
   l.setAttribute("class", "donut-center-l");
@@ -207,8 +206,19 @@ function buildSpendDonut() {
   l.setAttribute("y", cy + 8);
   l.setAttribute("text-anchor", "middle");
   l.setAttribute("font-size", "4.4");
-  l.textContent = "MILITARY · 2025";
+  l.textContent = centerLabel;
   svg.appendChild(l);
+}
+
+function buildSpendDonut() {
+  buildDonut(
+    "spendDonut",
+    "spendLegend",
+    spendBreakdown,
+    "amtB",
+    "$2.89T",
+    "MILITARY · 2025",
+  );
 }
 
 // ═══ EMISSIONS MINI GRID ════════════════════════════════════════
@@ -222,60 +232,15 @@ function buildEmissions() {
   }
 }
 
-// ═══ FILLED PIE (generic) ═══════════════════════════════════════
-// items: [{label, color, value}] · draws solid wedges + a legend with %
-function buildFilledPie(svgId, legendId, items, valueKey) {
-  const svg = document.getElementById(svgId);
-  const legend = document.getElementById(legendId);
-  if (!svg || !legend) return;
-  const NS = "http://www.w3.org/2000/svg";
-  const cx = 50,
-    cy = 50,
-    r = 46;
-  const total = items.reduce((s, x) => s + x[valueKey], 0);
-  let a0 = -Math.PI / 2;
-  items.forEach((it, i) => {
-    const frac = it[valueKey] / total;
-    const a1 = a0 + frac * Math.PI * 2;
-    const large = a1 - a0 > Math.PI ? 1 : 0;
-    const x1 = cx + r * Math.cos(a0),
-      y1 = cy + r * Math.sin(a0);
-    const x2 = cx + r * Math.cos(a1),
-      y2 = cy + r * Math.sin(a1);
-    const path = document.createElementNS(NS, "path");
-    path.setAttribute("class", "pie-seg");
-    path.setAttribute("data-i", i);
-    path.setAttribute(
-      "d",
-      `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`,
-    );
-    path.setAttribute("fill", it.color);
-    path.setAttribute("stroke", "#050507");
-    path.setAttribute("stroke-width", "0.6");
-    svg.appendChild(path);
-    a0 = a1;
-
-    const row = document.createElement("div");
-    row.className = "dleg";
-    row.innerHTML = `<span class="dleg-sw" style="background:${it.color}"></span>${it.label}<span class="dleg-amt">${Math.round(frac * 100)}%</span>`;
-    const dim = () =>
-      svg
-        .querySelectorAll(".pie-seg")
-        .forEach((e) =>
-          e.classList.toggle("dim", e.getAttribute("data-i") !== String(i)),
-        );
-    const undim = () =>
-      svg.querySelectorAll(".pie-seg").forEach((e) => e.classList.remove("dim"));
-    row.addEventListener("mouseenter", dim);
-    row.addEventListener("mouseleave", undim);
-    path.addEventListener("mouseenter", dim);
-    path.addEventListener("mouseleave", undim);
-    legend.appendChild(row);
-  });
-}
-
 function buildViolencePie() {
-  buildFilledPie("violencePie", "violenceLegend", violenceBreakdown, "pct");
+  buildDonut(
+    "violencePie",
+    "violenceLegend",
+    violenceBreakdown,
+    "pct",
+    "$21.8T",
+    "VIOLENCE · 2025",
+  );
 }
 
 // ═══ CONFLICT COST BARS ═════════════════════════════════════════
@@ -546,6 +511,26 @@ function toggleIssue(i) {
   updateCant();
   updateSummary();
   updateGate();
+  maybePromptRank();
+}
+
+// When the budget is effectively spent (nothing left can be funded),
+// invite the user to rank their priorities, once.
+function maybePromptRank() {
+  if (rankPrompted || sel.size === 0) return;
+  const remaining = DEFENCE - allocated;
+  let minUnfunded = Infinity;
+  issueData.forEach((iss, i) => {
+    if (!sel.has(i)) minUnfunded = Math.min(minUnfunded, iss.cost);
+  });
+  const budgetFull = remaining < minUnfunded; // can't add anything more
+  if (budgetFull) {
+    rankPrompted = true;
+    setTimeout(() => {
+      if (!document.getElementById("rankOv").classList.contains("open"))
+        openRankModal();
+    }, 700);
+  }
 }
 
 function updateCant() {
@@ -788,13 +773,18 @@ function drawFlow() {
 
     fX.textAlign = "center";
     fX.textBaseline = "middle";
-    const fs = Math.max(baseF * 0.6, Math.min(baseF * 1.15, n.r * 0.34));
-    fX.fillStyle = "rgba(255,255,255,0.92)";
+    // legible floor so even small nodes (e.g. Zero Hunger) read clearly
+    const fs = Math.max(baseF * 1.25, Math.min(baseF * 1.9, n.r * 0.4));
+    fX.save();
+    fX.shadowColor = "rgba(0,0,0,0.85)";
+    fX.shadowBlur = 4 * dpr;
+    fX.fillStyle = "#fff";
     fX.font = `${Math.round(fs)}px 'Bebas Neue',sans-serif`;
-    fX.fillText(issueData[n.idx].name.toUpperCase(), n.x, n.y - fs * 0.7);
+    fX.fillText(issueData[n.idx].name.toUpperCase(), n.x, n.y - fs * 0.62);
     fX.fillStyle = n.color;
-    fX.font = `${Math.round(fs * 1.2)}px 'Bebas Neue',sans-serif`;
-    fX.fillText(fmt(issueData[n.idx].cost), n.x, n.y + fs * 0.7);
+    fX.font = `${Math.round(fs * 1.25)}px 'Bebas Neue',sans-serif`;
+    fX.fillText(fmt(issueData[n.idx].cost), n.x, n.y + fs * 0.62);
+    fX.restore();
 
     if (Math.random() < 0.03) spawnP(cx, cy, n.x, n.y, n.color);
   });
@@ -828,6 +818,7 @@ function drawFlow() {
 function resetAll() {
   sel.clear();
   allocated = 0;
+  rankPrompted = false;
   document.querySelectorAll(".ix").forEach((c) => {
     c.classList.remove("ix-sel", "ix-cant");
     const t = c.querySelector(".ix-cant-tag");
@@ -1222,11 +1213,9 @@ function goToCoalition() {
 }
 
 // ═══ COALITION ══════════════════════════════════════════════════
-// NOTE FOR BACKEND DEV: replace localStorage with a real store (e.g.
-// Supabase table `submissions`, see README). Set SUPABASE_URL/KEY.
-const SUPABASE_URL = null;
-const SUPABASE_KEY = null;
-const SEED_COUNT = 2847;
+// Live data comes from Supabase (js/backend.js) when configured;
+// otherwise we fall back to this browser's localStorage (demo mode).
+const SEED_COUNT = (window.COW_CONFIG && window.COW_CONFIG.SEED_COUNT) || 2847;
 
 function getLocalSubs() {
   try {
@@ -1244,6 +1233,14 @@ function saveLocalSub(d) {
 }
 
 function getTally() {
+  // live backend (shared across all visitors)
+  if (window.__cowConfigured && window.__cowLive && window.__cowLive.ready) {
+    return {
+      count: SEED_COUNT + window.__cowLive.count,
+      tally: { ...window.__cowLive.tally },
+    };
+  }
+  // demo fallback (this browser only)
   const local = getLocalSubs();
   const tally = {};
   local.forEach((s) => {
@@ -1375,17 +1372,9 @@ function submitCoalition() {
   const country = selectedCountry ? selectedCountry[0] : "Unknown";
   const data = { ranking: [...ranking], country, email, ts: Date.now() };
   saveLocalSub(data);
-  if (SUPABASE_URL && SUPABASE_KEY) {
-    fetch(`${SUPABASE_URL}/rest/v1/submissions`, {
-      method: "POST",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: "Bearer " + SUPABASE_KEY,
-        "Content-Type": "application/json",
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify(data),
-    }).catch(() => {});
+  // live backend (shared) if configured; otherwise localStorage above
+  if (window.__cowSubmit) {
+    window.__cowSubmit(data);
   }
   if (email) {
     const fd = new FormData();
@@ -1530,6 +1519,14 @@ window.addEventListener("load", () => {
   updateSummary();
   updateGate();
   generateLetter();
+  // when live coalition data arrives from Supabase, refresh those views
+  window.onCowHydrated = function () {
+    const { count } = getTally();
+    animCoalitionNum(count);
+    animHeroCoalition(count);
+    initCoalition();
+    buildGlobalPriorities();
+  };
   // animate impact GDP bar when scrolled into view
   const igf = document.getElementById("impactGdpFill");
   if (igf) {

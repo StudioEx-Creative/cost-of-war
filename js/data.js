@@ -29,12 +29,12 @@ const globalContext = {
    defence-budget compositions (personnel / operations / procurement /
    R&D), since SIPRI does not publish one global category breakdown. */
 const spendBreakdown = [
-  { label: "Personnel & pay", amtB: 1010, color: "#ff2d2d" },
-  { label: "Operations & upkeep", amtB: 780, color: "#ff5a36" },
-  { label: "Arms & equipment", amtB: 578, color: "#f5852a" },
-  { label: "Research & development", amtB: 260, color: "#f5a623" },
-  { label: "Bases & infrastructure", amtB: 140, color: "#9c4a1a" },
-  { label: "Nuclear forces", amtB: 119, color: "#ffd23f" },
+  { label: "Personnel & pay", amtB: 1010, color: "#ff4d4d" },
+  { label: "Operations & upkeep", amtB: 780, color: "#e23030" },
+  { label: "Arms & equipment", amtB: 578, color: "#c21f1f" },
+  { label: "Research & development", amtB: 260, color: "#9c1414" },
+  { label: "Bases & infrastructure", amtB: 140, color: "#741010" },
+  { label: "Nuclear forces", amtB: 119, color: "#4d0a0a" },
 ];
 
 /* ── CHAPTER 01 · THE MACHINE — direct military spending ─────────── */
@@ -564,12 +564,12 @@ const countryData = [
    (military 45%, internal security 29%, etc.), applied to the $21.81T
    total. This is what the figure is actually made of. */
 const violenceBreakdown = [
-  { label: "Military expenditure", pct: 45, color: "#ff2d2d" },
-  { label: "Internal security (police, justice, prisons)", pct: 29, color: "#ff6b35" },
-  { label: "Private security", pct: 8, color: "#f5852a" },
-  { label: "Homicide", pct: 6, color: "#f5a623" },
-  { label: "Suicide", pct: 4, color: "#b9606a" },
-  { label: "Armed conflict, terrorism & losses", pct: 8, color: "#8b0000" },
+  { label: "Military expenditure", pct: 45, color: "#ffe14d" },
+  { label: "Internal security (police, justice, prisons)", pct: 29, color: "#f5c518" },
+  { label: "Private security", pct: 8, color: "#e0a90f" },
+  { label: "Homicide", pct: 6, color: "#c28a0a" },
+  { label: "Suicide", pct: 4, color: "#9c6c08" },
+  { label: "Armed conflict, terrorism & losses", pct: 8, color: "#6e4b05" },
 ];
 
 /* ── CONFLICT COSTS — reconstruction / damage estimates ($B) ───────

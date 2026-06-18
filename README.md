@@ -35,13 +35,14 @@ Two integration points, both currently stubbed client-side:
 
 1. **Coalition counter & submissions** (`js/main.js`, `// ═══ COALITION ═══` block).
    Currently localStorage + a fake seed count. To make it real, create a Supabase
-   project with a `submissions` table (`ranking int[], country text, email text, ts bigint`),
-   enable RLS allowing anonymous INSERT and a count-only SELECT, and set
-   `SUPABASE_URL` / `SUPABASE_KEY` (anon key) at the top of the block.
-   The fetch call is already written.
+   **The Supabase integration is now fully built** — client (`js/backend.js`),
+   schema (`supabase-schema.sql`) and config (`js/config.js`). To go live, create
+   a free Supabase project, run the SQL, and paste the URL + anon key into
+   `js/config.js`. Full walkthrough in **[BACKEND.md](BACKEND.md)**. Until then it
+   runs in localStorage demo mode automatically.
 
-2. **Email capture** — posts to `formsubmit.co` (forwards to greg@studioex.co).
-   Fine to launch with; replace with your own endpoint or Supabase when ready.
+2. **Email capture** — also posts to `formsubmit.co` (forwards to greg@studioex.co)
+   as a notification; emails are stored in the Supabase `submissions` table too.
 
 Data updates happen in `js/data.js` only — every figure has its source next to it,
 and `DATA-SOURCES.md` documents the verification trail. Annual refresh points:
