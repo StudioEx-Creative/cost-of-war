@@ -271,6 +271,36 @@ function buildEnvFacts() {
     .join("");
 }
 
+// ═══ EMITTER COMPARISON BARS ════════════════════════════════════
+function buildEmittersChart() {
+  const wrap = document.getElementById("emittersChart");
+  if (!wrap) return;
+  const max = Math.max(...emittersCompare.map((e) => e.pct));
+  wrap.innerHTML = emittersCompare
+    .map(
+      (e) =>
+        `<div class="emit-row${e.hot ? " hot" : ""}"><div class="emit-name">${e.name}</div><div class="emit-track"><div class="emit-fill" data-w="${((e.pct / max) * 100).toFixed(0)}"></div></div><div class="emit-val">${e.pct}%</div></div>`,
+    )
+    .join("");
+  // animate when scrolled into view
+  const io = new IntersectionObserver(
+    (es) => {
+      es.forEach((x) => {
+        if (x.isIntersecting) {
+          wrap
+            .querySelectorAll(".emit-fill")
+            .forEach((b, k) =>
+              setTimeout(() => (b.style.width = b.dataset.w + "%"), k * 80),
+            );
+          io.disconnect();
+        }
+      });
+    },
+    { threshold: 0.3 },
+  );
+  io.observe(wrap);
+}
+
 // ═══ HUMAN-IMPACT MINI PIES ═════════════════════════════════════
 function miniPieSVG(pct, color) {
   const r = 42,
@@ -293,16 +323,16 @@ function buildHiPies() {
     {
       pct: humanImpactExtra.civilianShare,
       color: "#ff2d2d",
-      big: "~90%",
-      lbl: "of those killed and wounded by explosive weapons in towns and cities are civilians, not combatants.",
+      big: "Most of those killed are civilians",
+      lbl: "Up to 90% of those killed and wounded by explosive weapons in towns and cities are civilians, not combatants.",
       src: "AOAV / UN",
       url: "https://aoav.org.uk/explosiveviolence/",
     },
     {
       pct: humanImpactExtra.childrenPct,
       color: "#00e5ff",
-      big: "38%",
-      lbl: "of the 117.8 million people displaced by war and persecution are children: about 45 million.",
+      big: "A third of the displaced are children",
+      lbl: "38% of the 117.8 million people displaced by war and persecution are children: about 45 million.",
       src: "UNHCR Global Trends 2026",
       url: "https://www.unhcr.org/global-trends",
     },
@@ -445,6 +475,21 @@ function drawLives() {
     const a = 0.25 + Math.random() * 0.55;
     x.fillStyle = `rgba(255,255,255,${a.toFixed(2)})`;
     x.fillRect(col * spacing, row * spacing, 1, 1);
+  }
+  // scale gridlines every 50,000 deaths
+  const perRow = cols; // ≈ deaths per pixel-row
+  x.textBaseline = "bottom";
+  x.font = "9px 'IBM Plex Mono', monospace";
+  for (let mark = 50000; mark < total; mark += 50000) {
+    const y = Math.round((mark / perRow) * spacing) + 0.5;
+    x.strokeStyle = "rgba(255,45,45,0.55)";
+    x.lineWidth = 1;
+    x.beginPath();
+    x.moveTo(0, y);
+    x.lineTo(w, y);
+    x.stroke();
+    x.fillStyle = "rgba(255,120,120,0.9)";
+    x.fillText(mark.toLocaleString(), 2, y - 1);
   }
 }
 
@@ -639,7 +684,9 @@ function rszFlow() {
   const availW = panel
     ? panel.getBoundingClientRect().width
     : window.innerWidth * 0.5;
-  const sz = Math.round(Math.min(availW, window.innerHeight * 0.82, 620));
+  // smaller, sticky-friendly pie on phones; big on desktop
+  const cap = window.innerWidth <= 760 ? 230 : 620;
+  const sz = Math.round(Math.min(availW, window.innerHeight * 0.82, cap));
   fW = fC.width = sz * dpr;
   fH = fC.height = sz * dpr;
   fC.style.width = sz + "px";
@@ -1066,6 +1113,14 @@ function showCountry(name) {
 <div class="cc-extra">
   <div><div class="cc-extra-h">Where ${c[0]} is heading</div>${trendHTML}</div>
   <div><div class="cc-extra-h">What people in ${c[0]} would fund first</div>${prioHTML}</div>
+</div>
+<div class="tax-box">
+  <div class="tax-box-h">Your personal share · how much of your tax funds the military</div>
+  <select class="tax-select" id="taxBracket" onchange="updateTaxToWar()">
+    <option value="">Select your income bracket…</option>
+    ${taxBrackets.map((b, i) => `<option value="${i}">${b.label} (~$${b.income.toLocaleString()}/yr)</option>`).join("")}
+  </select>
+  <div class="tax-result" id="taxResult"></div>
 </div>`;
   setTimeout(() => {
     box.querySelectorAll(".cc-bar-fill, .prio-bar-fill").forEach((el) => {
@@ -1077,6 +1132,30 @@ function showCountry(name) {
   const note = document.getElementById("letterContactNote");
   if (note && c[5])
     note.innerHTML = `Find your representative: <a href="${c[5]}" target="_blank">${c[0]} government contact page ↗</a>`;
+}
+
+// ═══ PERSONAL TAX → WAR ═════════════════════════════════════════
+// Indicative: share of public spending that is military ≈ (mil % of GDP) /
+// (government spending as % of GDP). Applied to the chosen bracket's tax.
+function updateTaxToWar() {
+  const selEl = document.getElementById("taxBracket");
+  const out = document.getElementById("taxResult");
+  if (!selEl || !out || !selectedCountry) return;
+  const v = selEl.value;
+  if (v === "") {
+    out.classList.remove("show");
+    return;
+  }
+  const b = taxBrackets[+v];
+  const milShareOfTax = selectedCountry[3] / 100 / GOV_SPEND_GDP; // fraction
+  const annualTax = b.income * b.rate;
+  const toWar = annualTax * milShareOfTax;
+  const perDay = toWar / 365;
+  out.innerHTML = `
+    <div class="tax-amt">$${Math.round(toWar).toLocaleString()}<span style="font-size:0.9rem;color:var(--ink-soft)"> /yr</span></div>
+    <div class="tax-lbl">of your income tax goes to ${selectedCountry[0]}'s military each year, about <b>$${perDay.toFixed(2)} a day</b>. That's ${(milShareOfTax * 100).toFixed(1)}% of the roughly $${Math.round(annualTax).toLocaleString()} you pay in income tax.</div>
+    <div class="tax-note">Indicative estimate only. Assumes government spending ≈ ${Math.round(GOV_SPEND_GDP * 100)}% of GDP and a representative effective tax rate; not tax advice. Built to wire into real national tax data later.</div>`;
+  out.classList.add("show");
 }
 
 // ═══ LETTER (with red placeholders when incomplete) ═════════════
@@ -1498,8 +1577,8 @@ window.addEventListener("load", () => {
   tickLiveSpend();
   buildSpendDonut();
   buildViolencePie();
-  buildEmissions();
   buildEnvFacts();
+  buildEmittersChart();
   buildConflictBars();
   buildDualSpenders();
   drawDotField();

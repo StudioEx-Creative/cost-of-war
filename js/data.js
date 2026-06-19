@@ -611,6 +611,31 @@ const countryTrend = {
 };
 const GLOBAL_TREND = 9.4; // world ex-US grew 9.2-9.4% (SIPRI 2026)
 
+/* ── CO₂: if the world's militaries were a country (approx % of global
+   emissions) — for the "War and the planet" comparison bar chart.
+   National shares: Global Carbon Project; military share: SGR/CEOBS. */
+const emittersCompare = [
+  { name: "China", pct: 30 },
+  { name: "United States", pct: 13 },
+  { name: "India", pct: 8 },
+  { name: "The world's militaries", pct: 5.5, hot: true },
+  { name: "Russia", pct: 5 },
+  { name: "Japan", pct: 3 },
+];
+
+/* ── PERSONAL TAX → WAR CALCULATOR ──────────────────────────────────
+   Indicative model (not tax advice). Effective income-tax rates and
+   income bands are rough global brackets; the military share of public
+   spending is derived per country from its military budget vs estimated
+   government spending (~38% of GDP). Wire to real national tax data later. */
+const taxBrackets = [
+  { label: "Lower income", income: 18000, rate: 0.1 },
+  { label: "Middle income", income: 45000, rate: 0.2 },
+  { label: "Higher income", income: 95000, rate: 0.3 },
+  { label: "Top earners", income: 250000, rate: 0.4 },
+];
+const GOV_SPEND_GDP = 0.38; // government spending ≈ 38% of GDP (rough global avg)
+
 /* ── SEEDED COALITION PRIORITY DATA (placeholder until backend) ─────
    A plausible global distribution of how people prioritise the 14 issues,
    as share of votes. Replaced by live data once the backend is wired

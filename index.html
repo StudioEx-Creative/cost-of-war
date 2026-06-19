@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r5" />
+    <link rel="stylesheet" href="css/style.css?v=2026r6" />
   </head>
   <body>
     <canvas id="bg"></canvas>
@@ -92,7 +92,7 @@
               ></div>
             </div>
             <div class="impact-gdp-cap">
-              <span>2.5% of the entire world economy</span>
+              <span><span class="gdp-pct red">2.5%</span>of the entire world economy</span>
               <span>$110T global GDP</span>
             </div>
           </div>
@@ -126,7 +126,7 @@
               ></div>
             </div>
             <div class="impact-gdp-cap">
-              <span>10.5% of the entire world economy</span>
+              <span><span class="gdp-pct amber">10.5%</span>of the entire world economy</span>
               <span>$110T global GDP</span>
             </div>
           </div>
@@ -191,22 +191,38 @@
       <!-- comparative stats -->
       <div class="stat-row rv">
         <div class="statc">
-          <div class="statc-num red">2.5%</div>
+          <div class="statc-num red">$679B</div>
           <div class="statc-lbl">
-            of global GDP goes to militaries, every year
+            record revenue of the 100 largest arms companies in 2024, the
+            highest ever recorded.
+            <a
+              href="https://www.sipri.org/media/press-release/2025/sipri-top-100-arms-producers-see-combined-revenues-surge-states-rush-modernize-and-expand-arsenals"
+              target="_blank"
+              rel="noopener"
+              style="color: var(--link)"
+              >SIPRI ↗</a
+            >
           </div>
         </div>
         <div class="statc">
           <div class="statc-num amber">+9.2%</div>
           <div class="statc-lbl">
             growth in the global arms trade, 2021–25: the biggest jump in a
-            decade
+            decade.
+            <a
+              href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-international-arms-transfers-2025"
+              target="_blank"
+              rel="noopener"
+              style="color: var(--link)"
+              >SIPRI ↗</a
+            >
           </div>
         </div>
         <div class="statc">
-          <div class="statc-num">10.5%</div>
+          <div class="statc-num">72×</div>
           <div class="statc-lbl">
-            of the world economy is consumed by violence and its containment
+            more is spent on militaries each year than the ~$40B it would take
+            to end world hunger.
           </div>
         </div>
       </div>
@@ -259,10 +275,13 @@
         <div class="rv rv-d1">
           <div class="viz-h">War and the planet</div>
           <div class="env-grid" id="envGrid"></div>
-          <div class="emissions-mini" id="emGrid" style="margin-top: 1rem"></div>
-          <div class="recon-note" style="margin-top: 0.6rem">
-            Each square ≈ 1% of global emissions; the lit squares are the
-            military's share.
+          <div class="viz-h" style="margin-top: 1.6rem">
+            If the world's militaries were a country · share of global CO₂
+          </div>
+          <div class="emit-chart" id="emittersChart"></div>
+          <div class="emit-cap">
+            Approx. share of global emissions. Military estimate: SGR / CEOBS ·
+            national shares: Global Carbon Project.
           </div>
         </div>
       </div>
@@ -856,9 +875,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r5"></script>
-    <script src="js/data.js?v=2026r5"></script>
-    <script src="js/backend.js?v=2026r5"></script>
-    <script src="js/main.js?v=2026r5"></script>
+    <script src="js/config.js?v=2026r6"></script>
+    <script src="js/data.js?v=2026r6"></script>
+    <script src="js/backend.js?v=2026r6"></script>
+    <script src="js/main.js?v=2026r6"></script>
   </body>
 </html>

@@ -3792,3 +3792,299 @@ footer a:hover {
   gap: 1.4rem;
   flex-wrap: wrap;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ▓▓▓  2026 REVISION 5  ▓▓▓  contrast · compactness · polish
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── GLOBAL: lighten greys a notch ── */
+:root {
+  --ink: #d2dae2;
+  --ink-soft: #aab4c0;
+  --muted: #8f9caa;
+  --link: #a8c3df;
+}
+footer p {
+  color: #9aa7b4;
+}
+.cti {
+  color: #7e8a97;
+}
+
+/* ── WHITE figure headings (capitalised labels above figures) ── */
+.hc-lbl {
+  color: #fff;
+}
+.viz-h {
+  color: #e3e8ee;
+}
+
+/* ── lighter, friendlier scroll cue ── */
+.scroll-cue {
+  color: #b8c2cc;
+  animation: blinkLight 2s infinite;
+}
+@keyframes blinkLight {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── slightly more compact vertical rhythm ── */
+.section {
+  padding: 3rem 2rem;
+}
+.journey-inner {
+  padding: 3.25rem 2rem;
+}
+.hys-divider {
+  padding: 3.5rem 2rem 2.5rem;
+}
+.human-inner {
+  padding: 4rem 2rem;
+}
+.bigsub {
+  margin-top: 2.75rem;
+}
+@media (max-width: 620px) {
+  .section {
+    padding: 2.5rem 1.1rem;
+  }
+  .journey-inner {
+    padding: 2.5rem 1.1rem;
+  }
+  .human-inner {
+    padding: 3rem 1.1rem;
+  }
+  .hstat {
+    padding: 2.25rem 0;
+  }
+  .hys-divider {
+    padding: 2.75rem 1.1rem 2rem;
+  }
+  .hys-lead {
+    font-size: 0.68rem;
+  }
+}
+
+/* ── CH1: big % inside the GDP-share caption (no extra space) ── */
+.impact-gdp-cap {
+  align-items: baseline;
+}
+.gdp-pct {
+  font-family: var(--fd);
+  font-size: 1.7rem;
+  line-height: 0.8;
+  margin-right: 0.3rem;
+  vertical-align: baseline;
+}
+.gdp-pct.red {
+  color: var(--red);
+}
+.gdp-pct.amber {
+  color: var(--amber);
+}
+
+/* ── CH1: mobile pairing — card → its pie → card → its pie ── */
+@media (max-width: 860px) {
+  .machine-cols {
+    grid-template-columns: 1fr;
+  }
+  .machine-cols > *:nth-child(1) {
+    order: 0;
+  }
+  .machine-cols > *:nth-child(3) {
+    order: 1;
+  } /* spend pie after spend card */
+  .machine-cols > *:nth-child(2) {
+    order: 2;
+  } /* impact card */
+  .machine-cols > *:nth-child(4) {
+    order: 3;
+  } /* impact pie */
+}
+
+/* ── CH2: emitter comparison bar chart ── */
+.emit-chart {
+  margin-top: 1.25rem;
+}
+.emit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.45rem;
+}
+.emit-name {
+  font-family: var(--fm);
+  font-size: 0.56rem;
+  color: var(--ink);
+  width: 130px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.emit-row.hot .emit-name {
+  color: #e8893a;
+  font-weight: 600;
+}
+.emit-track {
+  flex: 1;
+  height: 16px;
+  background: #0a0a0c;
+  overflow: hidden;
+}
+.emit-fill {
+  height: 100%;
+  width: 0%;
+  background: #2f3a45;
+  transition: width 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.emit-row.hot .emit-fill {
+  background: linear-gradient(90deg, #9c4a1a, #e8893a);
+  box-shadow: 0 0 12px rgba(232, 137, 58, 0.3);
+}
+.emit-val {
+  font-family: var(--fm);
+  font-size: 0.56rem;
+  color: var(--ink-soft);
+  width: 38px;
+  flex-shrink: 0;
+}
+.emit-cap {
+  font-family: var(--fm);
+  font-size: 0.54rem;
+  color: var(--ink-soft);
+  margin-top: 0.6rem;
+  line-height: 1.6;
+}
+
+/* ── CH2: hi-pie worded titles ── */
+.hi-pie-big {
+  font-family: var(--fd);
+  font-size: 1.5rem;
+  line-height: 1.05;
+  color: #fff;
+}
+
+/* ── REDISTRIBUTION mobile: keep the graph in view, compact cards ── */
+@media (max-width: 760px) {
+  /* let the tracker scroll away; the pie's centre shows budget remaining */
+  .tracker {
+    position: static;
+  }
+  /* pin the graph to the top while the cards scroll under it */
+  .redist-canvas-col {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(5px);
+    padding: 0.4rem 0 0.3rem;
+    margin: 0 -1.1rem;
+    border-bottom: 1px solid #15151c;
+  }
+  .redist-prompt {
+    margin-top: 0.15rem;
+    font-size: 0.58rem;
+  }
+  /* compact cards so more fit per screen */
+  .ix {
+    padding: 0.5rem 0.65rem;
+  }
+  .ix-sum {
+    font-size: 0.58rem;
+    margin-top: 0.22rem;
+  }
+  .ix-name {
+    font-size: 1rem;
+  }
+  .ix-detail {
+    font-size: 0.58rem;
+  }
+}
+
+/* ── COUNTRY: personal tax-to-war ── */
+.tax-box {
+  margin-top: 1.4rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid #15151c;
+}
+.tax-box-h {
+  font-family: var(--fm);
+  font-size: 0.54rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff;
+  margin-bottom: 0.7rem;
+}
+.tax-select {
+  background: #0a0a0f;
+  border: 1px solid var(--border);
+  color: #fff;
+  font-family: var(--fm);
+  font-size: 0.66rem;
+  padding: 0.6rem 1rem;
+  outline: none;
+  width: 100%;
+  max-width: 360px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.2s;
+}
+.tax-select:focus {
+  border-color: var(--say);
+}
+.tax-result {
+  margin-top: 1rem;
+  display: none;
+}
+.tax-result.show {
+  display: block;
+}
+.tax-amt {
+  font-family: var(--fd);
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+  line-height: 1;
+  color: var(--red);
+  text-shadow: 0 0 24px rgba(255, 45, 45, 0.2);
+}
+.tax-lbl {
+  font-family: var(--fm);
+  font-size: 0.62rem;
+  color: var(--ink-soft);
+  line-height: 1.7;
+  margin-top: 0.4rem;
+}
+.tax-lbl b {
+  color: var(--ink);
+}
+.tax-note {
+  font-family: var(--fm);
+  font-size: 0.5rem;
+  color: var(--muted);
+  margin-top: 0.6rem;
+  line-height: 1.5;
+}
+
+/* ── LETTER: read like a real document (white paper, black ink) ── */
+.letter-body {
+  background: #f6f4ec;
+  color: #1c1a17;
+  font-family: "IBM Plex Mono", monospace;
+}
+.letter-body:focus {
+  color: #1c1a17;
+}
+.letter-redfill {
+  color: #c0392b;
+  background: #fbe3df;
+  padding: 0 0.15em;
+  border-radius: 2px;
+}
+.letter-wrap {
+  background: #f6f4ec;
+}
