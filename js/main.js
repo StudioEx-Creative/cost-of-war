@@ -1448,6 +1448,158 @@ function buildGlobalPriorities() {
   io.observe(wrap);
 }
 
+// ═══ INTERACTIVE 3D GLOBE (coalition) ═══════════════════════════
+let globeInstance = null;
+
+// merge: seeded base + this browser's local subs + live backend (when wired)
+function getCountrySignups() {
+  const out = Object.assign({}, seededCountrySignups);
+  getLocalSubs().forEach((s) => {
+    if (s.country && s.country !== "Unknown")
+      out[s.country] = (out[s.country] || 0) + 1;
+  });
+  if (window.__cowCountrySignups) {
+    Object.entries(window.__cowCountrySignups).forEach(([k, v]) => {
+      out[k] = (out[k] || 0) + v;
+    });
+  }
+  return out;
+}
+
+// neon gradient by volume: teal → green → amber → red
+function volColor(t) {
+  const stops = [
+    [0.0, [0, 229, 255]],
+    [0.4, [0, 255, 136]],
+    [0.75, [245, 166, 35]],
+    [1.0, [255, 45, 45]],
+  ];
+  let a = stops[0],
+    b = stops[stops.length - 1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (t >= stops[i][0] && t <= stops[i + 1][0]) {
+      a = stops[i];
+      b = stops[i + 1];
+      break;
+    }
+  }
+  const f = (t - a[0]) / (b[0] - a[0] || 1);
+  const c = a[1].map((v, i) => Math.round(v + (b[1][i] - v) * f));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+function globeData() {
+  const counts = getCountrySignups();
+  const max = Math.max(1, ...Object.values(counts));
+  const pts = [];
+  Object.entries(counts).forEach(([country, n]) => {
+    const c = countryCoords[country];
+    if (!c || n <= 0) return;
+    const t = n / max;
+    pts.push({
+      country,
+      count: n,
+      lat: c[0],
+      lng: c[1],
+      alt: 0.04 + Math.sqrt(t) * 0.6,
+      color: volColor(t),
+    });
+  });
+  return pts;
+}
+
+function hasWebGL() {
+  try {
+    const c = document.createElement("canvas");
+    return !!(
+      window.WebGLRenderingContext &&
+      (c.getContext("webgl") || c.getContext("experimental-webgl"))
+    );
+  } catch (e) {
+    return false;
+  }
+}
+
+function globeFallback() {
+  const block = document.querySelector(".globe-block");
+  if (block) block.style.display = "none"; // existing bar-chart view remains
+}
+
+function buildGlobe() {
+  const wrap = document.getElementById("globeWrap");
+  if (!wrap || globeInstance) return;
+  if (!hasWebGL()) {
+    globeFallback();
+    return;
+  }
+  if (window.Globe) {
+    initGlobe();
+  } else {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/globe.gl";
+    s.onload = initGlobe;
+    s.onerror = globeFallback;
+    document.head.appendChild(s);
+  }
+}
+
+function initGlobe() {
+  const wrap = document.getElementById("globeWrap");
+  if (!wrap || !window.Globe) {
+    globeFallback();
+    return;
+  }
+  const loading = document.getElementById("globeLoading");
+  if (loading) loading.remove();
+  const mobile = window.innerWidth <= 760;
+  try {
+    globeInstance = Globe()(wrap)
+      .width(wrap.clientWidth)
+      .height(wrap.clientHeight)
+      .backgroundColor("rgba(0,0,0,0)")
+      .globeImageUrl(
+        "https://unpkg.com/three-globe/example/img/earth-night.jpg",
+      )
+      .showAtmosphere(true)
+      .atmosphereColor("#00e5ff")
+      .atmosphereAltitude(0.16)
+      .pointsData(globeData())
+      .pointLat("lat")
+      .pointLng("lng")
+      .pointAltitude("alt")
+      .pointColor("color")
+      .pointRadius(mobile ? 0.55 : 0.42)
+      .pointResolution(mobile ? 6 : 12)
+      .pointsMerge(false)
+      .pointLabel(
+        (d) =>
+          `<div class="globe-tip"><b>${d.country}</b><br>${d.count.toLocaleString()} sign-ups</div>`,
+      );
+    const controls = globeInstance.controls();
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.55;
+    controls.enableZoom = true;
+    controls.minDistance = 180;
+    controls.maxDistance = 600;
+    globeInstance.pointOfView({ lat: 22, lng: 5, altitude: 2.05 }, 0);
+    if (mobile && globeInstance.renderer)
+      globeInstance
+        .renderer()
+        .setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    window.addEventListener("resize", () => {
+      if (globeInstance)
+        globeInstance.width(wrap.clientWidth).height(wrap.clientHeight);
+    });
+  } catch (e) {
+    console.warn("[cow] globe init failed:", e.message);
+    globeFallback();
+  }
+}
+
+function refreshGlobe() {
+  if (globeInstance) globeInstance.pointsData(globeData());
+}
+
 function initCoalition() {
   const { count, tally } = getTally();
   animCoalitionNum(count);
@@ -1536,6 +1688,7 @@ function submitCoalition() {
   animCoalitionNum(count);
   initCoalition();
   buildGlobalPriorities();
+  refreshGlobe();
   setTimeout(() => generateShareCard(), 500);
 }
 
@@ -1657,6 +1810,22 @@ window.addEventListener("load", () => {
   updateSummary();
   updateGate();
   generateLetter();
+  // lazy-build the 3D globe when the coalition section nears the viewport
+  const gblock = document.querySelector(".globe-block");
+  if (gblock) {
+    const gio = new IntersectionObserver(
+      (es) => {
+        es.forEach((e) => {
+          if (e.isIntersecting) {
+            buildGlobe();
+            gio.disconnect();
+          }
+        });
+      },
+      { rootMargin: "300px" },
+    );
+    gio.observe(gblock);
+  }
   // when live coalition data arrives from Supabase, refresh those views
   window.onCowHydrated = function () {
     const { count } = getTally();
@@ -1664,6 +1833,7 @@ window.addEventListener("load", () => {
     animHeroCoalition(count);
     initCoalition();
     buildGlobalPriorities();
+    refreshGlobe();
   };
   // animate impact GDP bar when scrolled into view
   const igf = document.getElementById("impactGdpFill");

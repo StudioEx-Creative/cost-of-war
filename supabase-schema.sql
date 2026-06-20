@@ -52,6 +52,15 @@ language sql security definer set search_path = public as $$
   from submissions where country = p_country group by 1 order by 2 desc;
 $$;
 
+-- ── sign-ups per country (drives the 3D globe bars) ──
+create or replace function public.signups_by_country()
+returns table (country text, signups bigint)
+language sql security definer set search_path = public as $$
+  select country, count(*) as signups
+  from submissions where country is not null group by 1;
+$$;
+
 grant execute on function public.coalition_count() to anon;
 grant execute on function public.priority_tally() to anon;
 grant execute on function public.priority_tally_by_country(text) to anon;
+grant execute on function public.signups_by_country() to anon;

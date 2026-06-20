@@ -31,14 +31,21 @@
 
   async function hydrate() {
     try {
-      const [{ data: count }, { data: tally }] = await Promise.all([
-        sb.rpc("coalition_count"),
-        sb.rpc("priority_tally"),
-      ]);
+      const [{ data: count }, { data: tally }, { data: byCountry }] =
+        await Promise.all([
+          sb.rpc("coalition_count"),
+          sb.rpc("priority_tally"),
+          sb.rpc("signups_by_country"),
+        ]);
       live.count = count ?? 0;
       live.tally = {};
       (tally || []).forEach((r) => {
         live.tally[r.issue] = r.votes;
+      });
+      // per-country counts drive the 3D globe (getCountrySignups reads this)
+      window.__cowCountrySignups = {};
+      (byCountry || []).forEach((r) => {
+        window.__cowCountrySignups[r.country] = r.signups;
       });
       live.ready = true;
       if (typeof window.onCowHydrated === "function") window.onCowHydrated();
