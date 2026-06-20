@@ -53,6 +53,8 @@
         ranking: d.ranking,
         country: d.country,
         email: d.email || null,
+        income: d.income ?? null,
+        tax_to_war: d.tax_to_war ?? null,
       });
       live.count += 1;
       (d.ranking || []).forEach((i) => {

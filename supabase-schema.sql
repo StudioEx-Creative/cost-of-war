@@ -11,6 +11,8 @@ create table if not exists public.submissions (
   ranking     int[]       not null,            -- issueData indexes, in priority order
   country     text,
   email       text,                            -- optional; collected for the waitlist
+  income      bigint,                          -- optional; from the tax slider
+  tax_to_war  bigint,                          -- optional; their tax toward military
   created_at  timestamptz not null default now()
 );
 

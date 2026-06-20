@@ -4346,3 +4346,101 @@ footer p {
   color: var(--muted);
   margin-top: 0.4rem;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ▓▓▓  2026 REVISION 7  ▓▓▓  hero itinerary (desktop) · logos · top-5
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── HERO logo (top-left) ── */
+.hero-logo {
+  position: absolute;
+  top: 1.4rem;
+  left: 1.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  z-index: 4;
+}
+.hero-logo img {
+  height: 30px;
+  width: auto;
+}
+.hero-logo-wm {
+  font-family: var(--fd);
+  font-size: 1.15rem;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+.hero-logo-wm b {
+  color: var(--red);
+  font-weight: 400;
+}
+
+/* ── STUDIO credit row (bottom) ── */
+.st-credit-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+.st-logo-img {
+  margin: 0;
+}
+.st-x {
+  font-family: var(--fd);
+  font-size: 1.7rem;
+  color: var(--ink-soft);
+}
+.st-wordmark {
+  font-family: var(--fd);
+  font-size: 2.1rem;
+  color: var(--red);
+  letter-spacing: 0.03em;
+}
+
+/* ── TOP-5 cards: clearer green fill ── */
+.ix.ix-top5 {
+  background: #0b2a1a;
+}
+
+/* ── DESKTOP: itinerary vertical, to the right of the centred title ── */
+@media (min-width: 1100px) {
+  .hero {
+    padding-right: 300px;
+  }
+  .hero-title {
+    font-size: clamp(4rem, 11vw, 8rem);
+  }
+  .itin {
+    position: absolute;
+    top: 50vh;
+    transform: translateY(-50%);
+    right: clamp(1rem, 3vw, 3.5rem);
+    width: 240px;
+    max-width: 240px;
+    margin: 0;
+    padding: 0;
+    z-index: 3;
+  }
+  .itin-eyebrow {
+    text-align: left;
+    margin-bottom: 0.8rem;
+  }
+  .itin-track {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+  }
+  .itin-item {
+    width: 100%;
+    min-width: 0;
+  }
+  .itin-split {
+    padding: 0.25rem 0;
+  }
+  .itin-split span {
+    border-left: none;
+    padding-left: 0;
+  }
+}

@@ -8,6 +8,7 @@ let allocated = 0;
 let ranking = [];
 let selectedCountry = null;
 let rankPrompted = false; // auto-open rank modal once the budget is full
+let userTax = { used: false, income: 0, toWar: 0, currency: "$" }; // tax slider
 
 // ═══ FORMAT ═════════════════════════════════════════════════════
 function fmt(b) {
@@ -1137,7 +1138,7 @@ function showCountry(name) {
   <div class="tax-intro">Slide to your income and see how much of your tax funds the military each year.</div>
   <div class="tax-slider-wrap">
     <div class="tax-income"><span class="tax-income-cur">${currencyFor(c[0])}</span><span id="taxIncomeVal">45,000</span><span class="tax-income-yr">/yr income</span></div>
-    <input type="range" class="tax-slider" id="taxSlider" min="0" max="1000" value="430" oninput="updateTaxSlider()" />
+    <input type="range" class="tax-slider" id="taxSlider" min="0" max="1000" value="430" oninput="updateTaxSlider(true)" />
     <div class="tax-slider-scale"><span>0</span><span>${currencyFor(c[0])}100k</span><span>${currencyFor(c[0])}1M</span><span>${currencyFor(c[0])}6M</span></div>
   </div>
   <div class="tax-result show" id="taxResult"></div>
@@ -1148,7 +1149,7 @@ function showCountry(name) {
       el.style.width = el.dataset.w + "%";
     });
   }, 100);
-  updateTaxSlider();
+  updateTaxSlider(false);
   generateLetter();
   const note = document.getElementById("letterContactNote");
   if (note && c[5])
@@ -1176,7 +1177,7 @@ function fmtMoney(n) {
   if (n >= 1000000) return (n / 1000000).toFixed(n >= 10000000 ? 0 : 1) + "M";
   return Math.round(n).toLocaleString();
 }
-function updateTaxSlider() {
+function updateTaxSlider(fromUser) {
   const slider = document.getElementById("taxSlider");
   const out = document.getElementById("taxResult");
   const incEl = document.getElementById("taxIncomeVal");
@@ -1188,6 +1189,14 @@ function updateTaxSlider() {
   const annualTax = income * effectiveTaxRate(income);
   const toWar = annualTax * milShareOfTax;
   const perDay = toWar / 365;
+  // capture for submission + letter (only flag 'used' on real interaction)
+  userTax = {
+    used: fromUser ? true : userTax.used,
+    income,
+    toWar: Math.round(toWar),
+    currency: cur,
+  };
+  if (fromUser) generateLetter();
   out.innerHTML = `
     <div class="tax-amt">${cur}${fmtMoney(toWar)}<span style="font-size:0.9rem;color:var(--ink-soft)"> /yr</span></div>
     <div class="tax-lbl">of your income tax goes to ${selectedCountry[0]}'s military each year, about <b>${cur}${perDay < 10 ? perDay.toFixed(2) : Math.round(perDay).toLocaleString()} a day</b>. That's ${(milShareOfTax * 100).toFixed(1)}% of the roughly ${cur}${fmtMoney(annualTax)} you'd pay in income tax.</div>
@@ -1242,6 +1251,12 @@ function generateLetter() {
         "[Once you have ranked your priorities, the total cost of your choices will be calculated here.]",
       );
 
+  // personal line, only if the user actually set their income on the slider
+  const personalLine =
+    userTax.used && countryDone
+      ? `\n\nThis is not abstract to me. By my own estimate, roughly ${userTax.currency}${userTax.toWar.toLocaleString()} of the income tax I pay each year goes toward military spending. I would rather it built something.`
+      : "";
+
   const letter = `Dear ${leader},
 
 My name is ${name}. I am writing to you not as a partisan voice, not as an ideologue, and not from a place of anger, but as a human being who has sat with some uncomfortable numbers and can no longer stay quiet about what they mean.
@@ -1256,7 +1271,7 @@ I have thought carefully about where I believe the world must focus its resource
 
 ${top5}
 
-${totalLine}
+${totalLine}${personalLine}
 
 I am not naive. I know reallocation at this scale requires political courage that is rarely rewarded in short electoral cycles. But the trajectory we are on, ever-increasing military budgets in a warming, hungering, fractured world, is not making any of us safer. It is buying time, not peace.
 
@@ -1486,7 +1501,14 @@ function submitCoalition() {
   }
   const email = (document.getElementById("coalitionEmail")?.value || "").trim();
   const country = selectedCountry ? selectedCountry[0] : "Unknown";
-  const data = { ranking: [...ranking], country, email, ts: Date.now() };
+  const data = {
+    ranking: [...ranking],
+    country,
+    email,
+    income: userTax.used ? userTax.income : null,
+    tax_to_war: userTax.used ? userTax.toWar : null,
+    ts: Date.now(),
+  };
   saveLocalSub(data);
   // live backend (shared) if configured; otherwise localStorage above
   if (window.__cowSubmit) {
