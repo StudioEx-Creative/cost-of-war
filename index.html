@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r6" />
+    <link rel="stylesheet" href="css/style.css?v=2026r7" />
   </head>
   <body>
     <canvas id="bg"></canvas>
@@ -63,6 +63,38 @@
         ▼ &nbsp; scroll to see the full picture &nbsp; ▼
       </div>
     </section>
+
+    <!-- ═══ ITINERARY / CONTENTS ═══ -->
+    <nav class="itin rv">
+      <div class="itin-eyebrow">The journey · about 5 minutes</div>
+      <div class="itin-track">
+        <a class="itin-item info" href="#machine">
+          <span class="itin-n">01</span>
+          <span class="itin-body"><span class="itin-t">The Machine</span><span class="itin-d">what the world spends</span></span>
+        </a>
+        <a class="itin-item info" href="#impact">
+          <span class="itin-n">02</span>
+          <span class="itin-body"><span class="itin-t">The Impact of War</span><span class="itin-d">what it truly costs</span></span>
+        </a>
+        <div class="itin-split"><span>▶ now it's your turn</span></div>
+        <a class="itin-item act" href="#haveyoursay">
+          <span class="itin-n">03</span>
+          <span class="itin-body"><span class="itin-t">Redistribute</span><span class="itin-d">fund the world instead</span></span>
+        </a>
+        <a class="itin-item act" href="#countrySection">
+          <span class="itin-n">04</span>
+          <span class="itin-body"><span class="itin-t">Your Country</span><span class="itin-d">your nation, your tax</span></span>
+        </a>
+        <a class="itin-item act" href="#letterSection">
+          <span class="itin-n">05</span>
+          <span class="itin-body"><span class="itin-t">The Letter</span><span class="itin-d">to your leader</span></span>
+        </a>
+        <a class="itin-item act" href="#coalitionSection">
+          <span class="itin-n">06</span>
+          <span class="itin-body"><span class="itin-t">The Coalition</span><span class="itin-d">add your voice</span></span>
+        </a>
+      </div>
+    </nav>
 
     <!-- ═══ CH 01 · THE MACHINE ═══ -->
     <div class="section" id="machine">
@@ -389,11 +421,15 @@
       <div class="hi-pies rv" id="hiPies"></div>
       <div class="human-strip rv" id="humanStrip"></div>
 
+      <div class="lives-title rv">244,700 lives lost to war this year</div>
+      <p class="lives-intro rv">
+        Every point of light below is one person killed in armed conflict in the
+        last twelve months. Lines mark every 50,000.
+      </p>
       <canvas id="livesCanvas"></canvas>
       <p class="lives-cap rv">
-        244,700 points of light: one for every person killed in armed conflict
-        in the last twelve months. ACLED, Nov 2024 – Nov 2025. Every number on
-        this page was a person who wanted to live.
+        ACLED, Nov 2024 – Nov 2025. Every number on this page was a person who
+        wanted to live.
       </p>
 
       <div class="continue-wrap">
@@ -875,9 +911,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r6"></script>
-    <script src="js/data.js?v=2026r6"></script>
-    <script src="js/backend.js?v=2026r6"></script>
-    <script src="js/main.js?v=2026r6"></script>
+    <script src="js/config.js?v=2026r7"></script>
+    <script src="js/data.js?v=2026r7"></script>
+    <script src="js/backend.js?v=2026r7"></script>
+    <script src="js/main.js?v=2026r7"></script>
   </body>
 </html>

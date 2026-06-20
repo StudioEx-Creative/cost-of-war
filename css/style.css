@@ -4088,3 +4088,261 @@ footer p {
 .letter-wrap {
   background: #f6f4ec;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ▓▓▓  2026 REVISION 6  ▓▓▓  itinerary · titles · slider · top-5
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── ITINERARY / CONTENTS ── */
+.itin {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem 1rem;
+  position: relative;
+  z-index: 2;
+}
+.itin-eyebrow {
+  font-family: var(--fm);
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.itin-track {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  align-items: stretch;
+}
+.itin-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  padding: 0.6rem 0.9rem;
+  min-width: 150px;
+  transition:
+    border-color 0.2s,
+    transform 0.15s,
+    background 0.2s;
+}
+.itin-item:hover {
+  transform: translateY(-2px);
+}
+.itin-n {
+  font-family: var(--fd);
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.itin-body {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.itin-t {
+  font-family: var(--fd);
+  font-size: 1.05rem;
+  color: #fff;
+}
+.itin-d {
+  font-family: var(--fm);
+  font-size: 0.5rem;
+  color: var(--ink-soft);
+}
+.itin-item.info {
+  border-left: 2px solid var(--red-dim);
+}
+.itin-item.info .itin-n {
+  color: var(--red);
+}
+.itin-item.info:hover {
+  border-color: var(--red-dim);
+  background: #0d0305;
+}
+.itin-item.act {
+  border-left: 2px solid var(--say-dim);
+}
+.itin-item.act .itin-n {
+  color: var(--say);
+}
+.itin-item.act:hover {
+  border-color: var(--say);
+  background: #041009;
+}
+.itin-split {
+  display: flex;
+  align-items: center;
+  font-family: var(--fm);
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--say);
+  padding: 0 0.4rem;
+}
+.itin-split span {
+  border-left: 1px dashed var(--say-dim);
+  padding-left: 0.7rem;
+}
+@media (max-width: 760px) {
+  .itin-track {
+    flex-direction: column;
+  }
+  .itin-item {
+    width: 100%;
+  }
+  .itin-split {
+    justify-content: center;
+    padding: 0.3rem 0;
+  }
+  .itin-split span {
+    border-left: none;
+    padding-left: 0;
+  }
+}
+
+/* ── LIVES artwork title ── */
+.lives-title {
+  font-family: var(--fd);
+  font-size: clamp(1.8rem, 4.5vw, 3rem);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: #fff;
+  text-align: center;
+  margin: 2.5rem 0 0.5rem;
+}
+.lives-intro {
+  font-family: var(--fm);
+  font-size: 0.6rem;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.7;
+  max-width: 480px;
+  margin: 0 auto 1.1rem;
+}
+
+/* ── TOP-5 cards: green badge + outline ── */
+.ix {
+  position: relative;
+}
+.ix.ix-top5 {
+  border-color: var(--say);
+  border-left-color: var(--say);
+  background: #04140c;
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.14);
+}
+.ix.ix-top5 .ix-chk {
+  background: var(--say);
+  border-color: var(--say);
+}
+.ix-rank {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--say);
+  color: #00160c;
+  font-family: var(--fd);
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 3px;
+  z-index: 2;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+}
+
+/* ── BIGGER, BOLDER WHITE CHART TITLES ── */
+.viz-h,
+.gap-title,
+.cc-extra-h,
+.tax-box-h,
+.global-prio-h,
+.sp-head,
+.bars-col .sp-head {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.14em;
+}
+.gap-title,
+.global-prio-h {
+  font-family: var(--fm);
+  text-transform: uppercase;
+}
+.tax-box-h.big {
+  font-family: var(--fd);
+  font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: #fff;
+}
+
+/* ── TAX SLIDER ── */
+.tax-intro {
+  font-family: var(--fm);
+  font-size: 0.62rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin: 0.3rem 0 1.2rem;
+}
+.tax-slider-wrap {
+  max-width: 460px;
+}
+.tax-income {
+  font-family: var(--fm);
+  font-size: 0.7rem;
+  color: var(--ink);
+  margin-bottom: 0.6rem;
+}
+.tax-income-cur,
+#taxIncomeVal {
+  font-family: var(--fd);
+  font-size: 1.6rem;
+  color: #fff;
+}
+.tax-income-yr {
+  color: var(--ink-soft);
+  margin-left: 0.3rem;
+}
+.tax-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #5a0000, var(--red));
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+.tax-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--red);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 45, 45, 0.5);
+}
+.tax-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--red);
+  cursor: pointer;
+}
+.tax-slider-scale {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--fm);
+  font-size: 0.5rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}

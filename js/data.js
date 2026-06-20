@@ -636,6 +636,38 @@ const taxBrackets = [
 ];
 const GOV_SPEND_GDP = 0.38; // government spending ≈ 38% of GDP (rough global avg)
 
+/* currency symbol per country for the tax slider (label only, no FX) */
+const CURRENCY = {
+  "United Kingdom": "£",
+  "United States": "$",
+  Canada: "$",
+  Australia: "$",
+  "New Zealand": "$",
+  Germany: "€",
+  France: "€",
+  Italy: "€",
+  Spain: "€",
+  Netherlands: "€",
+  Belgium: "€",
+  Ireland: "€",
+  Greece: "€",
+  Portugal: "€",
+  Austria: "€",
+  Finland: "€",
+  Japan: "¥",
+  China: "¥",
+  India: "₹",
+  Russia: "₽",
+  "South Korea": "₩",
+  Switzerland: "CHF ",
+  Sweden: "kr ",
+  Norway: "kr ",
+  Denmark: "kr ",
+  Brazil: "R$",
+  Israel: "₪",
+  Turkey: "₺",
+};
+
 /* ── SEEDED COALITION PRIORITY DATA (placeholder until backend) ─────
    A plausible global distribution of how people prioritise the 14 issues,
    as share of votes. Replaced by live data once the backend is wired

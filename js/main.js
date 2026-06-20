@@ -476,20 +476,23 @@ function drawLives() {
     x.fillStyle = `rgba(255,255,255,${a.toFixed(2)})`;
     x.fillRect(col * spacing, row * spacing, 1, 1);
   }
-  // scale gridlines every 50,000 deaths
+  // scale gridlines every 50,000 deaths — bright white, clearly legible
   const perRow = cols; // ≈ deaths per pixel-row
   x.textBaseline = "bottom";
-  x.font = "9px 'IBM Plex Mono', monospace";
+  x.font = "bold 13px 'IBM Plex Mono', monospace";
   for (let mark = 50000; mark < total; mark += 50000) {
     const y = Math.round((mark / perRow) * spacing) + 0.5;
-    x.strokeStyle = "rgba(255,45,45,0.55)";
-    x.lineWidth = 1;
+    x.strokeStyle = "rgba(255,255,255,0.9)";
+    x.lineWidth = 1.5;
     x.beginPath();
     x.moveTo(0, y);
     x.lineTo(w, y);
     x.stroke();
-    x.fillStyle = "rgba(255,120,120,0.9)";
-    x.fillText(mark.toLocaleString(), 2, y - 1);
+    const label = mark.toLocaleString();
+    x.fillStyle = "rgba(0,0,0,0.85)";
+    x.fillRect(0, y - 16, x.measureText(label).width + 8, 15);
+    x.fillStyle = "#fff";
+    x.fillText(label, 4, y - 2);
   }
 }
 
@@ -866,10 +869,11 @@ function resetAll() {
   sel.clear();
   allocated = 0;
   rankPrompted = false;
+  ranking = [];
   document.querySelectorAll(".ix").forEach((c) => {
-    c.classList.remove("ix-sel", "ix-cant");
-    const t = c.querySelector(".ix-cant-tag");
-    if (t) t.remove();
+    c.classList.remove("ix-sel", "ix-cant", "ix-top5");
+    c.querySelector(".ix-cant-tag")?.remove();
+    c.querySelector(".ix-rank")?.remove();
   });
   updateTracker();
   updateSummary();
@@ -1000,6 +1004,20 @@ function clearRankModal() {
 
 function saveRanking() {
   if (ranking.length === 0) return;
+  // highlight the chosen top 5 in green, distinct from the gold "funded" state
+  issueData.forEach((_, i) => {
+    const card = document.getElementById("ix" + i);
+    if (!card) return;
+    const pos = ranking.indexOf(i);
+    card.classList.toggle("ix-top5", pos > -1);
+    card.querySelector(".ix-rank")?.remove();
+    if (pos > -1) {
+      const rk = document.createElement("div");
+      rk.className = "ix-rank";
+      rk.textContent = "#" + (pos + 1);
+      card.prepend(rk);
+    }
+  });
   closeRankModal();
   generateLetter();
   buildGlobalPriorities();
@@ -1115,12 +1133,14 @@ function showCountry(name) {
   <div><div class="cc-extra-h">What people in ${c[0]} would fund first</div>${prioHTML}</div>
 </div>
 <div class="tax-box">
-  <div class="tax-box-h">Your personal share · how much of your tax funds the military</div>
-  <select class="tax-select" id="taxBracket" onchange="updateTaxToWar()">
-    <option value="">Select your income bracket…</option>
-    ${taxBrackets.map((b, i) => `<option value="${i}">${b.label} (~$${b.income.toLocaleString()}/yr)</option>`).join("")}
-  </select>
-  <div class="tax-result" id="taxResult"></div>
+  <div class="tax-box-h big">Where does your tax money go?</div>
+  <div class="tax-intro">Slide to your income and see how much of your tax funds the military each year.</div>
+  <div class="tax-slider-wrap">
+    <div class="tax-income"><span class="tax-income-cur">${currencyFor(c[0])}</span><span id="taxIncomeVal">45,000</span><span class="tax-income-yr">/yr income</span></div>
+    <input type="range" class="tax-slider" id="taxSlider" min="0" max="1000" value="430" oninput="updateTaxSlider()" />
+    <div class="tax-slider-scale"><span>0</span><span>${currencyFor(c[0])}100k</span><span>${currencyFor(c[0])}1M</span><span>${currencyFor(c[0])}6M</span></div>
+  </div>
+  <div class="tax-result show" id="taxResult"></div>
 </div>`;
   setTimeout(() => {
     box.querySelectorAll(".cc-bar-fill, .prio-bar-fill").forEach((el) => {
@@ -1128,33 +1148,50 @@ function showCountry(name) {
       el.style.width = el.dataset.w + "%";
     });
   }, 100);
+  updateTaxSlider();
   generateLetter();
   const note = document.getElementById("letterContactNote");
   if (note && c[5])
     note.innerHTML = `Find your representative: <a href="${c[5]}" target="_blank">${c[0]} government contact page ↗</a>`;
 }
 
-// ═══ PERSONAL TAX → WAR ═════════════════════════════════════════
-// Indicative: share of public spending that is military ≈ (mil % of GDP) /
-// (government spending as % of GDP). Applied to the chosen bracket's tax.
-function updateTaxToWar() {
-  const selEl = document.getElementById("taxBracket");
+// ═══ PERSONAL TAX → WAR (income slider) ═════════════════════════
+function currencyFor(country) {
+  return CURRENCY[country] || "$";
+}
+// non-linear slider 0..1000 → income: fine 0–200k (pos 0–700), coarse to 6M
+function sliderToIncome(pos) {
+  if (pos <= 700) return Math.round((pos / 700) * 200000);
+  return Math.round(200000 + ((pos - 700) / 300) * (6000000 - 200000));
+}
+// indicative progressive effective income-tax rate
+function effectiveTaxRate(income) {
+  if (income < 15000) return 0.08;
+  if (income < 50000) return 0.08 + ((income - 15000) / 35000) * 0.12; // →0.20
+  if (income < 150000) return 0.2 + ((income - 50000) / 100000) * 0.12; // →0.32
+  if (income < 500000) return 0.32 + ((income - 150000) / 350000) * 0.08; // →0.40
+  return 0.42;
+}
+function fmtMoney(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(n >= 10000000 ? 0 : 1) + "M";
+  return Math.round(n).toLocaleString();
+}
+function updateTaxSlider() {
+  const slider = document.getElementById("taxSlider");
   const out = document.getElementById("taxResult");
-  if (!selEl || !out || !selectedCountry) return;
-  const v = selEl.value;
-  if (v === "") {
-    out.classList.remove("show");
-    return;
-  }
-  const b = taxBrackets[+v];
-  const milShareOfTax = selectedCountry[3] / 100 / GOV_SPEND_GDP; // fraction
-  const annualTax = b.income * b.rate;
+  const incEl = document.getElementById("taxIncomeVal");
+  if (!slider || !out || !selectedCountry) return;
+  const cur = currencyFor(selectedCountry[0]);
+  const income = sliderToIncome(+slider.value);
+  if (incEl) incEl.textContent = fmtMoney(income);
+  const milShareOfTax = selectedCountry[3] / 100 / GOV_SPEND_GDP;
+  const annualTax = income * effectiveTaxRate(income);
   const toWar = annualTax * milShareOfTax;
   const perDay = toWar / 365;
   out.innerHTML = `
-    <div class="tax-amt">$${Math.round(toWar).toLocaleString()}<span style="font-size:0.9rem;color:var(--ink-soft)"> /yr</span></div>
-    <div class="tax-lbl">of your income tax goes to ${selectedCountry[0]}'s military each year, about <b>$${perDay.toFixed(2)} a day</b>. That's ${(milShareOfTax * 100).toFixed(1)}% of the roughly $${Math.round(annualTax).toLocaleString()} you pay in income tax.</div>
-    <div class="tax-note">Indicative estimate only. Assumes government spending ≈ ${Math.round(GOV_SPEND_GDP * 100)}% of GDP and a representative effective tax rate; not tax advice. Built to wire into real national tax data later.</div>`;
+    <div class="tax-amt">${cur}${fmtMoney(toWar)}<span style="font-size:0.9rem;color:var(--ink-soft)"> /yr</span></div>
+    <div class="tax-lbl">of your income tax goes to ${selectedCountry[0]}'s military each year, about <b>${cur}${perDay < 10 ? perDay.toFixed(2) : Math.round(perDay).toLocaleString()} a day</b>. That's ${(milShareOfTax * 100).toFixed(1)}% of the roughly ${cur}${fmtMoney(annualTax)} you'd pay in income tax.</div>
+    <div class="tax-note">Indicative estimate. Assumes government spending ≈ ${Math.round(GOV_SPEND_GDP * 100)}% of GDP and a representative progressive tax rate; not tax advice. Built to wire into real national tax data later.</div>`;
   out.classList.add("show");
 }
 
