@@ -20,4 +20,11 @@ window.COW_CONFIG = {
   SUPABASE_URL: "", // e.g. "https://abcdxyz.supabase.co"
   SUPABASE_ANON_KEY: "", // the public anon key
   SEED_COUNT: 2847, // base number shown before/under real submissions
+
+  // ── Phase 1 (optional, recommended before public promotion) ──
+  // When both are set, submissions go through the validated, captcha-gated
+  // `submit` edge function instead of inserting directly, and a Cloudflare
+  // Turnstile widget appears on the form. Leave blank to skip (Phase 0).
+  SUBMIT_URL: "", // e.g. "https://abcdxyz.supabase.co/functions/v1/submit"
+  TURNSTILE_SITE_KEY: "", // Cloudflare Turnstile site key (public)
 };

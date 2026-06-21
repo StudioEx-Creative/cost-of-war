@@ -51,6 +51,43 @@ keeps working on GitHub Pages (everything is client-side).
   `priority_tally_by_country`. Until there's real data they show a seeded
   placeholder distribution; once submissions arrive, real numbers blend in.
 
+## Phase 1 — hardening (recommended before public promotion)
+
+The code for this is already written and dormant. It activates only when you
+fill in the extra keys in `js/config.js` and deploy the function.
+
+**What it adds:** all submissions go through a validated, captcha-gated
+Supabase **Edge Function** (`supabase/functions/submit/`), and a Cloudflare
+**Turnstile** widget appears on the form. You then revoke direct anon insert so
+bots can't write junk with the public key.
+
+Steps:
+
+1. **Turnstile** — at [Cloudflare → Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile),
+   create a widget for your domain. Copy the **site key** (public) and the
+   **secret key**.
+2. **Deploy the function** (needs the [Supabase CLI](https://supabase.com/docs/guides/cli)):
+   ```bash
+   supabase login
+   supabase link --project-ref <your-project-ref>
+   supabase secrets set TURNSTILE_SECRET=<your-turnstile-secret>
+   supabase functions deploy submit --no-verify-jwt
+   ```
+   (`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically.)
+3. **Point the site at it** — in `js/config.js` set:
+   ```js
+   SUBMIT_URL: "https://<project-ref>.supabase.co/functions/v1/submit",
+   TURNSTILE_SITE_KEY: "0x4AAAA...your-site-key",
+   ```
+4. **Lock the table** — in the SQL editor, run the revoke line noted in
+   `supabase-schema.sql` (drops the "anon can insert" policy) so all writes
+   must go through the function.
+5. **Privacy** — fill in the placeholders in `privacy.html` (legal entity,
+   contact, storage region, retention) and have it reviewed.
+
+Until these keys are set, the site stays on the Phase 0 path (direct insert,
+no captcha). Leaving `SUBMIT_URL`/`TURNSTILE_SITE_KEY` blank is safe.
+
 ## How the code is wired
 
 - `js/config.js` — your keys (the only file you edit).

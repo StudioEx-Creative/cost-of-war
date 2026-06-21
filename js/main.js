@@ -1600,6 +1600,32 @@ function refreshGlobe() {
   if (globeInstance) globeInstance.pointsData(globeData());
 }
 
+// ═══ TURNSTILE (anti-bot, only when a site key is configured) ═══
+let turnstileWidgetId = null;
+function initTurnstile() {
+  const key = window.__cowTurnstileKey;
+  const box = document.getElementById("turnstileBox");
+  if (!key || !box) return; // not configured → no captcha (Phase 0)
+  box.style.display = "block";
+  const render = () => {
+    if (!window.turnstile) return;
+    turnstileWidgetId = window.turnstile.render(box, {
+      sitekey: key,
+      theme: "dark",
+    });
+  };
+  if (window.turnstile) {
+    render();
+  } else {
+    const s = document.createElement("script");
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    s.async = true;
+    s.defer = true;
+    s.onload = render;
+    document.head.appendChild(s);
+  }
+}
+
 function initCoalition() {
   const { count, tally } = getTally();
   animCoalitionNum(count);
@@ -1651,7 +1677,24 @@ function submitCoalition() {
     alert("Fund some causes and rank them first, then add your voice.");
     return;
   }
-  const email = (document.getElementById("coalitionEmail")?.value || "").trim();
+  let email = (document.getElementById("coalitionEmail")?.value || "").trim();
+  const consent = document.getElementById("coalitionConsent");
+  // email is personal data → only store it with explicit consent
+  if (email && consent && !consent.checked) {
+    alert(
+      "To share your email, tick the consent box — or leave the email blank to take part anonymously.",
+    );
+    return;
+  }
+  // captcha (only when configured)
+  let token = null;
+  if (window.__cowTurnstileKey && window.turnstile) {
+    token = window.turnstile.getResponse(turnstileWidgetId);
+    if (!token) {
+      alert("Please complete the quick verification below the email box.");
+      return;
+    }
+  }
   const country = selectedCountry ? selectedCountry[0] : "Unknown";
   const data = {
     ranking: [...ranking],
@@ -1664,7 +1707,7 @@ function submitCoalition() {
   saveLocalSub(data);
   // live backend (shared) if configured; otherwise localStorage above
   if (window.__cowSubmit) {
-    window.__cowSubmit(data);
+    window.__cowSubmit(data, token);
   }
   if (email) {
     const fd = new FormData();
@@ -1802,6 +1845,7 @@ window.addEventListener("load", () => {
   buildCountrySelect();
   initCoalition();
   buildGlobalPriorities();
+  initTurnstile();
   initScrollProgress();
   initReveal();
   rszFlow();

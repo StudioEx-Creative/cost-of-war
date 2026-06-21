@@ -39,6 +39,12 @@ Full step-by-step is already in **[BACKEND.md](BACKEND.md)**.
 
 ## Phase 1 — Harden: anti-abuse, validation, privacy · before promoting
 
+> **Status: the code is written and dormant** (edge function, DB constraints,
+> Turnstile wiring, consent UI, privacy page). It activates when Daniel adds
+> the Turnstile keys + `SUBMIT_URL` and deploys the function — see
+> [BACKEND.md](BACKEND.md) "Phase 1". The remaining tasks below are Daniel's
+> provisioning steps + the privacy-policy wording.
+
 ### 1a. Stop bot/spam writes
 Move inserts behind a **Supabase Edge Function** + a **Cloudflare Turnstile**
 check (free, privacy-friendly captcha), then revoke direct anon insert.

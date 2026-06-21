@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r9" />
+    <link rel="stylesheet" href="css/style.css?v=2026r10" />
   </head>
   <body>
     <canvas id="bg"></canvas>
@@ -713,6 +713,17 @@
                     id="coalitionEmail"
                     placeholder="Your email (optional, for Six Degrees waitlist & Blueprint updates)"
                   />
+                  <label class="consent-row">
+                    <input type="checkbox" id="coalitionConsent" />
+                    <span
+                      >Email me Blueprint &amp; Six Degrees updates. I agree to the
+                      <a href="privacy.html" target="_blank" rel="noopener"
+                        >privacy policy</a
+                      >. (Leave the box and email blank to take part
+                      anonymously.)</span
+                    >
+                  </label>
+                  <div id="turnstileBox" class="turnstile-box"></div>
                   <button
                     class="btn btn-t"
                     style="width: 100%; margin-top: 0.6rem"
@@ -797,6 +808,7 @@
           >Share this artwork</a
         >
         <a href="mailto:hello@studioex.co">Contact</a>
+        <a href="privacy.html">Privacy</a>
       </div>
     </div>
 
@@ -932,9 +944,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r9"></script>
-    <script src="js/data.js?v=2026r9"></script>
-    <script src="js/backend.js?v=2026r9"></script>
-    <script src="js/main.js?v=2026r9"></script>
+    <script src="js/config.js?v=2026r10"></script>
+    <script src="js/data.js?v=2026r10"></script>
+    <script src="js/backend.js?v=2026r10"></script>
+    <script src="js/main.js?v=2026r10"></script>
   </body>
 </html>

@@ -54,21 +54,52 @@
     }
   }
 
-  window.__cowSubmit = async function (d) {
+  // expose so the form can show a Turnstile widget when required
+  window.__cowTurnstileKey = cfg.TURNSTILE_SITE_KEY || "";
+
+  window.__cowSubmit = async function (d, turnstileToken) {
     try {
-      await sb.from("submissions").insert({
-        ranking: d.ranking,
-        country: d.country,
-        email: d.email || null,
-        income: d.income ?? null,
-        tax_to_war: d.tax_to_war ?? null,
-      });
+      if (cfg.SUBMIT_URL) {
+        // Phase 1: validated + captcha-gated edge function
+        const res = await fetch(cfg.SUBMIT_URL, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            apikey: cfg.SUPABASE_ANON_KEY,
+            Authorization: "Bearer " + cfg.SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            ranking: d.ranking,
+            country: d.country,
+            email: d.email || null,
+            income: d.income ?? null,
+            tax_to_war: d.tax_to_war ?? null,
+            turnstileToken: turnstileToken || null,
+          }),
+        });
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          console.warn("[cow] submit rejected:", j.error || res.status);
+          return false;
+        }
+      } else {
+        // Phase 0: direct insert with the anon key
+        await sb.from("submissions").insert({
+          ranking: d.ranking,
+          country: d.country,
+          email: d.email || null,
+          income: d.income ?? null,
+          tax_to_war: d.tax_to_war ?? null,
+        });
+      }
       live.count += 1;
       (d.ranking || []).forEach((i) => {
         live.tally[i] = (live.tally[i] || 0) + 1;
       });
+      return true;
     } catch (e) {
       console.warn("[cow] submit failed:", e.message);
+      return false;
     }
   };
 

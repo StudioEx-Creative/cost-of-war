@@ -4504,3 +4504,86 @@ footer p {
     height: clamp(300px, 46vh, 420px);
   }
 }
+
+/* ── CONSENT + TURNSTILE (coalition form) ── */
+.consent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  font-family: var(--fm);
+  font-size: 0.55rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.consent-row input {
+  margin-top: 0.15rem;
+  accent-color: var(--say);
+  flex-shrink: 0;
+}
+.consent-row a {
+  color: var(--say);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--say-dim);
+}
+.turnstile-box {
+  display: none;
+  margin-top: 0.7rem;
+}
+
+/* ── PRIVACY PAGE ── */
+.legal-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 4rem 2rem 5rem;
+  position: relative;
+  z-index: 2;
+}
+.legal-wrap h1 {
+  font-family: var(--fd);
+  font-size: clamp(2.2rem, 6vw, 3.5rem);
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+.legal-wrap .legal-sub {
+  font-family: var(--fm);
+  font-size: 0.6rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.1em;
+  margin-bottom: 2rem;
+}
+.legal-wrap h2 {
+  font-family: var(--fm);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--say);
+  margin: 2rem 0 0.6rem;
+}
+.legal-wrap p,
+.legal-wrap li {
+  font-family: var(--fb);
+  font-size: 0.82rem;
+  color: var(--ink);
+  line-height: 1.8;
+}
+.legal-wrap ul {
+  padding-left: 1.1rem;
+  margin: 0.4rem 0;
+}
+.legal-wrap a {
+  color: var(--say);
+}
+.legal-wrap .legal-flag {
+  color: var(--amber);
+}
+.legal-back {
+  font-family: var(--fm);
+  font-size: 0.62rem;
+  color: var(--say);
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 2rem;
+}
