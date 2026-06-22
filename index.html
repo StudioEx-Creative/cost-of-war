@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r10" />
+    <link rel="stylesheet" href="css/style.css?v=2026r11" />
   </head>
   <body>
     <canvas id="bg"></canvas>
@@ -39,29 +39,12 @@
         war takes, in money, in futures, and in lives, then asks one question:
         what if we chose differently?
       </p>
-      <div class="hero-counters">
-        <div class="hc">
-          <div class="hc-lbl">global military spending · 2025</div>
-          <div class="hc-num red" id="hDef">—</div>
-          <div class="hc-sub">SIPRI · April 2026</div>
+      <div class="live-spend hero-centre">
+        <div class="live-spend-lbl">
+          Since you opened this page, the world has spent
         </div>
-        <div class="hc">
-          <div class="hc-lbl">total economic impact of violence</div>
-          <div class="hc-num amber" id="hTotal">—</div>
-          <div class="hc-sub">
-            IEP Global Peace Index 2026 · 10.5% of global GDP
-          </div>
-        </div>
-        <div class="hc">
-          <div class="hc-lbl">people who have chosen differently</div>
-          <div class="hc-num say" id="hCoalition">—</div>
-          <div class="hc-sub">and added their voice to the coalition</div>
-        </div>
-      </div>
-      <div class="live-spend">
-        Since you opened this page, the world has spent<br /><b id="liveSpend"
-          >$0</b
-        ><br />on its militaries
+        <b id="liveSpend">$0</b>
+        <div class="live-spend-foot">on its militaries</div>
       </div>
       <div class="scroll-cue">
         ▼ &nbsp; scroll to see the full picture &nbsp; ▼
@@ -70,7 +53,6 @@
 
     <!-- ═══ ITINERARY / CONTENTS ═══ -->
     <nav class="itin rv">
-      <div class="itin-eyebrow">The journey · about 5 minutes</div>
       <div class="itin-track">
         <a class="itin-item info" href="#machine">
           <span class="itin-n">01</span>
@@ -78,24 +60,11 @@
         </a>
         <a class="itin-item info" href="#impact">
           <span class="itin-n">02</span>
-          <span class="itin-body"><span class="itin-t">The Impact of War</span><span class="itin-d">what it truly costs</span></span>
+          <span class="itin-body"><span class="itin-t">The Impact</span><span class="itin-d">what it truly costs</span></span>
         </a>
-        <div class="itin-split"><span>▶ now it's your turn</span></div>
         <a class="itin-item act" href="#haveyoursay">
-          <span class="itin-n">03</span>
-          <span class="itin-body"><span class="itin-t">Redistribute</span><span class="itin-d">fund the world instead</span></span>
-        </a>
-        <a class="itin-item act" href="#countrySection">
-          <span class="itin-n">04</span>
-          <span class="itin-body"><span class="itin-t">Your Country</span><span class="itin-d">your nation, your tax</span></span>
-        </a>
-        <a class="itin-item act" href="#letterSection">
-          <span class="itin-n">05</span>
-          <span class="itin-body"><span class="itin-t">The Letter</span><span class="itin-d">to your leader</span></span>
-        </a>
-        <a class="itin-item act" href="#coalitionSection">
-          <span class="itin-n">06</span>
-          <span class="itin-body"><span class="itin-t">The Coalition</span><span class="itin-d">add your voice</span></span>
+          <span class="itin-n">▾</span>
+          <span class="itin-body"><span class="itin-t">Then it's your turn</span><span class="itin-d">redistribute · your country · your letter</span></span>
         </a>
       </div>
     </nav>
@@ -224,8 +193,17 @@
         </div>
       </div>
 
+      <!-- the most screenshot-able line on the page: militaries vs. hunger -->
+      <div class="hunger-stat rv">
+        <div class="hunger-mult">72×</div>
+        <div class="hunger-copy">
+          more is spent on the world's militaries each year than the
+          <b>~$40&nbsp;billion</b> it would take to <b>end world hunger</b>.
+        </div>
+      </div>
+
       <!-- comparative stats -->
-      <div class="stat-row rv">
+      <div class="stat-row duo rv">
         <div class="statc">
           <div class="statc-num red">$679B</div>
           <div class="statc-lbl">
@@ -252,13 +230,6 @@
               style="color: var(--link)"
               >SIPRI ↗</a
             >
-          </div>
-        </div>
-        <div class="statc">
-          <div class="statc-num">72×</div>
-          <div class="statc-lbl">
-            more is spent on militaries each year than the ~$40B it would take
-            to end world hunger.
           </div>
         </div>
       </div>
@@ -431,17 +402,20 @@
         last twelve months. Lines mark every 50,000.
       </p>
       <canvas id="livesCanvas"></canvas>
-      <p class="lives-cap rv">
-        ACLED, Nov 2024 – Nov 2025. Every number on this page was a person who
-        wanted to live.
-      </p>
+      <p class="lives-cap rv">ACLED, Nov 2024 – Nov 2025.</p>
+    </div>
 
-      <div class="continue-wrap">
+    <!-- the emotional peak — a full breath, alone -->
+    <div class="lives-breath">
+      <p class="rv">
+        Every number on this page was a person<br />who wanted to live.
+      </p>
+      <div class="lives-breath-cta rv">
         <button
           class="continue-btn say"
           onclick="document.getElementById('haveyoursay').scrollIntoView({behavior:'smooth'})"
         >
-          Now: what would you do about it? <span class="ar">▾</span>
+          When you're ready <span class="ar">▾</span>
         </button>
       </div>
     </div>
@@ -485,29 +459,33 @@
       </div>
     </div>
 
-    <!-- ═══ REDISTRIBUTION (combined) ═══ -->
+    <!-- ═══ REDISTRIBUTION (combined select = rank) ═══ -->
     <div class="redist" id="redistribute">
-      <div class="fund-cta">Click what to fund with global defence</div>
+      <div class="fund-cta">Spend the $2.89 trillion on the world instead</div>
       <p class="fund-cta-sub">
-        Tap any cause below. The military budget in the centre drains as you
-        spend it on the world instead. Fund as many as the $2.89 trillion will
-        cover, then save your choices.
+        Tap the causes you'd fund, <b>in order of priority — your most urgent
+        first</b>. The order you choose them in is your ranking. Watch the
+        military budget in the centre drain as you go.
       </p>
       <div class="redist-layout">
         <div class="issue-col" id="issueColL"></div>
         <div class="redist-canvas-col">
           <canvas id="flowC"></canvas>
-          <div class="redist-prompt" id="redistPrompt">
-            ← Click a cause to fund it →
-          </div>
+          <div class="redist-prompt" id="redistPrompt">$2.89T to redistribute</div>
         </div>
         <div class="issue-col" id="issueColR"></div>
       </div>
 
       <div class="summary" style="border-top: none; padding-top: 2rem">
-        <div class="sum-big" id="sumBig">
-          Select issues to begin<br />redistributing the budget
+        <!-- live ordered priorities + reorder (the ranking, folded in) -->
+        <div class="prio-panel" id="prioPanel">
+          <div class="prio-head">
+            Your priorities, in order
+            <span class="prio-hint">use ↑ ↓ to reorder · your top priority first</span>
+          </div>
+          <div class="prio-list" id="prioList"></div>
         </div>
+        <div class="sum-big" id="sumBig"></div>
         <div class="sum-stmt" id="sumStmt">
           The money to solve these crises already exists in the world's annual
           military budgets. This is not a question of financial capacity. It is
@@ -518,30 +496,15 @@
           <button class="btn-cta-out" onclick="openShare()">↗ Share this</button>
         </div>
         <div class="continue-wrap" style="padding-top: 0.5rem">
-          <button class="continue-btn" id="toRankBtn" onclick="openRankModal()">
-            Save my choices &amp; rank them <span class="ar">▾</span>
+          <button
+            class="continue-btn"
+            id="toCountryBtn"
+            onclick="goToCountryFromRedist()"
+            disabled
+            style="opacity: 0.4"
+          >
+            Continue → Your country <span class="ar">▾</span>
           </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ RANKING OVERLAY (modal) ═══ -->
-    <div class="rank-ov" id="rankOv">
-      <div class="rank-modal">
-        <h3>Choose your priorities, 1 to 5</h3>
-        <p class="rm-sub">
-          You've allocated the budget. To go further and learn more, choose
-          your most important priorities. Click your funded causes in order,
-          most urgent first. They write your letter and join the global
-          coalition. <span class="rm-count" id="rmCount">0 of 5 ranked</span>
-        </p>
-        <div class="rm-list" id="rmList"></div>
-        <div class="rm-actions">
-          <button class="continue-btn" id="rmSaveBtn" onclick="saveRanking()">
-            Save &amp; continue to your country →
-          </button>
-          <button class="btn-cta-out" onclick="clearRankModal()">↺ Clear</button>
-          <span class="rm-close" onclick="closeRankModal()">Close</span>
         </div>
       </div>
     </div>
@@ -550,16 +513,15 @@
     <div class="gated locked" id="journeyGate">
       <div class="gate-msg">
         <div class="gate-msg-inner">
-          <div class="gate-lock">🔒</div>
           <p>
-            To go further, choose where you'd fund above.<br />Select at least
-            one issue to unlock your letter and join the coalition.
+            Your letter writes itself from your choices.<br />Make one above to
+            continue.
           </p>
           <button
             class="continue-btn say"
             onclick="document.getElementById('redistribute').scrollIntoView({behavior:'smooth'})"
           >
-            ▲ Make your choice
+            ▲ Choose what you'd fund
           </button>
         </div>
       </div>
@@ -652,12 +614,19 @@
               ></div>
             </div>
             <div class="letter-contact-note" id="letterContactNote"></div>
-            <div class="journey-actions" style="margin-top: 1.5rem">
-              <button class="btn btn-t" onclick="goToCoalition()">
-                Continue → Join the coalition
+            <!-- single primary action: send it to your representative -->
+            <div class="letter-primary">
+              <button class="continue-btn say" onclick="sendToRepresentative()">
+                ✉ Send this letter to your representative
               </button>
-              <button class="btn btn-w" onclick="generateShareCard()">
+            </div>
+            <div class="letter-secondary">
+              <button class="link-btn" onclick="generateShareCard()">
                 Generate shareable card
+              </button>
+              <span class="link-sep">·</span>
+              <button class="link-btn" onclick="goToCoalition()">
+                Skip to the coalition
               </button>
             </div>
           </div>
@@ -750,34 +719,24 @@
 
     <!-- ═══ DISCLAIMER ═══ -->
     <div class="disclaimer">
-      <div class="disc-box">
-        <div class="disc-title">⚠ Important disclaimer</div>
+      <details class="disc-box">
+        <summary class="disc-title">Methodology &amp; disclaimer ▾</summary>
         <div class="disc-text">
-          This is a work of data art and advocacy, not a policy document. The
-          reality of global defence, conflict, and humanitarian funding is
-          vastly more nuanced than any single visualisation can capture. Defence
-          spending serves multiple purposes: deterrence, disaster response,
-          peacekeeping, and geopolitical stability, and many military personnel
-          serve with genuine dedication and sacrifice. The cost figures for
-          solving global issues are estimates derived from peer-reviewed and UN
-          agency sources, representing additional investment gaps above current
-          spending. Many of these issues are deeply interrelated and cannot be
-          solved by money alone: governance, political will, institutional
-          capacity, and cultural change are equally critical.
-          <br /><br />
-          This visualisation is intended to provoke reflection on the scale of
-          global resource allocation, not to offer simple solutions to complex
-          problems. We have not invented or inflated any figure; all data was
-          verified against primary sources in June 2026. We acknowledge the
-          immense complexity faced by policymakers navigating genuine security
-          threats.
-          <br /><br />
-          <em
-            >The world is not simple. But some of its choices are starker than
-            we allow ourselves to see.</em
-          >
+          A work of data art and advocacy, not a policy document. Defence
+          spending serves real purposes — deterrence, disaster response,
+          peacekeeping — and many who serve do so with dedication. The
+          investment-gap figures are estimates from peer-reviewed and UN-agency
+          sources; these crises need political will and capacity, not money
+          alone. We have not invented or inflated any figure; all data was
+          verified against primary sources in June 2026.
         </div>
-      </div>
+      </details>
+    </div>
+
+    <!-- the genuine last word -->
+    <div class="closing-line">
+      The world is not simple.<br />But some of its choices are starker than we
+      allow ourselves to see.
     </div>
 
     <!-- ═══ STUDIO ═══ -->
@@ -944,9 +903,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r10"></script>
-    <script src="js/data.js?v=2026r10"></script>
-    <script src="js/backend.js?v=2026r10"></script>
-    <script src="js/main.js?v=2026r10"></script>
+    <script src="js/config.js?v=2026r11"></script>
+    <script src="js/data.js?v=2026r11"></script>
+    <script src="js/backend.js?v=2026r11"></script>
+    <script src="js/main.js?v=2026r11"></script>
   </body>
 </html>

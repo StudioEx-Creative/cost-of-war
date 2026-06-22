@@ -535,24 +535,28 @@ function buildIssues() {
     });
     (i < half ? colL : colR).appendChild(card);
   });
+  // teach the gesture: gently pulse the first card until first interaction
+  document.getElementById("ix0")?.classList.add("ix-pulse");
 }
 
-// ═══ TOGGLE ═════════════════════════════════════════════════════
+// ═══ SELECT = RANK ══════════════════════════════════════════════
+// Selection order IS the priority ranking. `ranking` stays the ordered
+// array of issue indices the letter / share card / submission depend on;
+// `sel` is its Set mirror, used by the pie + tracker.
 function toggleIssue(i) {
+  document
+    .querySelectorAll(".ix-pulse")
+    .forEach((c) => c.classList.remove("ix-pulse"));
   const card = document.getElementById("ix" + i);
   if (card && card.classList.contains("ix-cant") && !sel.has(i)) return;
   if (sel.has(i)) {
     sel.delete(i);
-    if (card) {
-      card.classList.remove("ix-sel");
-      burst(card, "-" + fmt(issueData[i].cost), "#ff2d2d");
-    }
+    ranking = ranking.filter((x) => x !== i);
+    if (card) burst(card, "removed", "#ff2d2d");
   } else {
     sel.add(i);
-    if (card) {
-      card.classList.add("ix-sel");
-      burst(card, "+" + fmt(issueData[i].cost), "#f5c542");
-    }
+    ranking.push(i); // selection order = priority order
+    if (card) burst(card, "#" + ranking.length, "#00ff88");
   }
   allocated = 0;
   sel.forEach((x) => (allocated += issueData[x].cost));
@@ -560,26 +564,7 @@ function toggleIssue(i) {
   updateCant();
   updateSummary();
   updateGate();
-  maybePromptRank();
-}
-
-// When the budget is effectively spent (nothing left can be funded),
-// invite the user to rank their priorities, once.
-function maybePromptRank() {
-  if (rankPrompted || sel.size === 0) return;
-  const remaining = DEFENCE - allocated;
-  let minUnfunded = Infinity;
-  issueData.forEach((iss, i) => {
-    if (!sel.has(i)) minUnfunded = Math.min(minUnfunded, iss.cost);
-  });
-  const budgetFull = remaining < minUnfunded; // can't add anything more
-  if (budgetFull) {
-    rankPrompted = true;
-    setTimeout(() => {
-      if (!document.getElementById("rankOv").classList.contains("open"))
-        openRankModal();
-    }, 700);
-  }
+  renderPriorities();
 }
 
 function updateCant() {
@@ -632,7 +617,7 @@ function updateSummary() {
   const sb = document.getElementById("sumBig"),
     ss = document.getElementById("sumStmt");
   if (sel.size === 0) {
-    sb.innerHTML = "Select issues to begin<br>redistributing the budget";
+    sb.innerHTML = "";
     ss.textContent =
       "The money to solve these crises already exists in the world's annual military budgets. This is not a question of financial capacity. It is a question of political will.";
   } else if (pct <= 0) {
@@ -640,7 +625,7 @@ function updateSummary() {
     ss.textContent = `You allocated ${fmt(allocated)}. The military budget is exhausted, and ${sel.size} of humanity's greatest challenges are addressed from a single year of weapons spending. The money was always there.`;
   } else {
     sb.innerHTML = `<span class="g">${fmt(allocated)}</span> redirected to ${sel.size} issue${sel.size !== 1 ? "s" : ""}.<br><span class="r">${fmt(rem)}</span> still goes to weapons.`;
-    ss.textContent = `After funding ${sel.size} global crisis${sel.size !== 1 ? "es" : ""}, ${fmt(rem)}, ${pct.toFixed(0)}% of the military budget, remains. It continues to flow into weapons. This is the geometry of our current priorities.`;
+    ss.textContent = `After funding ${sel.size} global cris${sel.size !== 1 ? "es" : "is"}, ${fmt(rem)}, ${pct.toFixed(0)}% of the military budget, remains. It continues to flow into weapons. This is the geometry of our current priorities.`;
   }
 }
 
@@ -652,13 +637,13 @@ function updateGate() {
   if (sel.size >= 1) {
     gate.classList.remove("locked");
     if (prompt) {
-      prompt.textContent = "✓ Unlocked. Now rank your priorities below ▾";
+      prompt.textContent = `✓ ${fmt(allocated)} redirected · ${ranking.length} ${ranking.length === 1 ? "priority" : "priorities"}`;
       prompt.classList.add("go");
     }
   } else {
     gate.classList.add("locked");
     if (prompt) {
-      prompt.textContent = "Select issues on either side to fund them";
+      prompt.textContent = "$2.89T to redistribute";
       prompt.classList.remove("go");
     }
   }
@@ -869,7 +854,6 @@ function drawFlow() {
 function resetAll() {
   sel.clear();
   allocated = 0;
-  rankPrompted = false;
   ranking = [];
   document.querySelectorAll(".ix").forEach((c) => {
     c.classList.remove("ix-sel", "ix-cant", "ix-top5");
@@ -879,6 +863,7 @@ function resetAll() {
   updateTracker();
   updateSummary();
   updateGate();
+  renderPriorities();
 }
 
 // ═══ SHARE ══════════════════════════════════════════════════════
@@ -943,85 +928,73 @@ function initScrollProgress() {
   );
 }
 
-// ═══ RANKING ════════════════════════════════════════════════════
-// ═══ RANKING MODAL ══════════════════════════════════════════════
-// Ranks the funded (selected) issues, in priority order, up to 5.
-function openRankModal() {
-  if (sel.size === 0) {
-    document
-      .getElementById("redistribute")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    const p = document.getElementById("redistPrompt");
-    if (p) {
-      p.textContent = "← Fund at least one cause first";
-      p.classList.add("go");
-    }
-    return;
-  }
-  // keep only ranks that are still funded
-  ranking = ranking.filter((i) => sel.has(i));
-  buildRankModalList();
-  document.getElementById("rankOv").classList.add("open");
-}
-
-function closeRankModal() {
-  document.getElementById("rankOv").classList.remove("open");
-}
-
-function buildRankModalList() {
-  const list = document.getElementById("rmList");
-  if (!list) return;
-  const funded = [...sel];
-  list.innerHTML = "";
-  funded.forEach((idx) => {
-    const iss = issueData[idx];
-    const pos = ranking.indexOf(idx);
-    const item = document.createElement("div");
-    item.className = "rm-item" + (pos > -1 ? " picked" : "");
-    item.innerHTML = `<div class="rm-rank">${pos > -1 ? pos + 1 : "·"}</div><div class="rm-dot" style="background:${iss.color}"></div><div class="rm-name">${iss.name}</div><div class="rm-cost">${fmt(iss.cost)}/yr</div>`;
-    item.addEventListener("click", () => toggleRank(idx));
-    list.appendChild(item);
-  });
-  const cap = Math.min(5, funded.length);
-  const cnt = document.getElementById("rmCount");
-  if (cnt) cnt.textContent = `${ranking.length} of ${cap} ranked`;
-  const btn = document.getElementById("rmSaveBtn");
-  if (btn) {
-    btn.disabled = ranking.length === 0;
-    btn.style.opacity = ranking.length === 0 ? ".4" : "1";
-  }
-}
-
-function toggleRank(idx) {
-  if (ranking.includes(idx)) ranking = ranking.filter((x) => x !== idx);
-  else if (ranking.length < 5) ranking.push(idx);
-  buildRankModalList();
-}
-
-function clearRankModal() {
-  ranking = [];
-  buildRankModalList();
-}
-
-function saveRanking() {
-  if (ranking.length === 0) return;
-  // highlight the chosen top 5 in green, distinct from the gold "funded" state
+// ═══ PRIORITIES (live ranking = selection order) ════════════════
+// Renders rank badges on the cards + the ordered "your priorities" list
+// with reorder controls. `ranking` is the single source of truth.
+function renderPriorities() {
+  // rank-number badge + green highlight on each selected card, in order
   issueData.forEach((_, i) => {
     const card = document.getElementById("ix" + i);
     if (!card) return;
     const pos = ranking.indexOf(i);
+    card.classList.toggle("ix-sel", pos > -1);
     card.classList.toggle("ix-top5", pos > -1);
     card.querySelector(".ix-rank")?.remove();
     if (pos > -1) {
       const rk = document.createElement("div");
       rk.className = "ix-rank";
-      rk.textContent = "#" + (pos + 1);
+      rk.textContent = pos + 1;
       card.prepend(rk);
     }
   });
-  closeRankModal();
+
+  // the ordered list + reorder controls
+  const list = document.getElementById("prioList");
+  const panel = document.getElementById("prioPanel");
+  const cont = document.getElementById("toCountryBtn");
+  if (panel) panel.classList.toggle("show", ranking.length > 0);
+  if (cont) {
+    cont.disabled = ranking.length === 0;
+    cont.style.opacity = ranking.length === 0 ? "0.4" : "1";
+  }
+  if (list) {
+    list.innerHTML = ranking
+      .map(
+        (idx, p) =>
+          `<div class="prio-item">
+             <span class="prio-rank">${p + 1}</span>
+             <span class="prio-dot" style="background:${issueData[idx].color}"></span>
+             <span class="prio-name">${issueData[idx].name}</span>
+             <span class="prio-cost">${fmt(issueData[idx].cost)}/yr</span>
+             <span class="prio-moves">
+               <button class="prio-mv" title="Move up" onclick="moveRank(${idx},-1)" ${p === 0 ? "disabled" : ""}>↑</button>
+               <button class="prio-mv" title="Move down" onclick="moveRank(${idx},1)" ${p === ranking.length - 1 ? "disabled" : ""}>↓</button>
+               <button class="prio-rm" title="Remove" onclick="toggleIssue(${idx})">✕</button>
+             </span>
+           </div>`,
+      )
+      .join("");
+  }
   generateLetter();
   buildGlobalPriorities();
+}
+
+function moveRank(idx, dir) {
+  const p = ranking.indexOf(idx);
+  const q = p + dir;
+  if (p < 0 || q < 0 || q >= ranking.length) return;
+  [ranking[p], ranking[q]] = [ranking[q], ranking[p]];
+  renderPriorities();
+}
+
+// continue: confirm the ordered list, then flow to the country step
+function goToCountryFromRedist() {
+  if (ranking.length === 0) {
+    document
+      .getElementById("redistribute")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   document
     .getElementById("countrySection")
     ?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1327,6 +1300,39 @@ function tweetLetter() {
   );
 }
 
+// the single primary action: copy the letter + open the rep's contact page
+function sendToRepresentative() {
+  const out = document.getElementById("letterOutput");
+  const txt = out?.innerText || out?.dataset?.plain || "";
+  const open = () => {
+    const url = selectedCountry && selectedCountry[5];
+    if (url) {
+      window.open(url, "_blank", "noopener");
+    } else {
+      const sub = encodeURIComponent(
+        "On the allocation of our national budget, a citizen's priorities",
+      );
+      window.open(
+        `mailto:?subject=${sub}&body=${encodeURIComponent(txt)}`,
+        "_blank",
+      );
+    }
+  };
+  if (navigator.clipboard && txt) {
+    navigator.clipboard.writeText(txt).then(
+      () => {
+        alert(
+          "Your letter is copied to the clipboard. We'll open your representative's contact page — paste it in.",
+        );
+        open();
+      },
+      () => open(),
+    );
+  } else {
+    open();
+  }
+}
+
 function goToCountry() {
   document
     .getElementById("countrySection")
@@ -1600,6 +1606,29 @@ function refreshGlobe() {
   if (globeInstance) globeInstance.pointsData(globeData());
 }
 
+// peak-end reward: fly to the user's country and pulse a ring on their pin
+function rewardGlobe(country) {
+  if (!globeInstance) return;
+  const c = countryCoords[country];
+  if (!c) return;
+  try {
+    globeInstance.controls().autoRotate = false;
+    globeInstance.pointOfView({ lat: c[0], lng: c[1], altitude: 1.7 }, 1400);
+    globeInstance
+      .ringsData([{ lat: c[0], lng: c[1] }])
+      .ringColor(() => (t) => `rgba(0,255,136,${1 - t})`)
+      .ringMaxRadius(7)
+      .ringPropagationSpeed(3)
+      .ringRepeatPeriod(650);
+    setTimeout(() => {
+      if (globeInstance) {
+        globeInstance.ringsData([]);
+        globeInstance.controls().autoRotate = true;
+      }
+    }, 6500);
+  } catch (e) {}
+}
+
 // ═══ TURNSTILE (anti-bot, only when a site key is configured) ═══
 let turnstileWidgetId = null;
 function initTurnstile() {
@@ -1645,9 +1674,23 @@ function initCoalition() {
   }, 700);
 }
 
+const COALITION_REVEAL = 10000; // below this, a raw count reads as "few care"
 function animCoalitionNum(target) {
   const el = document.getElementById("coalitionNum");
   if (!el) return;
+  const suffix = el.parentElement?.querySelector(".coalition-suffix");
+  // Keep the headline qualitative until the coalition is large enough that the
+  // number itself is persuasive — a low count works against the cause.
+  if (target < COALITION_REVEAL) {
+    el.classList.add("soft");
+    el.textContent = "A growing coalition";
+    if (suffix)
+      suffix.textContent =
+        "of people choosing where the money should go — add your voice.";
+    return;
+  }
+  el.classList.remove("soft");
+  if (suffix) suffix.textContent = "people have made their choice";
   const s = performance.now(),
     from = SEED_COUNT,
     dur = 1800;
@@ -1732,7 +1775,8 @@ function submitCoalition() {
   initCoalition();
   buildGlobalPriorities();
   refreshGlobe();
-  setTimeout(() => generateShareCard(), 500);
+  rewardGlobe(country);
+  setTimeout(() => generateShareCard(), 1600);
 }
 
 // ═══ SHARE CARD ═════════════════════════════════════════════════
@@ -1766,7 +1810,13 @@ function generateShareCard() {
   if (statL)
     statL.innerHTML = `Total annual cost:<br>${total}<br><br>${Math.round((totalB / DEFENCE) * 100)}% of the global military budget`;
   const statR = document.getElementById("scStatRight");
-  if (statR) statR.textContent = `${count.toLocaleString()}\npeople\nhave chosen`;
+  // keep the share card qualitative until the coalition is large enough that
+  // the number itself helps the cause (see COALITION_REVEAL)
+  if (statR)
+    statR.textContent =
+      count < COALITION_REVEAL
+        ? `join a\ngrowing\ncoalition`
+        : `${count.toLocaleString()}\npeople\nhave chosen`;
 
   const cl = document.getElementById("scCountryLine");
   if (cl) cl.textContent = `From ${country} · ${spend} annual military spend`;
@@ -1823,12 +1873,6 @@ function shareCardTo(type) {
 
 // ═══ INIT ═══════════════════════════════════════════════════════
 window.addEventListener("load", () => {
-  const { count: coCount } = getTally();
-  setTimeout(() => {
-    cntTo(document.getElementById("hDef"), 2887, 2200);
-    cntTo(document.getElementById("hTotal"), 21810, 3000);
-    animHeroCoalition(coCount);
-  }, 450);
   tickLiveSpend();
   buildSpendDonut();
   buildViolencePie();

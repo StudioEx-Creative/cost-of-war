@@ -4587,3 +4587,333 @@ footer p {
   display: inline-block;
   margin-bottom: 2rem;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ▓▓▓  2026 REVISION 9  ▓▓▓  UX / journey overhaul
+   Hero as one held breath · lives-breath · select=rank panel ·
+   card affordance · single letter CTA · tightened close · 72× feature
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── P1 · HERO: the live counter is the centrepiece ── */
+.live-spend.hero-centre {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 2.6rem auto 0;
+  max-width: 680px;
+  text-align: center;
+  line-height: 1.2;
+}
+.live-spend-lbl,
+.live-spend-foot {
+  font-family: var(--fm);
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.live-spend.hero-centre b {
+  display: block;
+  font-family: var(--fd);
+  font-size: clamp(3.4rem, 12vw, 7rem);
+  line-height: 1;
+  color: var(--red);
+  letter-spacing: 0.02em;
+  margin: 0.45rem 0 0.3rem;
+  font-weight: 400;
+  text-shadow: 0 0 40px rgba(255, 45, 45, 0.42);
+  font-variant-numeric: tabular-nums;
+}
+
+/* desktop: keep the itinerary a calm horizontal nav BELOW the hero,
+   not an absolute rail overlapping it — the hero stays one held breath */
+@media (min-width: 1100px) {
+  .hero {
+    padding-right: 0;
+  }
+  .itin {
+    position: static;
+    transform: none;
+    top: auto;
+    right: auto;
+    width: auto;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem 1rem;
+    z-index: 2;
+  }
+  .itin-track {
+    flex-direction: row;
+    gap: 0.7rem;
+  }
+  .itin-item {
+    width: auto;
+    min-width: 210px;
+  }
+}
+
+/* ── COPY MOVE 1 · the 72× line, made screenshot-able ── */
+.hunger-stat {
+  max-width: 900px;
+  margin: 2.6rem auto 0.5rem;
+  text-align: center;
+  border: 1px solid #1a0505;
+  background: linear-gradient(
+    180deg,
+    rgba(22, 0, 0, 0.5),
+    rgba(8, 0, 0, 0.15)
+  );
+  padding: clamp(1.8rem, 5vw, 3.4rem) 1.4rem;
+}
+.hunger-mult {
+  font-family: var(--fd);
+  font-size: clamp(4.6rem, 16vw, 11rem);
+  line-height: 0.88;
+  color: var(--red);
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 46px rgba(255, 45, 45, 0.4);
+}
+.hunger-copy {
+  font-family: var(--fb);
+  font-weight: 300;
+  font-size: clamp(1rem, 2.7vw, 1.65rem);
+  line-height: 1.5;
+  color: var(--text);
+  max-width: 24ch;
+  margin: 0.7rem auto 0;
+}
+.hunger-copy b {
+  color: #fff;
+  font-weight: 600;
+}
+.stat-row.duo {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (max-width: 620px) {
+  .stat-row.duo {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── P2 · the lives-lost line gets a full viewport, alone ── */
+.lives-breath {
+  text-align: center;
+  padding-bottom: 16vh;
+}
+.lives-breath > p {
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1.5rem;
+  font-family: var(--fd);
+  font-size: clamp(2rem, 6vw, 4.6rem);
+  line-height: 1.18;
+  letter-spacing: 0.01em;
+  color: #fff;
+}
+.lives-breath-cta {
+  margin-top: 4vh; /* below the fold of the 100vh line → found on scroll */
+}
+
+/* ── P3 · cause-card affordance + teaching pulse (select = rank) ── */
+.ix:hover:not(.ix-cant):not(.ix-sel) {
+  border-color: var(--say);
+  border-left-color: var(--say);
+  background: #07140d;
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.12);
+}
+@keyframes ixTeach {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 136, 0);
+    border-left-color: var(--border);
+  }
+  50% {
+    box-shadow: 0 0 16px 2px rgba(0, 255, 136, 0.28);
+    border-left-color: var(--say);
+  }
+}
+.ix.ix-pulse {
+  animation: ixTeach 1.9s ease-in-out infinite;
+}
+
+/* ── P3 · the live ordered priorities panel (the folded-in ranking) ── */
+.prio-panel {
+  display: none;
+  max-width: 580px;
+  margin: 0 auto 1.4rem;
+  padding: 1rem 1.1rem 1.1rem;
+  border: 1px solid var(--say-dim);
+  background: #04140c;
+  border-radius: 4px;
+}
+.prio-panel.show {
+  display: block;
+}
+.prio-head {
+  font-family: var(--fd);
+  font-size: 1.2rem;
+  color: #fff;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.prio-hint {
+  font-family: var(--fm);
+  font-size: 0.5rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+.prio-list {
+  margin-top: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.prio-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.6rem;
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid var(--say-dim);
+}
+.prio-rank {
+  font-family: var(--fd);
+  font-size: 1.15rem;
+  line-height: 1;
+  color: var(--say);
+  width: 1.4rem;
+  flex-shrink: 0;
+  text-align: center;
+}
+.prio-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.prio-name {
+  font-family: var(--fb);
+  font-size: 0.74rem;
+  color: var(--text);
+  flex: 1;
+}
+.prio-cost {
+  font-family: var(--fm);
+  font-size: 0.58rem;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+.prio-moves {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+.prio-mv,
+.prio-rm {
+  width: 1.55rem;
+  height: 1.55rem;
+  font-family: var(--fm);
+  font-size: 0.72rem;
+  line-height: 1;
+  background: transparent;
+  border: 1px solid var(--say-dim);
+  color: var(--say);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+.prio-mv:hover:not(:disabled),
+.prio-rm:hover {
+  background: var(--say-dim);
+}
+.prio-mv:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.prio-rm {
+  color: var(--red);
+  border-color: var(--red-dim);
+}
+.prio-rm:hover {
+  background: var(--red-dim);
+}
+.redist-prompt.go {
+  color: var(--say);
+}
+
+/* ── P5 · letter: one primary action, the rest demoted ── */
+.letter-primary {
+  text-align: center;
+  margin: 1.7rem 0 0.7rem;
+}
+.letter-secondary {
+  text-align: center;
+  margin-bottom: 0.4rem;
+}
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-family: var(--fm);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0.2rem 0.35rem;
+  transition: color 0.15s;
+}
+.link-btn:hover {
+  color: var(--text);
+}
+.link-sep {
+  color: var(--border);
+  font-family: var(--fm);
+  font-size: 0.62rem;
+}
+
+/* ── P7 · disclaimer collapses; the close stands alone ── */
+.disc-box summary.disc-title {
+  cursor: pointer;
+  margin-bottom: 0;
+  list-style: none;
+  user-select: none;
+}
+.disc-box summary.disc-title::-webkit-details-marker {
+  display: none;
+}
+.disc-box[open] summary.disc-title {
+  margin-bottom: 0.8rem;
+}
+.closing-line {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 6vh 2rem 9vh;
+  text-align: center;
+  font-family: var(--fd);
+  font-size: clamp(1.6rem, 4vw, 3rem);
+  line-height: 1.26;
+  letter-spacing: 0.01em;
+  color: #fff;
+  position: relative;
+  z-index: 2;
+}
+
+/* ── COPY MOVE 2 · qualitative coalition headline until ~10k ── */
+.coalition-num.soft {
+  font-size: clamp(1.9rem, 5.5vw, 3rem);
+  line-height: 1.12;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ix.ix-pulse {
+    animation: none;
+  }
+}
