@@ -17,8 +17,8 @@
    schema). Never paste the service_role key here.
    ═══════════════════════════════════════════════════════════════════ */
 window.COW_CONFIG = {
-  SUPABASE_URL: "", // e.g. "https://abcdxyz.supabase.co"
-  SUPABASE_ANON_KEY: "", // the public anon key
+  SUPABASE_URL: "https://hvxcttvulzfnlbnlqjml.supabase.co", // e.g. "https://abcdxyz.supabase.co"
+  SUPABASE_ANON_KEY: "sb_publishable_Vtl6oHuS8b5HNXnwXHQI_w_DJDRGBXX", // the public anon key
   SEED_COUNT: 2847, // base number shown before/under real submissions
 
   // ── Phase 1 (optional, recommended before public promotion) ──
