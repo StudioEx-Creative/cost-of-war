@@ -18,10 +18,14 @@ function fmt(b) {
 }
 
 // ═══ BG CANVAS ══════════════════════════════════════════════════
-const bgEl = document.getElementById("bg"),
-  bgX = bgEl.getContext("2d");
-let bgPs = [];
+// The drifting particle field is retired: the dossier's grid + grain +
+// vignette sit on top of it, so it was invisible while still clearing and
+// redrawing 90 arcs every single frame, forever, competing for rAF with the
+// smooth-scroll and the scroll-driven timelines. The canvas element stays
+// (other code resizes against it) but nothing animates on it.
+const bgEl = document.getElementById("bg");
 function rsz() {
+  if (!bgEl) return;
   bgEl.width = innerWidth;
   bgEl.height = innerHeight;
 }
@@ -32,37 +36,6 @@ window.addEventListener("resize", () => {
   drawDotField();
   drawLives();
 });
-for (let i = 0; i < 90; i++)
-  bgPs.push({
-    x: Math.random() * innerWidth,
-    y: Math.random() * innerHeight,
-    r: Math.random() * 1.1 + 0.2,
-    sx: (Math.random() - 0.5) * 0.22,
-    sy: (Math.random() - 0.5) * 0.22,
-    c:
-      Math.random() > 0.7
-        ? "255,45,45"
-        : Math.random() > 0.5
-          ? "0,229,255"
-          : "120,80,200",
-    a: Math.random() * 0.1 + 0.02,
-  });
-(function bgL() {
-  bgX.clearRect(0, 0, bgEl.width, bgEl.height);
-  bgPs.forEach((p) => {
-    p.x += p.sx;
-    p.y += p.sy;
-    if (p.x < 0 || p.x > bgEl.width || p.y < 0 || p.y > bgEl.height) {
-      p.x = Math.random() * bgEl.width;
-      p.y = Math.random() * bgEl.height;
-    }
-    bgX.beginPath();
-    bgX.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    bgX.fillStyle = `rgba(${p.c},${p.a})`;
-    bgX.fill();
-  });
-  requestAnimationFrame(bgL);
-})();
 
 // ═══ LIVE SPEND TICKER ══════════════════════════════════════════
 const pageOpened = Date.now();

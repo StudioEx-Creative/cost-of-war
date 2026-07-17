@@ -4629,7 +4629,8 @@ footer p {
   letter-spacing: 0.02em;
   margin: 0.45rem 0 0.3rem;
   font-weight: 400;
-  text-shadow: 0 0 40px rgba(255, 59, 48, 0.42);
+  /* PERF: small blur — this number repaints every frame */
+  text-shadow: 0 0 14px rgba(255, 59, 48, 0.5);
   font-variant-numeric: tabular-nums;
 }
 

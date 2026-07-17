@@ -119,7 +119,10 @@
   // ── Lenis smooth scroll drives ScrollTrigger ──
   var LenisCtor = window.Lenis || window.lenis;
   if (LenisCtor) {
-    var lenis = new LenisCtor({ lerp: 0.1, smoothWheel: true });
+    // lerp is the feel dial. 0.1 drags noticeably behind the trackpad and
+    // reads as lag; 0.2 keeps the glide but stays attached to the input.
+    // Touch is left on native scroll — smoothing a finger always feels wrong.
+    var lenis = new LenisCtor({ lerp: 0.2, smoothWheel: true, smoothTouch: false });
     lenis.on("scroll", function () {
       ScrollTrigger.update();
     });
@@ -209,6 +212,7 @@
         end: cfg.end,
         pin: cfg.stage,
         scrub: true,
+        anticipatePin: 1, // avoids the one-frame jump as the pin engages
       },
     });
     // 1 · the war figure counts up, alone
@@ -321,6 +325,7 @@
           end: px(1.4),
           pin: "#matchcutStage",
           scrub: true,
+          anticipatePin: 1,
         },
       })
       .to(".mc-circle", { scale: 0.05, rotate: 90, opacity: 0, ease: "power2.in", duration: 0.4 }, 0)

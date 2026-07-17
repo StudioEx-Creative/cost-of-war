@@ -35,6 +35,9 @@
   background-size: 44px 44px;
   will-change: transform;
 }
+/* PERF: no mix-blend-mode here. A blend mode on a fixed, full-viewport layer
+   forces the compositor to re-blend the entire screen every scroll frame and
+   kills GPU scrolling outright. Plain alpha reads the same and stays cheap. */
 .fx-scan {
   position: absolute;
   inset: 0;
@@ -42,9 +45,8 @@
     0deg,
     rgba(0, 0, 0, 0) 0,
     rgba(0, 0, 0, 0) 2px,
-    rgba(0, 0, 0, 0.16) 3px
+    rgba(0, 0, 0, 0.14) 3px
   );
-  mix-blend-mode: multiply;
   opacity: 0.5;
 }
 .fx-grain {
@@ -79,8 +81,10 @@
   letter-spacing: 0.18em;
   color: var(--ink-soft);
   text-transform: uppercase;
-  background: rgba(10, 11, 13, 0.72);
-  backdrop-filter: blur(6px);
+  /* PERF: no backdrop-filter. Two fixed, full-width bars each running a live
+     backdrop blur re-rasterise on every scroll frame — one of the most
+     expensive things you can ask of a compositor. Opaque bar, same read. */
+  background: rgba(10, 11, 13, 0.92);
   will-change: opacity;
 }
 .hud-top {
@@ -260,6 +264,9 @@ body.dossier .hero-title .hero-title-em {
   justify-content: flex-end;
   z-index: 2;
   clip-path: inset(0 0 0 calc(var(--split, 100) * 1%));
+  /* PERF: promote so the wipe is composited rather than repainting a
+     full-viewport radial gradient on every scrub frame */
+  will-change: clip-path;
 }
 .half-build .mh-inner {
   text-align: right;
@@ -289,11 +296,11 @@ body.dossier .hero-title .hero-title-em {
 }
 .mh-fig.war {
   color: var(--war);
-  text-shadow: 0 0 40px rgba(255, 59, 48, 0.3);
+  text-shadow: 0 0 14px rgba(255, 59, 48, 0.45); /* PERF: odometer repaints per frame */
 }
 .mh-fig.build {
   color: var(--build);
-  text-shadow: 0 0 40px rgba(49, 208, 214, 0.3);
+  text-shadow: 0 0 14px rgba(49, 208, 214, 0.45); /* PERF: odometer repaints per frame */
 }
 .mh-desc {
   font-family: var(--fm);
