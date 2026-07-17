@@ -21,9 +21,9 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r17" />
+    <link rel="stylesheet" href="css/style.css?v=2026r19" />
     <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r17" />
+    <link rel="stylesheet" href="css/dossier.css?v=2026r19" />
   </head>
   <body class="dossier">
     <canvas id="bg"></canvas>
@@ -397,6 +397,34 @@
         </div>
       </div>
 
+      <!-- ══ THE SETBACK CLOCK ══ scrolling DOWN runs time backwards: money
+           rebuilds buildings, not the 77 years of development a war erased. -->
+      <section class="scene setback" id="setback">
+        <div class="stage" id="setbackStage">
+          <div class="sb-inner">
+            <div class="sb-kicker"><span class="tick">▚</span> GAZA · HUMAN DEVELOPMENT INDEX</div>
+            <div class="sb-year" id="sbYear">2025</div>
+            <div class="sb-lost"><span id="sbLost">0</span> YEARS ERASED</div>
+            <div class="sb-track">
+              <div class="sb-fill" id="sbFill"></div>
+              <div class="sb-ticks" id="sbTicks" aria-hidden="true"></div>
+            </div>
+            <p class="sb-cap">
+              Money can rebuild a building. It cannot rebuild time. The UN
+              estimates one war set human development in Gaza back
+              <b>77 years</b> — to 1948, before almost anyone alive today was
+              born.
+              <a
+                href="https://news.un.org/en/story/2026/04/1167336"
+                target="_blank"
+                rel="noopener"
+                >UN 2026 ↗</a
+              >
+            </p>
+          </div>
+        </div>
+      </section>
+
       <!-- ── DISPLACEMENT ── -->
       <div class="rv">
         <span class="bigsub-tag">The people scattered</span>
@@ -432,9 +460,26 @@
               >
             </div>
           </div>
-          <canvas id="dotField" style="margin-top: 1.2rem"></canvas>
-          <div class="dot-legend" id="dotLegend"></div>
-          <div class="dot-cap">Each dot represents 100,000 people.</div>
+          <!-- ══ THE BORDER ══ most of the displaced never cross one -->
+          <div class="border-viz" id="borderViz">
+            <canvas id="borderCanvas"></canvas>
+            <div class="bd-labels" aria-hidden="true">
+              <div class="bd-side bd-home">
+                TRAPPED INSIDE<br />THEIR OWN COUNTRY<br /><b>68.7M</b>
+              </div>
+              <div class="bd-side bd-fled">
+                FLED ACROSS<br />A BORDER<br /><b>49.1M</b>
+              </div>
+            </div>
+            <div class="bd-count">
+              <span id="bdCount">0</span> forcibly displaced ·
+              <b id="bdChildren">0</b> of them children
+            </div>
+            <div class="dot-cap">
+              Most people driven from home never even leave their own country.
+              1 mark ≈ 200,000 people. UNHCR 2026.
+            </div>
+          </div>
         </div>
         <div class="rv rv-d1">
           <div class="gap-box">
@@ -1007,14 +1052,14 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r17"></script>
-    <script src="js/data.js?v=2026r17"></script>
-    <script src="js/backend.js?v=2026r17"></script>
-    <script src="js/main.js?v=2026r17"></script>
+    <script src="js/config.js?v=2026r19"></script>
+    <script src="js/data.js?v=2026r19"></script>
+    <script src="js/backend.js?v=2026r19"></script>
+    <script src="js/main.js?v=2026r19"></script>
     <!-- scroll engine + the dossier choreography, layered on top of main.js.
          Native scroll only — no smooth-scroll library (see js/dossier.js). -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="js/dossier.js?v=2026r17"></script>
+    <script src="js/dossier.js?v=2026r19"></script>
   </body>
 </html>

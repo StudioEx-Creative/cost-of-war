@@ -839,3 +839,180 @@ body.no-motion .mf-unit {
 body.no-motion .mf-morph .stage {
   min-height: 60vh;
 }
+
+/* ═══════════════ THE SETBACK CLOCK (destruction) ═══════════════
+   Scrolling down runs the year BACKWARDS — money rebuilds buildings, not
+   the 77 years of human development a war erased. */
+.setback {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+.setback .stage {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.sb-inner {
+  max-width: 760px;
+  text-align: center;
+  padding: 0 1.4rem;
+}
+.sb-kicker {
+  font-family: var(--fm);
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 1rem;
+}
+.sb-kicker .tick {
+  color: var(--red);
+}
+.sb-year {
+  font-family: var(--fd);
+  font-size: clamp(5rem, 20vw, 15rem);
+  line-height: 0.86;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.sb-lost {
+  font-family: var(--fm);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin: 0.4rem 0 2rem;
+}
+.sb-lost span {
+  font-variant-numeric: tabular-nums;
+}
+.sb-track {
+  position: relative;
+  height: 2px;
+  background: var(--border);
+  margin: 0 auto 2.4rem;
+  max-width: 640px;
+}
+.sb-fill {
+  position: absolute;
+  top: 0;
+  right: 0; /* drains from the present leftward, into the past */
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--red-dim), var(--red));
+  box-shadow: 0 0 8px rgba(255, 59, 48, 0.5);
+}
+.sb-ticks {
+  position: absolute;
+  inset: 0;
+}
+.sb-tick {
+  position: absolute;
+  top: -4px;
+  width: 1px;
+  height: 10px;
+  background: var(--ink-faint, #565b61);
+}
+.sb-tick span {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--fm);
+  font-size: 0.5rem;
+  color: var(--ink-soft);
+}
+.sb-cap {
+  font-family: var(--fm);
+  font-weight: 300;
+  font-size: clamp(0.72rem, 1.4vw, 0.9rem);
+  line-height: 1.85;
+  color: var(--ink-soft);
+  max-width: 52ch;
+  margin: 0 auto;
+}
+.sb-cap b {
+  color: var(--red);
+  font-weight: 600;
+}
+.sb-cap a {
+  color: var(--link);
+  white-space: nowrap;
+}
+
+/* ═══════════════ THE BORDER (displacement) ═══════════════
+   The 68.7M internally displaced pile against a line only the 49.1M
+   refugees cross — most never escape their own country. */
+.border-viz {
+  position: relative;
+  margin-top: 1.4rem;
+}
+#borderCanvas {
+  width: 100%;
+  height: clamp(240px, 34vh, 340px);
+  display: block;
+}
+.bd-labels {
+  position: absolute;
+  top: 0.6rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  padding: 0 0.4rem;
+}
+.bd-side {
+  font-family: var(--fm);
+  font-size: 0.5rem;
+  letter-spacing: 0.16em;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.bd-side.bd-home {
+  text-align: left;
+  border-left: 2px solid #4f7cff;
+  padding-left: 0.5rem;
+}
+.bd-side.bd-fled {
+  text-align: right;
+  border-right: 2px solid var(--build);
+  padding-right: 0.5rem;
+}
+.bd-side b {
+  font-family: var(--fd);
+  font-size: 1.3rem;
+  color: #fff;
+  display: inline-block;
+  margin-top: 0.2rem;
+}
+.bd-count {
+  font-family: var(--fm);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  margin-top: 0.7rem;
+}
+.bd-count span,
+.bd-count b {
+  font-family: var(--fd);
+  font-size: 1.4rem;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.bd-count b {
+  color: var(--amber);
+}
+
+/* no-motion rest states */
+body.no-motion .setback .stage {
+  min-height: 60vh;
+}
+body.no-motion .sb-fill {
+  width: 100%;
+}

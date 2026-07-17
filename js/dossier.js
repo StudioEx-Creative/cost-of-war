@@ -105,6 +105,47 @@
         d.className = "mf-unit";
         convR.appendChild(d);
       }
+    // setback clock + border rest at their end figures
+    var sy = $("#sbYear");
+    if (sy) sy.textContent = "1948";
+    var sl = $("#sbLost");
+    if (sl) sl.textContent = "77";
+    var bc = $("#bdCount");
+    if (bc) bc.textContent = "117.8M";
+    var bch = $("#bdChildren");
+    if (bch) bch.textContent = "45M";
+    var bcv = $("#borderCanvas");
+    if (bcv) {
+      var cx = bcv.getContext("2d"),
+        dpr = window.devicePixelRatio || 1,
+        w = (bcv.width = bcv.offsetWidth * dpr),
+        h = (bcv.height = bcv.offsetHeight * dpr),
+        bx = w * 0.56;
+      cx.strokeStyle = "rgba(232,230,224,0.5)";
+      cx.lineWidth = dpr;
+      cx.beginPath();
+      cx.moveTo(bx, 0);
+      cx.lineTo(bx, h);
+      cx.stroke();
+      var place = function (n, x0, x1, col) {
+        for (var i = 0; i < n; i++) {
+          cx.fillStyle = col;
+          cx.globalAlpha = 0.75;
+          cx.beginPath();
+          cx.arc(
+            x0 + Math.random() * (x1 - x0),
+            10 * dpr + Math.random() * (h - 20 * dpr),
+            1.7 * dpr,
+            0,
+            6.2832,
+          );
+          cx.fill();
+        }
+      };
+      place(344, 12 * dpr, bx - 20 * dpr, "#4f7cff");
+      place(246, bx + 24 * dpr, w - 12 * dpr, "#31d0d6");
+      cx.globalAlpha = 1;
+    }
     return; // no ScrollTrigger at all
   }
 
@@ -372,6 +413,147 @@
           if (gEl) gEl.textContent = "+" + g.v.toFixed(1) + "%";
         },
       }, 0);
+  }
+
+  // ══ THE SETBACK CLOCK (destruction) ══ scroll DOWN → the year runs
+  // BACKWARDS. Money rebuilds buildings; it can't rebuy the 77 years of human
+  // development a war erased.
+  if ($("#setback")) {
+    var NOW_YEAR = 2025,
+      BACK_YEARS = 77; // 2025 → 1948, UN estimate for Gaza
+    var ticksEl = $("#sbTicks");
+    if (ticksEl)
+      for (var yr = 1950; yr <= 2020; yr += 10) {
+        var frac = (NOW_YEAR - yr) / BACK_YEARS; // 0 at 2025 (right) → 1 at 1948
+        var tk = document.createElement("div");
+        tk.className = "sb-tick";
+        tk.style.right = frac * 100 + "%";
+        tk.innerHTML = "<span>" + yr + "</span>";
+        ticksEl.appendChild(tk);
+      }
+    var yEl = $("#sbYear"),
+      lEl = $("#sbLost"),
+      fEl = $("#sbFill"),
+      sbP = { p: 0 };
+    gsap
+      .timeline({
+        scrollTrigger: {
+          trigger: "#setback",
+          start: "top top",
+          end: px(0.9),
+          pin: "#setbackStage",
+          scrub: true,
+        },
+      })
+      .to(sbP, {
+        p: 1,
+        ease: "none",
+        duration: 1,
+        onUpdate: function () {
+          var lost = Math.round(BACK_YEARS * sbP.p);
+          if (yEl) yEl.textContent = NOW_YEAR - lost;
+          if (lEl) lEl.textContent = lost;
+          if (fEl) fEl.style.width = sbP.p * 100 + "%";
+        },
+      });
+  }
+
+  // ══ THE BORDER (displacement) ══ the 68.7M displaced INSIDE their own country
+  // pile against a line only the 49.1M refugees cross. Most never escape.
+  var bCanvas = $("#borderCanvas");
+  if (bCanvas) {
+    var bctx = bCanvas.getContext("2d");
+    var HOME = 344, // 68.7M ÷ 200k
+      FLED = 246; // 49.1M ÷ 200k
+    var bMarks = null;
+    var buildBorder = function () {
+      var dpr = window.devicePixelRatio || 1;
+      var w = (bCanvas.width = bCanvas.offsetWidth * dpr);
+      var h = (bCanvas.height = bCanvas.offsetHeight * dpr);
+      var bx = w * 0.56,
+        pad = 10 * dpr;
+      bMarks = { w: w, h: h, bx: bx, dpr: dpr, list: [], drawn: 0 };
+      var rnd = function (s) {
+        // deterministic scatter so redraws are stable
+        var x = Math.sin(s * 12.9898) * 43758.5453;
+        return x - Math.floor(x);
+      };
+      for (var i = 0; i < HOME; i++)
+        bMarks.list.push({
+          x: pad + rnd(i + 1) * (bx - pad * 2.4),
+          y: pad + rnd(i + 99) * (h - pad * 2),
+          home: true,
+          child: rnd(i + 7) < 0.38,
+        });
+      for (var j = 0; j < FLED; j++)
+        bMarks.list.push({
+          x: bx + pad * 2.4 + rnd(j + 500) * (w - bx - pad * 3),
+          y: pad + rnd(j + 777) * (h - pad * 2),
+          home: false,
+          child: rnd(j + 313) < 0.38,
+        });
+    };
+    var drawBorder = function (reveal) {
+      if (!bMarks) buildBorder();
+      var m = bMarks;
+      reveal = Math.max(0, Math.min(m.list.length, Math.floor(reveal)));
+      if (reveal < m.drawn) {
+        bctx.clearRect(0, 0, m.w, m.h);
+        m.drawn = 0;
+      }
+      if (m.drawn === 0) {
+        bctx.strokeStyle = "rgba(232,230,224,0.5)";
+        bctx.lineWidth = m.dpr;
+        bctx.setLineDash([4 * m.dpr, 4 * m.dpr]);
+        bctx.beginPath();
+        bctx.moveTo(m.bx, 0);
+        bctx.lineTo(m.bx, m.h);
+        bctx.stroke();
+        bctx.setLineDash([]);
+      }
+      // colour by SIDE only — the trapped(blue)/fled(cyan) split is the story;
+      // the 45M children figure lives in the count line, not as a third colour.
+      var r = 1.7 * m.dpr;
+      for (var i = m.drawn; i < reveal; i++) {
+        var p = m.list[i];
+        bctx.beginPath();
+        bctx.fillStyle = p.home ? "#4f7cff" : "#31d0d6";
+        bctx.globalAlpha = 0.8;
+        bctx.arc(p.x, p.y, r, 0, 6.2832);
+        bctx.fill();
+      }
+      bctx.globalAlpha = 1;
+      m.drawn = reveal;
+    };
+    buildBorder();
+    var bP = { n: 0 },
+      bcEl = $("#bdCount"),
+      bchEl = $("#bdChildren");
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: "#borderViz",
+        start: "top 80%",
+        end: "bottom 62%",
+        scrub: true,
+      },
+    }).to(bP, {
+      n: 1,
+      ease: "none",
+      duration: 1,
+      onUpdate: function () {
+        drawBorder(bP.n * bMarks.list.length);
+        if (bcEl) bcEl.textContent = (117.8 * bP.n).toFixed(1) + "M";
+        if (bchEl) bchEl.textContent = Math.round(45 * bP.n) + "M";
+      },
+    });
+    var bz;
+    window.addEventListener("resize", function () {
+      clearTimeout(bz);
+      bz = setTimeout(function () {
+        buildBorder();
+        drawBorder(bMarks.list.length);
+      }, 200);
+    });
   }
 
   // ── THE DISSOLVE · the machine falls away for the human cost ──
