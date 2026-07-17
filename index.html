@@ -21,9 +21,9 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r15" />
+    <link rel="stylesheet" href="css/style.css?v=2026r16" />
     <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r15" />
+    <link rel="stylesheet" href="css/dossier.css?v=2026r16" />
   </head>
   <body class="dossier">
     <canvas id="bg"></canvas>
@@ -122,74 +122,62 @@
         everything it produces on its militaries, the highest share since 2009.
       </p>
 
-      <!-- two matching info cards (row 1) + two matching donuts (row 2) -->
-      <div class="machine-cols">
-        <!-- CARD: what we spend (red) -->
-        <div class="figcard rv">
-          <div class="viz-h">What the world spends on its militaries</div>
-          <div class="impact-fig red" id="spendFig">$2.89T</div>
-          <div class="impact-sub">
-            in 2025: an all-time record, and the eleventh straight year of
-            growth. The US alone spent $954B; Europe surged 14%.
-          </div>
-          <div class="impact-gdp">
-            <div class="impact-gdp-track">
-              <div
-                class="impact-gdp-fill red"
-                id="spendGdpFill"
-                data-w="2.5"
-              ></div>
+      <!-- ══ THE MIRROR (the one split-screen) ══
+           what we CHOOSE to spend ($2.89T) ↔ what violence actually COSTS
+           ($21.8T). The $2,650-per-person and 10.5%-of-GDP facts live here now,
+           so the standalone info-cards and the duplicate lower mirror are gone. -->
+      <section class="scene mirror-scene cost" id="mirror01">
+        <div class="stage" id="mirror01Stage">
+          <div class="mirror" id="mirror01Mirror">
+            <div class="mirror-half half-war">
+              <div class="mh-inner">
+                <div class="mh-kicker war">What the world spends on its military</div>
+                <div class="mh-fig war" id="odo01">$0</div>
+                <div class="mh-desc">
+                  in 2025: an all-time record, 2.5% of everything the world
+                  produces. The US alone spent $954B; Europe surged 14%.
+                  <a
+                    href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-world-military-expenditure-2025"
+                    target="_blank"
+                    rel="noopener"
+                    >SIPRI 2026 ↗</a
+                  >
+                </div>
+              </div>
             </div>
-            <div class="impact-gdp-cap">
-              <span><span class="gdp-pct red">2.5%</span>of the entire world economy</span>
-              <span>$110T global GDP</span>
+            <div class="mirror-half half-build">
+              <div class="mh-inner">
+                <div class="mh-kicker build">The full bill, once you count the damage</div>
+                <div class="mh-fig build">$21.8T</div>
+                <div class="mh-desc">
+                  the total economic impact of violence: 10.5% of world GDP,
+                  about <b>$2,650 taken from every person alive</b>.
+                  <a
+                    href="https://www.visionofhumanity.org/economic-impact-of-violence/"
+                    target="_blank"
+                    rel="noopener"
+                    >IEP GPI 2026 ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mirror-divider" id="divider01">
+              <div class="seal" id="seal01">
+                <span class="seal-x">10.5%</span>
+                <span class="seal-lbl">of world GDP<br />lost to violence</span>
+              </div>
             </div>
           </div>
-          <div class="figcard-src">
-            <a
-              href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-world-military-expenditure-2025"
-              target="_blank"
-              rel="noopener"
-              >Source: SIPRI Military Expenditure 2026 ↗</a
-            >
+          <div class="mirror-readout" id="readout01" aria-hidden="true">
+            <span class="ro war">$2.89T we choose to spend</span>
+            <span class="ro-vs">↔</span>
+            <span class="ro build">$21.8T it actually costs</span>
           </div>
         </div>
+      </section>
 
-        <!-- CARD: the full impact (yellow) -->
-        <div
-          class="figcard clickable rv rv-d1"
-          onclick="document.getElementById('impact').scrollIntoView({behavior:'smooth'})"
-        >
-          <div class="viz-h">The full bill, once you count the damage</div>
-          <div class="impact-fig" id="impactFig">$21.8T</div>
-          <div class="impact-sub">
-            total economic impact of violence in 2025, about $2,650 for every
-            person alive
-          </div>
-          <div class="impact-gdp">
-            <div class="impact-gdp-track">
-              <div
-                class="impact-gdp-fill"
-                id="impactGdpFill"
-                data-w="10.5"
-              ></div>
-            </div>
-            <div class="impact-gdp-cap">
-              <span><span class="gdp-pct amber">10.5%</span>of the entire world economy</span>
-              <span>$110T global GDP</span>
-            </div>
-          </div>
-          <div class="figcard-src">
-            <a
-              href="https://www.visionofhumanity.org/economic-impact-of-violence/"
-              target="_blank"
-              rel="noopener"
-              >Source: IEP Global Peace Index 2026 ↗</a
-            >
-            <span class="impact-cta">▽ Tap to see the impact in full</span>
-          </div>
-        </div>
-
+      <!-- two matching donuts: where the spend goes / what the full bill is -->
+      <div class="machine-cols pies-only">
         <!-- DONUT: spend by sector (red shades) -->
         <div class="piecard rv">
           <div class="viz-h">Where the $2.89T goes · by sector</div>
@@ -236,51 +224,6 @@
           </div>
         </div>
       </div>
-
-      <!-- ══ MIRROR 1/4 · the signature move: $2.89T destruction ↔ $40B creation ══ -->
-      <section class="scene mirror-scene" id="mirror01">
-        <div class="stage" id="mirror01Stage">
-          <div class="mirror" id="mirror01Mirror">
-            <div class="mirror-half half-war">
-              <div class="mh-inner">
-                <div class="mh-kicker war">Military spending · 2025</div>
-                <div class="mh-fig war" id="odo01">$0</div>
-                <div class="mh-desc">
-                  a new record, and the eleventh straight year of growth: 2.5%
-                  of everything the world produces.
-                </div>
-              </div>
-            </div>
-            <div class="mirror-half half-build">
-              <div class="mh-inner">
-                <div class="mh-kicker build">To end world hunger · every year</div>
-                <div class="mh-fig build">$40B</div>
-                <div class="mh-desc">
-                  enough to feed the 673 million people who go hungry, for one
-                  fiftieth of the same budget.
-                  <a
-                    href="https://www.fao.org/publications/sofi"
-                    target="_blank"
-                    rel="noopener"
-                    >FAO / Ceres2030 ↗</a
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="mirror-divider" id="divider01">
-              <div class="seal" id="seal01">
-                <span class="seal-x">72×</span>
-                <span class="seal-lbl">more on arms<br />than on hunger</span>
-              </div>
-            </div>
-          </div>
-          <div class="mirror-readout" id="readout01" aria-hidden="true">
-            <span class="ro war">$2.89T destruction</span>
-            <span class="ro-vs">↔</span>
-            <span class="ro build">$40B creation</span>
-          </div>
-        </div>
-      </section>
 
       <!-- comparative stats -->
       <div class="stat-row duo rv">
@@ -367,46 +310,6 @@
         01 shows its make-up. Below is what it looks like on the ground.
       </p>
 
-      <!-- ══ MIRROR 3/4 · the whole bill ↔ what it is per living person ══ -->
-      <section class="scene mirror-scene warming" id="mirror03">
-        <div class="stage" id="mirror03Stage">
-          <div class="mirror" id="mirror03Mirror">
-            <div class="mirror-half half-war">
-              <div class="mh-inner">
-                <div class="mh-kicker war">Total cost of violence · 2025</div>
-                <div class="mh-fig war" id="odo03">$0</div>
-                <div class="mh-desc">
-                  10.5% of everything the world produces, once you count the
-                  destruction, not just the budgets.
-                  <a
-                    href="https://www.visionofhumanity.org/economic-impact-of-violence/"
-                    target="_blank"
-                    rel="noopener"
-                    >IEP GPI 2026 ↗</a
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="mirror-half half-build">
-              <div class="mh-inner">
-                <div class="mh-kicker build">Taken from every person alive</div>
-                <div class="mh-fig build">$2,650</div>
-                <div class="mh-desc">
-                  every year, from every human being on earth. Not a tax anyone
-                  voted for, and not a bill anyone is shown.
-                </div>
-              </div>
-            </div>
-            <div class="mirror-divider" id="divider03">
-              <div class="seal" id="seal03">
-                <span class="seal-x">10.5%</span>
-                <span class="seal-lbl">of everything<br />humanity makes</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- ── DESTRUCTION ── -->
       <div class="rv">
         <span class="bigsub-tag">The economic wreckage</span>
@@ -430,47 +333,6 @@
           </div>
         </div>
       </div>
-
-      <!-- ══ MIRROR 4/4 · rebuilding one war ↔ what that builds for everyone ══ -->
-      <section class="scene mirror-scene warming" id="mirror04">
-        <div class="stage" id="mirror04Stage">
-          <div class="mirror" id="mirror04Mirror">
-            <div class="mirror-half half-war">
-              <div class="mh-inner">
-                <div class="mh-kicker war">To rebuild Ukraine</div>
-                <div class="mh-fig war" id="odo04">$0</div>
-                <div class="mh-desc">
-                  nearly three times everything Ukraine's economy makes in a
-                  year, and it buys nothing new: it only restores what already
-                  stood.
-                  <a
-                    href="https://www.worldbank.org/en/news/press-release/2026/02/23/updated-ukraine-recovery-and-reconstruction-needs-assessment-released"
-                    target="_blank"
-                    rel="noopener"
-                    >World Bank RDNA5 ↗</a
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="mirror-half half-build">
-              <div class="mh-inner">
-                <div class="mh-kicker build">Clean water for every human</div>
-                <div class="mh-fig build">$114B</div>
-                <div class="mh-desc">
-                  a year delivers water and sanitation to everyone on earth.
-                  Rebuilding one war is five years of that, for all of us.
-                </div>
-              </div>
-            </div>
-            <div class="mirror-divider" id="divider04">
-              <div class="seal" id="seal04">
-                <span class="seal-x">5×</span>
-                <span class="seal-lbl">one war's repair<br />= water for all</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- ── DISPLACEMENT ── -->
       <div class="rv">
@@ -563,52 +425,6 @@
           </div>
         </div>
       </div>
-
-      <!-- ══ MIRROR 2/4 · $119B warheads ↔ $12B that reached the wounded ══ -->
-      <section class="scene mirror-scene warming" id="mirror02">
-        <div class="stage" id="mirror02Stage">
-          <div class="mirror" id="mirror02Mirror">
-            <div class="mirror-half half-war">
-              <div class="mh-inner">
-                <div class="mh-kicker war">Nuclear weapons · 2025</div>
-                <div class="mh-fig war" id="odo02">$0</div>
-                <div class="mh-desc">
-                  spent by nine states on warheads: $3,768 every second, and the
-                  largest single-year rise ever recorded.
-                  <a
-                    href="https://www.icanw.org/premeditated_2025_global_nuclear_weapons_spending"
-                    target="_blank"
-                    rel="noopener"
-                    >ICAN 2026 ↗</a
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="mirror-half half-build">
-              <div class="mh-inner">
-                <div class="mh-kicker build">Reached the humanitarian system</div>
-                <div class="mh-fig build">$12B</div>
-                <div class="mh-desc">
-                  of the $33B the UN asked for: the lowest share in a decade,
-                  while 240 million people needed aid.
-                  <a
-                    href="https://humanitarianaction.info/"
-                    target="_blank"
-                    rel="noopener"
-                    >UN OCHA GHO 2026 ↗</a
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="mirror-divider" id="divider02">
-              <div class="seal" id="seal02">
-                <span class="seal-x">10×</span>
-                <span class="seal-lbl">warheads over<br />the wounded</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- ── HUMAN IMPACT — the machine dissolves from here ── -->
       <div class="rv" id="humanPivot">
@@ -1128,14 +944,14 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r15"></script>
-    <script src="js/data.js?v=2026r15"></script>
-    <script src="js/backend.js?v=2026r15"></script>
-    <script src="js/main.js?v=2026r15"></script>
+    <script src="js/config.js?v=2026r16"></script>
+    <script src="js/data.js?v=2026r16"></script>
+    <script src="js/backend.js?v=2026r16"></script>
+    <script src="js/main.js?v=2026r16"></script>
     <!-- scroll engine + the dossier choreography, layered on top of main.js.
          Native scroll only — no smooth-scroll library (see js/dossier.js). -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="js/dossier.js?v=2026r15"></script>
+    <script src="js/dossier.js?v=2026r16"></script>
   </body>
 </html>

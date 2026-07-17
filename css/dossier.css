@@ -314,6 +314,27 @@ body.dossier .hero-title .hero-title-em {
   color: var(--link);
   white-space: nowrap;
 }
+/* The CH01 mirror is spend ↔ FULL COST, not destruction ↔ creation. Both
+   sides are money the world loses, so the right half reads impact-amber
+   (the site's cost colour), not the build cyan the other side would use. */
+.mirror-scene.cost .half-build {
+  background: radial-gradient(
+    100% 100% at 80% 50%,
+    #241a05,
+    var(--near-black) 70%
+  );
+}
+.mirror-scene.cost .mh-kicker.build,
+.mirror-scene.cost .ro.build {
+  color: var(--amber);
+}
+.mirror-scene.cost .mh-fig.build {
+  color: var(--amber);
+  text-shadow: 0 0 14px rgba(255, 176, 32, 0.45);
+}
+.mirror-scene.cost .seal-x {
+  color: var(--amber);
+}
 .mirror-divider {
   position: absolute;
   top: 0;

@@ -46,7 +46,6 @@
       : "$" + Math.round(n) + "B";
   };
   var DEF = typeof DEFENCE !== "undefined" ? DEFENCE : 2887; // $B → $2.89T
-  var NUKE_B = 119; // ICAN 2026
 
   var reduce =
     (window.matchMedia &&
@@ -89,16 +88,9 @@
     titles.forEach(function (t) {
       t.textContent = t.getAttribute("data-final");
     });
-    // every mirror rests at its final, readable figure
-    [
-      ["#odo01", fmtMoney(DEF)],
-      ["#odo02", "$" + NUKE_B + "B"],
-      ["#odo03", "$21.8T"],
-      ["#odo04", "$588B"],
-    ].forEach(function (p) {
-      var el = $(p[0]);
-      if (el) el.textContent = p[1];
-    });
+    // the mirror rests at its final, readable figure
+    var o1 = $("#odo01");
+    if (o1) o1.textContent = fmtMoney(DEF);
     return; // no ScrollTrigger at all
   }
 
@@ -239,6 +231,10 @@
       tl.to(cfg.readout, { opacity: 1, duration: 0.2 }, 0.82);
   }
 
+  // THE ONE MIRROR · what we CHOOSE to spend ($2.89T) ↔ what violence COSTS
+  // ($21.8T). The odometer counts the military budget; the far bigger full
+  // bill wipes in over it. (The old nuclear/hunger/Ukraine mirrors are gone —
+  // three near-identical split-screens read as repetition, not rhythm.)
   buildMirror({
     scene: "#mirror01",
     stage: "#mirror01Stage",
@@ -251,53 +247,6 @@
     odoEnd: 0.42,
     splitEnd: 18,
     end: px(1.0),
-  });
-
-  var asB = function (v) {
-    return "$" + Math.round(v) + "B";
-  };
-
-  buildMirror({
-    scene: "#mirror02",
-    stage: "#mirror02Stage",
-    mirror: "#mirror02Mirror",
-    odo: "#odo02",
-    seal: "#seal02",
-    value: NUKE_B,
-    fmt: asB,
-    odoEnd: 0.38,
-    splitEnd: 22,
-    end: px(0.9),
-  });
-
-  // MIRROR 3 · $21.8T total cost of violence ↔ $2,650 taken from every person
-  buildMirror({
-    scene: "#mirror03",
-    stage: "#mirror03Stage",
-    mirror: "#mirror03Mirror",
-    odo: "#odo03",
-    seal: "#seal03",
-    value: 21800, // $B — IEP GPI 2026
-    fmt: function (v) {
-      return "$" + (v / 1000).toFixed(1) + "T"; // the site says $21.8T, not $21.80T
-    },
-    odoEnd: 0.4,
-    splitEnd: 20,
-    end: px(0.9),
-  });
-
-  // MIRROR 4 · $588B to rebuild one war ↔ $114B/yr of clean water for everyone
-  buildMirror({
-    scene: "#mirror04",
-    stage: "#mirror04Stage",
-    mirror: "#mirror04Mirror",
-    odo: "#odo04",
-    seal: "#seal04",
-    value: 588, // World Bank RDNA5 2026
-    fmt: asB,
-    odoEnd: 0.38,
-    splitEnd: 22,
-    end: px(0.9),
   });
 
   // ── MATCH-CUT · dial → reticle → ground ──
