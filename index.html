@@ -21,9 +21,9 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r13" />
+    <link rel="stylesheet" href="css/style.css?v=2026r15" />
     <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r13" />
+    <link rel="stylesheet" href="css/dossier.css?v=2026r15" />
   </head>
   <body class="dossier">
     <canvas id="bg"></canvas>
@@ -1128,14 +1128,14 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r13"></script>
-    <script src="js/data.js?v=2026r13"></script>
-    <script src="js/backend.js?v=2026r13"></script>
-    <script src="js/main.js?v=2026r13"></script>
-    <!-- scroll engine + the dossier choreography, layered on top of main.js -->
+    <script src="js/config.js?v=2026r15"></script>
+    <script src="js/data.js?v=2026r15"></script>
+    <script src="js/backend.js?v=2026r15"></script>
+    <script src="js/main.js?v=2026r15"></script>
+    <!-- scroll engine + the dossier choreography, layered on top of main.js.
+         Native scroll only — no smooth-scroll library (see js/dossier.js). -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
-    <script src="js/dossier.js?v=2026r13"></script>
+    <script src="js/dossier.js?v=2026r15"></script>
   </body>
 </html>

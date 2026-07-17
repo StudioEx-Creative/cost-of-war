@@ -12,14 +12,17 @@
              · reticle scales 1 → RETICLE_MIN and fades: contracts to a point
              · hero content drifts up and out
              · title assembles glyph-by-glyph on load (SCRAMBLE_MS)
-   MIRROR 1  #mirror01  pin .stage  end +=170%  scrub                [2.89T↔40B]
+   Engine: GSAP ScrollTrigger on NATIVE scroll. No smooth-scroll library.
+   MIRROR 1  #mirror01  pin .stage  end +=1.0vh  scrub               [2.89T↔40B]
              0.00–0.42  odometer $0 → $2.89T (red, alone)
              0.42–1.00  cyan half wipes in (SPLIT 100→18), divider slides left,
                         72× seal scales in, readout fades up
              tune: ODO_END, SPLIT_END, seal window
-   MATCHCUT  #matchcut  pin .stage  end +=140%  scrub
+   MATCHCUT  #matchcut  pin .stage  end +=0.8vh  scrub
              dial circle shrinks/rotates → reticle → coordinate grid pushes out
-   MIRROR 2  #mirror02  pin .stage  end +=150%  scrub               [119B↔12B]
+   MIRROR 2/3/4  pin .stage  end +=0.9vh  scrub   [119B↔12B · 21.8T↔2650 · 588B↔114B]
+             Pins are deliberately short: a pinned scene is a stretch where the
+             page looks frozen, so each resolves in about one screen of scroll.
              odometer $0 → $119B, then SPLIT 100→22, 10× seal. Machine warms.
    DISSOLVE  #humanPivot → .lives-breath
              chrome (.fx + .hud) fades to 0 and stays gone through the lives
@@ -27,7 +30,7 @@
    RE-ARM    #haveyoursay  chrome fades back in: the file is now YOURS.
              The interactive half is never pinned — the tools must stay usable.
 
-   prefers-reduced-motion (or ?static=1) → body.no-motion: no Lenis, no pins,
+   prefers-reduced-motion (or ?static=1) → body.no-motion: no pins,
    no scrub. Mirrors rest open side by side, odometers show final values.
    ═══════════════════════════════════════════════════════════════════════ */
 (function () {
@@ -96,7 +99,7 @@
       var el = $(p[0]);
       if (el) el.textContent = p[1];
     });
-    return; // no Lenis, no ScrollTrigger
+    return; // no ScrollTrigger at all
   }
 
   if (!window.gsap || !window.ScrollTrigger) return; // fail soft to a static page
@@ -116,21 +119,13 @@
     }, 240 + i * 200);
   });
 
-  // ── Lenis smooth scroll drives ScrollTrigger ──
-  var LenisCtor = window.Lenis || window.lenis;
-  if (LenisCtor) {
-    // lerp is the feel dial. 0.1 drags noticeably behind the trackpad and
-    // reads as lag; 0.2 keeps the glide but stays attached to the input.
-    // Touch is left on native scroll — smoothing a finger always feels wrong.
-    var lenis = new LenisCtor({ lerp: 0.2, smoothWheel: true, smoothTouch: false });
-    lenis.on("scroll", function () {
-      ScrollTrigger.update();
-    });
-    gsap.ticker.add(function (t) {
-      lenis.raf(t * 1000);
-    });
-    gsap.ticker.lagSmoothing(0);
-  }
+  // ── NATIVE SCROLL. No smooth-scroll library. ──
+  // We used Lenis here and it was wrong. It replaces the browser's scrolling
+  // with a JS simulation that then has to stay in sync with five pinned
+  // scenes — it fought the pins, threw away real trackpad momentum, and felt
+  // broken no matter how the lerp was tuned. The browser's own scrolling is
+  // smooth, momentum-correct, interruptible and free. ScrollTrigger is happy
+  // on native scroll and pins behave. Keep it this way.
   gsap.registerPlugin(ScrollTrigger);
 
   // ── HUD: file id per chapter, coords, progress ──
@@ -212,7 +207,6 @@
         end: cfg.end,
         pin: cfg.stage,
         scrub: true,
-        anticipatePin: 1, // avoids the one-frame jump as the pin engages
       },
     });
     // 1 · the war figure counts up, alone
@@ -256,7 +250,7 @@
     fmt: fmtMoney,
     odoEnd: 0.42,
     splitEnd: 18,
-    end: px(1.7),
+    end: px(1.0),
   });
 
   var asB = function (v) {
@@ -273,7 +267,7 @@
     fmt: asB,
     odoEnd: 0.38,
     splitEnd: 22,
-    end: px(1.5),
+    end: px(0.9),
   });
 
   // MIRROR 3 · $21.8T total cost of violence ↔ $2,650 taken from every person
@@ -289,7 +283,7 @@
     },
     odoEnd: 0.4,
     splitEnd: 20,
-    end: px(1.5),
+    end: px(0.9),
   });
 
   // MIRROR 4 · $588B to rebuild one war ↔ $114B/yr of clean water for everyone
@@ -303,7 +297,7 @@
     fmt: asB,
     odoEnd: 0.38,
     splitEnd: 22,
-    end: px(1.5),
+    end: px(0.9),
   });
 
   // ── MATCH-CUT · dial → reticle → ground ──
@@ -322,10 +316,9 @@
         scrollTrigger: {
           trigger: "#matchcut",
           start: "top top",
-          end: px(1.4),
+          end: px(0.8),
           pin: "#matchcutStage",
           scrub: true,
-          anticipatePin: 1,
         },
       })
       .to(".mc-circle", { scale: 0.05, rotate: 90, opacity: 0, ease: "power2.in", duration: 0.4 }, 0)

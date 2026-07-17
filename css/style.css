@@ -37,7 +37,13 @@
   --fb: "IBM Plex Sans", sans-serif;
 }
 html {
-  scroll-behavior: smooth;
+  /* NOT scroll-behavior: smooth. GSAP warns against it with ScrollTrigger:
+     ScrollTrigger sets scroll position itself, the CSS then animates those
+     writes too, and the two fight — which shows up as pinned scenes that
+     stutter and a page that feels like it is resisting you. The site's own
+     "continue" buttons pass behavior:"smooth" to scrollIntoView explicitly,
+     so those still glide. */
+  scroll-behavior: auto;
 }
 body {
   background: var(--black);
