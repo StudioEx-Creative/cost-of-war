@@ -88,9 +88,23 @@
     titles.forEach(function (t) {
       t.textContent = t.getAttribute("data-final");
     });
-    // the mirror rests at its final, readable figure
-    var o1 = $("#odo01");
-    if (o1) o1.textContent = fmtMoney(DEF);
+    // the mirror + manufacturing figures rest at their final, readable values
+    [
+      ["#odo01", fmtMoney(DEF)],
+      ["#mfRevenue", "$679B"],
+      ["#mfGrowth", "+9.2%"],
+    ].forEach(function (p) {
+      var el = $(p[0]);
+      if (el) el.textContent = p[1];
+    });
+    // populate the (static) conveyor so it isn't empty
+    var convR = $("#mfConveyor");
+    if (convR)
+      for (var u = 0; u < 48; u++) {
+        var d = document.createElement("div");
+        d.className = "mf-unit";
+        convR.appendChild(d);
+      }
     return; // no ScrollTrigger at all
   }
 
@@ -276,6 +290,88 @@
       .fromTo("#mcGrid", { scale: 1.6, opacity: 0 }, { scale: 1, opacity: 1, ease: "none", duration: 0.4 }, 0.62)
       .fromTo("#mcCaption", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 0.4)
       .to("#mcCaption", { opacity: 0, duration: 0.2 }, 0.82);
+  }
+
+  // ══ THE PRODUCTION LINE ══ three different devices (not the mirror).
+
+  // 1 · CIVILIAN → WEAPON morph (short pin). Same line, different output:
+  // the turbine's blades fold and it becomes a missile; cyan → red.
+  if ($("#mfMorph"))
+    gsap
+      .timeline({
+        scrollTrigger: {
+          trigger: "#mfMorph",
+          start: "top top",
+          end: px(0.9),
+          pin: "#mfMorphStage",
+          scrub: true,
+        },
+      })
+      // blades rotate as if spinning down, then fold flat
+      .fromTo("#moBlades", { rotate: 0 }, { rotate: 200, transformOrigin: "100px 120px", ease: "power1.in", duration: 0.6 }, 0)
+      .to("#moTurbine", { opacity: 0, ease: "none", duration: 0.2 }, 0.42)
+      .fromTo("#moMissile", { opacity: 0, y: 14 }, { opacity: 1, y: 0, ease: "none", duration: 0.24 }, 0.44)
+      .to("#mfLabBuild", { opacity: 0, duration: 0.15 }, 0.42)
+      .to("#mfLabWar", { opacity: 1, duration: 0.15 }, 0.52)
+      // a slight launch-lift at the end
+      .to("#moMissile", { y: -18, ease: "power1.out", duration: 0.3 }, 0.7);
+
+  // 2 · SELF-DRAWING BLUEPRINT (inline, no pin). The schematic draws itself and
+  // the record revenue counts up as it passes through the viewport.
+  if ($("#mfBlueprint")) {
+    var rev = { v: 0 };
+    var revEl = $("#mfRevenue");
+    gsap
+      .timeline({
+        scrollTrigger: {
+          trigger: "#mfBlueprint",
+          start: "top 82%",
+          end: "bottom 65%",
+          scrub: true,
+        },
+      })
+      .to(".bp-line", { strokeDashoffset: 0, ease: "none", duration: 0.8, stagger: 0.04 }, 0)
+      .to(rev, {
+        v: 679,
+        ease: "none",
+        duration: 0.8,
+        onUpdate: function () {
+          if (revEl) revEl.textContent = "$" + Math.round(rev.v) + "B";
+        },
+      }, 0)
+      .to(".bp-tag", { opacity: 1, duration: 0.15 }, 0.7);
+  }
+
+  // 3 · PRODUCTION SCALE (inline). Units accumulate and the trade-growth
+  // figure climbs — industrial momentum, not one object.
+  if ($("#mfScale")) {
+    var conv = $("#mfConveyor");
+    var UNITS = 48;
+    for (var u = 0; u < UNITS; u++) {
+      var d = document.createElement("div");
+      d.className = "mf-unit";
+      conv.appendChild(d);
+    }
+    var g = { v: 0 };
+    var gEl = $("#mfGrowth");
+    gsap
+      .timeline({
+        scrollTrigger: {
+          trigger: "#mfScale",
+          start: "top 82%",
+          end: "bottom 70%",
+          scrub: true,
+        },
+      })
+      .to(".mf-unit", { opacity: 1, y: 0, ease: "none", duration: 0.7, stagger: 0.012 }, 0)
+      .to(g, {
+        v: 9.2,
+        ease: "none",
+        duration: 0.7,
+        onUpdate: function () {
+          if (gEl) gEl.textContent = "+" + g.v.toFixed(1) + "%";
+        },
+      }, 0);
   }
 
   // ── THE DISSOLVE · the machine falls away for the human cost ──

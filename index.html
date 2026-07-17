@@ -21,9 +21,9 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r16" />
+    <link rel="stylesheet" href="css/style.css?v=2026r17" />
     <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r16" />
+    <link rel="stylesheet" href="css/dossier.css?v=2026r17" />
   </head>
   <body class="dossier">
     <canvas id="bg"></canvas>
@@ -225,35 +225,98 @@
         </div>
       </div>
 
-      <!-- comparative stats -->
-      <div class="stat-row duo rv">
-        <div class="statc">
-          <div class="statc-num red">$679B</div>
-          <div class="statc-lbl">
-            record revenue of the 100 largest arms companies in 2024, the
-            highest ever recorded.
-            <a
-              href="https://www.sipri.org/media/press-release/2025/sipri-top-100-arms-producers-see-combined-revenues-surge-states-rush-modernize-and-expand-arsenals"
-              target="_blank"
-              rel="noopener"
-              style="color: var(--link)"
-              >SIPRI ↗</a
-            >
+      <!-- ══ THE PRODUCTION LINE ══ three distinct scroll pieces (not mirrors):
+           a civilian→weapon morph, a self-drawing blueprint, a production
+           scale. They carry the $679B and +9.2% figures the old static stat
+           cards used to. -->
+      <div class="manufacture">
+        <div class="mf-eyebrow rv">
+          <span class="tick">▚</span> THE PRODUCTION LINE
+        </div>
+
+        <!-- 1 · CIVILIAN → WEAPON · same line, different output -->
+        <section class="scene mf-morph" id="mfMorph">
+          <div class="stage" id="mfMorphStage">
+            <svg class="morph-svg" id="morphSvg" viewBox="0 0 200 250" aria-hidden="true">
+              <g class="mo-turbine" id="moTurbine">
+                <line class="mo-mast" x1="100" y1="238" x2="100" y2="120" />
+                <g class="mo-blades" id="moBlades">
+                  <path d="M100 120 L100 34" />
+                  <path d="M100 120 L174 162" />
+                  <path d="M100 120 L26 162" />
+                </g>
+                <circle class="mo-hub" cx="100" cy="120" r="5" />
+              </g>
+              <g class="mo-missile" id="moMissile">
+                <path class="mo-body" d="M86 236 L86 76 Q100 40 114 76 L114 236 Z" />
+                <path class="mo-fin" d="M86 214 L66 244 L86 206 Z" />
+                <path class="mo-fin" d="M114 214 L134 244 L114 206 Z" />
+                <line class="mo-tip" x1="100" y1="44" x2="100" y2="18" />
+                <line class="mo-seam" x1="100" y1="90" x2="100" y2="150" />
+              </g>
+            </svg>
+            <div class="mf-labels">
+              <span class="mf-lab build" id="mfLabBuild">CLEAN ENERGY</span>
+              <span class="mf-lab war" id="mfLabWar">MUNITIONS</span>
+            </div>
+            <p class="mf-cap">
+              The same factories. The same steel, the same engineers.<br />
+              <b>The only variable is what we choose to build.</b>
+            </p>
+          </div>
+        </section>
+
+        <!-- 2 · SELF-DRAWING BLUEPRINT · $679B record arms revenue -->
+        <div class="mf-blueprint rv" id="mfBlueprint">
+          <svg class="bp-svg" id="bpSvg" viewBox="0 0 320 130" aria-hidden="true">
+            <path class="bp-line" d="M22 65 L250 65 L300 65" />
+            <path class="bp-line" d="M30 46 L250 46 L300 65 L250 84 L30 84 Z" />
+            <path class="bp-line" d="M30 46 L12 30 L44 46" />
+            <path class="bp-line" d="M30 84 L12 100 L44 84" />
+            <path class="bp-line" d="M150 46 L150 22 L182 46" />
+            <path class="bp-line bp-thin" d="M86 46 L86 84" />
+            <path class="bp-line bp-thin" d="M232 46 L232 84" />
+            <path class="bp-line bp-tick" d="M86 46 L86 14 L120 14" />
+            <path class="bp-line bp-tick" d="M232 84 L232 112 L198 112" />
+          </svg>
+          <div class="bp-labels" aria-hidden="true">
+            <span class="bp-tag t1">GUIDANCE</span>
+            <span class="bp-tag t2">WARHEAD</span>
+          </div>
+          <div class="mf-fig-block">
+            <div class="mf-fig red" id="mfRevenue">$0</div>
+            <div class="mf-fig-lbl">
+              record revenue of the 100 largest arms makers, 2024 — the highest
+              ever recorded.
+              <a
+                href="https://www.sipri.org/media/press-release/2025/sipri-top-100-arms-producers-see-combined-revenues-surge-states-rush-modernize-and-expand-arsenals"
+                target="_blank"
+                rel="noopener"
+                >SIPRI ↗</a
+              >
+            </div>
+            <p class="mf-cap sm">
+              A record year. Every line on this schematic is somebody's profit.
+            </p>
           </div>
         </div>
-        <div class="statc">
-          <div class="statc-num amber">+9.2%</div>
-          <div class="statc-lbl">
-            growth in the global arms trade, 2021–25: the biggest jump in a
-            decade.
-            <a
-              href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-international-arms-transfers-2025"
-              target="_blank"
-              rel="noopener"
-              style="color: var(--link)"
-              >SIPRI ↗</a
-            >
+
+        <!-- 3 · PRODUCTION SCALE · +9.2% arms-trade growth -->
+        <div class="mf-scale rv" id="mfScale">
+          <div class="mf-fig-block">
+            <div class="mf-fig amber" id="mfGrowth">+0.0%</div>
+            <div class="mf-fig-lbl">
+              growth in the global arms trade, 2021–25 — the biggest jump in a
+              decade.
+              <a
+                href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-international-arms-transfers-2025"
+                target="_blank"
+                rel="noopener"
+                >SIPRI ↗</a
+              >
+            </div>
           </div>
+          <div class="mf-conveyor" id="mfConveyor" aria-hidden="true"></div>
         </div>
       </div>
 
@@ -944,14 +1007,14 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r16"></script>
-    <script src="js/data.js?v=2026r16"></script>
-    <script src="js/backend.js?v=2026r16"></script>
-    <script src="js/main.js?v=2026r16"></script>
+    <script src="js/config.js?v=2026r17"></script>
+    <script src="js/data.js?v=2026r17"></script>
+    <script src="js/backend.js?v=2026r17"></script>
+    <script src="js/main.js?v=2026r17"></script>
     <!-- scroll engine + the dossier choreography, layered on top of main.js.
          Native scroll only — no smooth-scroll library (see js/dossier.js). -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="js/dossier.js?v=2026r16"></script>
+    <script src="js/dossier.js?v=2026r17"></script>
   </body>
 </html>
