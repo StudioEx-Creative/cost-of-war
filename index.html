@@ -15,39 +15,83 @@
     />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r11" />
+    <link rel="stylesheet" href="css/style.css?v=2026r12" />
+    <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
+    <link rel="stylesheet" href="css/dossier.css?v=2026r12" />
   </head>
-  <body>
+  <body class="dossier">
     <canvas id="bg"></canvas>
 
-    <!-- ═══ HERO ═══ -->
-    <section class="hero">
+    <!-- ══ AMBIENT TEXTURE — dies at the human pivot ══ -->
+    <div class="fx" aria-hidden="true">
+      <div class="fx-grid" id="fxGrid"></div>
+      <div class="fx-scan" id="fxScan"></div>
+      <div class="fx-grain"></div>
+      <div class="fx-vignette"></div>
+    </div>
+
+    <!-- ══ DOSSIER HUD ══ -->
+    <header class="hud hud-top" id="hudTop" aria-hidden="true">
+      <span class="hud-stamp">CLASSIFIED // DECLASSIFIED FOR PUBLIC RELEASE</span>
+      <span class="hud-file" id="hudFile">FILE 00 · BOOT</span>
+      <span class="hud-coord" id="hudCoord">00.0000° / 00.0000°</span>
+    </header>
+    <footer class="hud hud-bottom" aria-hidden="true">
+      <span class="hud-rec"><i class="rec-dot"></i> REC</span>
+      <span class="hud-prog"><span class="hud-prog-fill" id="hudProg"></span></span>
+      <span class="hud-src">SOURCE: SIPRI · IEP · UNHCR · ACLED · ICAN — 2026</span>
+    </footer>
+
+    <!-- ═══ HERO · "BOOTING THE FILE" ═══ -->
+    <section class="hero" id="hero">
+      <!-- crop-mark reticle: sweeps in, contracts to a point on scroll -->
+      <svg class="reticle" id="reticle" viewBox="0 0 100 100" aria-hidden="true">
+        <g class="ret-crop">
+          <path d="M4 14 V4 H14" /><path d="M86 4 H96 V14" />
+          <path d="M96 86 V96 H86" /><path d="M14 96 H4 V86" />
+        </g>
+        <circle class="ret-ring" cx="50" cy="50" r="30" />
+        <circle class="ret-ring ret-ring-2" cx="50" cy="50" r="20" />
+        <path class="ret-cross" d="M50 8 V34 M50 66 V92 M8 50 H34 M66 50 H92" />
+        <circle class="ret-dot" cx="50" cy="50" r="1.1" />
+      </svg>
+
       <a class="hero-logo" href="https://www.studioex.co" target="_blank" rel="noopener" aria-label="Blueprint × StudioEX">
         <img src="assets/blueprint-logo-white.png" alt="Blueprint" />
         <span class="hero-logo-wm">×&nbsp;<b>StudioEX</b></span>
       </a>
-      <div class="eyebrow">
-        A data art installation · Blueprint × StudioEX · 2026
-      </div>
-      <h1 class="hero-title">THE<br /><span>COST OF WAR</span></h1>
-      <p class="hero-sub">
-        Every second, violence costs humanity $691,590. This page counts what
-        war takes, in money, in futures, and in lives, then asks one question:
-        what if we chose differently?
-      </p>
-      <div class="live-spend hero-centre">
-        <div class="live-spend-lbl">
-          Since you opened this page, the world has spent
+      <div class="hero-content">
+        <div class="eyebrow">
+          <span class="tick">▚</span> ACQUIRING TARGET… PATTERN RECOGNITION
+          ONLINE
         </div>
-        <b id="liveSpend">$0</b>
-        <div class="live-spend-foot">on its militaries</div>
+        <!-- assembles glyph-by-glyph out of monospace noise -->
+        <h1 class="hero-title">
+          <span class="scramble" data-final="THE">THE</span>
+          <span class="scramble hero-title-em" data-final="COST OF WAR">COST OF WAR</span>
+        </h1>
+        <p class="hero-sub">
+          An intelligence file on a civilization. Every second, violence costs
+          humanity $691,590. Every figure here has a civilian twin: this page
+          cross-references what we spend on destruction against what that same
+          money could build.
+        </p>
+        <div class="live-spend hero-centre">
+          <div class="live-spend-lbl">
+            <i class="rec-dot"></i> Since you opened this file, the world has spent
+          </div>
+          <b id="liveSpend">$0</b>
+          <div class="live-spend-foot">on its militaries</div>
+        </div>
       </div>
-      <div class="scroll-cue">
-        ▼ &nbsp; scroll to see the full picture &nbsp; ▼
+      <div class="scroll-cue" id="scrollCue">
+        ▼ &nbsp; BEGIN DEBRIEF &nbsp; ▼
       </div>
     </section>
 
@@ -193,14 +237,50 @@
         </div>
       </div>
 
-      <!-- the most screenshot-able line on the page: militaries vs. hunger -->
-      <div class="hunger-stat rv">
-        <div class="hunger-mult">72×</div>
-        <div class="hunger-copy">
-          more is spent on the world's militaries each year than the
-          <b>~$40&nbsp;billion</b> it would take to <b>end world hunger</b>.
+      <!-- ══ MIRROR 1/4 · the signature move: $2.89T destruction ↔ $40B creation ══ -->
+      <section class="scene mirror-scene" id="mirror01">
+        <div class="stage" id="mirror01Stage">
+          <div class="mirror" id="mirror01Mirror">
+            <div class="mirror-half half-war">
+              <div class="mh-inner">
+                <div class="mh-kicker war">Military spending · 2025</div>
+                <div class="mh-fig war" id="odo01">$0</div>
+                <div class="mh-desc">
+                  a new record, and the eleventh straight year of growth: 2.5%
+                  of everything the world produces.
+                </div>
+              </div>
+            </div>
+            <div class="mirror-half half-build">
+              <div class="mh-inner">
+                <div class="mh-kicker build">To end world hunger · every year</div>
+                <div class="mh-fig build">$40B</div>
+                <div class="mh-desc">
+                  enough to feed the 673 million people who go hungry, for one
+                  fiftieth of the same budget.
+                  <a
+                    href="https://www.fao.org/publications/sofi"
+                    target="_blank"
+                    rel="noopener"
+                    >FAO / Ceres2030 ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mirror-divider" id="divider01">
+              <div class="seal" id="seal01">
+                <span class="seal-x">72×</span>
+                <span class="seal-lbl">more on arms<br />than on hunger</span>
+              </div>
+            </div>
+          </div>
+          <div class="mirror-readout" id="readout01" aria-hidden="true">
+            <span class="ro war">$2.89T destruction</span>
+            <span class="ro-vs">↔</span>
+            <span class="ro build">$40B creation</span>
+          </div>
         </div>
-      </div>
+      </section>
 
       <!-- comparative stats -->
       <div class="stat-row duo rv">
@@ -255,6 +335,24 @@
         </button>
       </div>
     </div>
+
+    <!-- ══ MATCH-CUT 01→02 · pattern recognition: dial → reticle → ground ══ -->
+    <section class="scene matchcut" id="matchcut" aria-hidden="true">
+      <div class="stage" id="matchcutStage">
+        <svg class="mc" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+          <circle class="mc-circle" cx="50" cy="50" r="22" />
+          <g class="mc-reticle">
+            <circle cx="50" cy="50" r="30" />
+            <path d="M50 12 V30 M50 70 V88 M12 50 H30 M70 50 H88" />
+            <path class="mc-ticks" d="M50 18 V22 M50 78 V82 M18 50 H22 M78 50 H82" />
+          </g>
+          <g class="mc-grid" id="mcGrid"></g>
+        </svg>
+        <div class="mc-caption" id="mcCaption">
+          Cross-referencing… abstract finance → ground truth
+        </div>
+      </div>
+    </section>
 
     <!-- ═══ CH 02 · THE IMPACT OF WAR (merged) ═══ -->
     <div class="section" id="impact">
@@ -385,8 +483,54 @@
         </div>
       </div>
 
-      <!-- ── HUMAN IMPACT ── -->
-      <div class="rv">
+      <!-- ══ MIRROR 2/4 · $119B warheads ↔ $12B that reached the wounded ══ -->
+      <section class="scene mirror-scene warming" id="mirror02">
+        <div class="stage" id="mirror02Stage">
+          <div class="mirror" id="mirror02Mirror">
+            <div class="mirror-half half-war">
+              <div class="mh-inner">
+                <div class="mh-kicker war">Nuclear weapons · 2025</div>
+                <div class="mh-fig war" id="odo02">$0</div>
+                <div class="mh-desc">
+                  spent by nine states on warheads: $3,768 every second, and the
+                  largest single-year rise ever recorded.
+                  <a
+                    href="https://www.icanw.org/premeditated_2025_global_nuclear_weapons_spending"
+                    target="_blank"
+                    rel="noopener"
+                    >ICAN 2026 ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mirror-half half-build">
+              <div class="mh-inner">
+                <div class="mh-kicker build">Reached the humanitarian system</div>
+                <div class="mh-fig build">$12B</div>
+                <div class="mh-desc">
+                  of the $33B the UN asked for: the lowest share in a decade,
+                  while 240 million people needed aid.
+                  <a
+                    href="https://humanitarianaction.info/"
+                    target="_blank"
+                    rel="noopener"
+                    >UN OCHA GHO 2026 ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mirror-divider" id="divider02">
+              <div class="seal" id="seal02">
+                <span class="seal-x">10×</span>
+                <span class="seal-lbl">warheads over<br />the wounded</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── HUMAN IMPACT — the machine dissolves from here ── -->
+      <div class="rv" id="humanPivot">
         <span class="bigsub-tag">What no budget holds</span>
         <div class="bigsub white">The Human Impact</div>
       </div>
@@ -903,9 +1047,14 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r11"></script>
-    <script src="js/data.js?v=2026r11"></script>
-    <script src="js/backend.js?v=2026r11"></script>
-    <script src="js/main.js?v=2026r11"></script>
+    <script src="js/config.js?v=2026r12"></script>
+    <script src="js/data.js?v=2026r12"></script>
+    <script src="js/backend.js?v=2026r12"></script>
+    <script src="js/main.js?v=2026r12"></script>
+    <!-- scroll engine + the dossier choreography, layered on top of main.js -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+    <script src="js/dossier.js?v=2026r12"></script>
   </body>
 </html>

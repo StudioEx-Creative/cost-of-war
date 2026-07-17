@@ -8,23 +8,31 @@
   margin: 0;
   padding: 0;
 }
+/* ── DOSSIER IDENTITY (rev 10) ──────────────────────────────────────
+   The colour law of the whole piece:
+     red  = what war TAKES (spend, destruction, warnings)
+     cyan = what we could BUILD (opportunity cost, the interactive half)
+   The old "Have Your Say" green and the teal CTA are absorbed into that one
+   build-cyan, so every screen states the same argument. Amber stays for the
+   $21.8T impact reading; purple/blue remain categorical data colours.
+   Display face is the condensed grotesque; mono is the machine talking. */
 :root {
   --black: #000;
-  --near-black: #050508;
-  --panel: #0a0a0f;
-  --red: #ff2d2d;
-  --red-dim: #8b0000;
-  --amber: #f5a623;
-  --green: #00ff88;
-  --green-dim: #004422;
-  --teal: #00e5ff;
-  --teal-dim: #003344;
+  --near-black: #0a0b0d;
+  --panel: #0e1013;
+  --red: #ff3b30;
+  --red-dim: #7d1b15;
+  --amber: #ffb020;
+  --green: #31d0d6; /* → build cyan (was the have-your-say green) */
+  --green-dim: #0a3d3f;
+  --teal: #31d0d6; /* → build cyan (was the CTA teal) */
+  --teal-dim: #0a3d3f;
   --purple: #b967ff;
   --blue: #4488ff;
-  --text: #e8e8e8;
+  --text: #e8e6e0;
   --muted: #708090;
   --border: #1a1a2e;
-  --fd: "Bebas Neue", sans-serif;
+  --fd: "Anton", "Bebas Neue", sans-serif;
   --fm: "IBM Plex Mono", monospace;
   --fb: "IBM Plex Sans", sans-serif;
 }
@@ -116,7 +124,7 @@ canvas#bg {
 .hero-title span {
   color: var(--red);
   display: block;
-  text-shadow: 0 0 60px rgba(255, 45, 45, 0.4);
+  text-shadow: 0 0 60px rgba(255, 59, 48, 0.4);
 }
 .hero-sub {
   font-family: var(--fm);
@@ -184,7 +192,7 @@ canvas#bg {
   color: var(--red);
   font-weight: 400;
   letter-spacing: 0.03em;
-  text-shadow: 0 0 18px rgba(255, 45, 45, 0.35);
+  text-shadow: 0 0 18px rgba(255, 59, 48, 0.35);
 }
 .scroll-cue {
   font-family: var(--fm);
@@ -246,11 +254,11 @@ canvas#bg {
 }
 .sec-title.red {
   color: var(--red);
-  text-shadow: 0 0 30px rgba(255, 45, 45, 0.2);
+  text-shadow: 0 0 30px rgba(255, 59, 48, 0.2);
 }
 .sec-title.teal {
   color: var(--teal);
-  text-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+  text-shadow: 0 0 30px rgba(49, 208, 214, 0.2);
 }
 .sec-title.amber {
   color: var(--amber);
@@ -430,7 +438,7 @@ canvas#bg {
   background: linear-gradient(90deg, #3a0000, var(--red));
   width: 0%;
   transition: width 1.6s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 0 14px rgba(255, 45, 45, 0.25);
+  box-shadow: 0 0 14px rgba(255, 59, 48, 0.25);
 }
 .sp-amt {
   font-family: var(--fm);
@@ -480,7 +488,7 @@ canvas#bg {
   font-size: clamp(4rem, 9vw, 7rem);
   color: var(--teal);
   line-height: 0.95;
-  text-shadow: 0 0 40px rgba(0, 229, 255, 0.25);
+  text-shadow: 0 0 40px rgba(49, 208, 214, 0.25);
 }
 .disp-big-sub {
   font-family: var(--fm);
@@ -737,7 +745,7 @@ canvas#bg {
 }
 .ti-val.g {
   color: var(--green);
-  text-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+  text-shadow: 0 0 15px rgba(49, 208, 214, 0.3);
 }
 .ti-val.a {
   color: var(--amber);
@@ -745,7 +753,7 @@ canvas#bg {
 }
 .ti-val.r {
   color: var(--red);
-  text-shadow: 0 0 15px rgba(255, 45, 45, 0.3);
+  text-shadow: 0 0 15px rgba(255, 59, 48, 0.3);
 }
 .ti-bar-w {
   flex: 1;
@@ -811,8 +819,8 @@ canvas#bg {
 .ic.sel {
   border-color: var(--teal);
   box-shadow:
-    0 0 18px rgba(0, 229, 255, 0.1),
-    inset 0 0 18px rgba(0, 229, 255, 0.03);
+    0 0 18px rgba(49, 208, 214, 0.1),
+    inset 0 0 18px rgba(49, 208, 214, 0.03);
   animation: glow 2.5s ease infinite;
 }
 .ic.cant {
@@ -822,10 +830,10 @@ canvas#bg {
 @keyframes glow {
   0%,
   100% {
-    box-shadow: 0 0 10px rgba(0, 229, 255, 0.05);
+    box-shadow: 0 0 10px rgba(49, 208, 214, 0.05);
   }
   50% {
-    box-shadow: 0 0 25px rgba(0, 229, 255, 0.18);
+    box-shadow: 0 0 25px rgba(49, 208, 214, 0.18);
   }
 }
 .ic-top {
@@ -1136,7 +1144,7 @@ canvas#bg {
 }
 .sum-big .g {
   color: var(--green);
-  text-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+  text-shadow: 0 0 30px rgba(49, 208, 214, 0.3);
 }
 .sum-big .r {
   color: var(--red);
@@ -1579,7 +1587,7 @@ footer a:hover {
   font-family: var(--fd);
   font-size: 3.5rem;
   color: var(--red);
-  text-shadow: 0 0 20px rgba(255, 45, 45, 0.2);
+  text-shadow: 0 0 20px rgba(255, 59, 48, 0.2);
   line-height: 1;
   margin-bottom: 0.3rem;
 }
@@ -1748,7 +1756,7 @@ footer a:hover {
   font-family: var(--fd);
   font-size: clamp(4rem, 11vw, 8rem);
   color: var(--green);
-  text-shadow: 0 0 40px rgba(0, 255, 136, 0.18);
+  text-shadow: 0 0 40px rgba(49, 208, 214, 0.18);
   line-height: 1;
 }
 .coalition-suffix {
@@ -1869,14 +1877,14 @@ footer a:hover {
   line-height: 1.6;
 }
 .sc-logo {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--fd);
   font-size: 0.9rem;
   color: var(--red);
   text-align: right;
   line-height: 1.2;
 }
 .sc-headline {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--fd);
   font-size: 2rem;
   color: #fff;
   line-height: 1.05;
@@ -1894,7 +1902,7 @@ footer a:hover {
   gap: 0.45rem;
 }
 .sc-rn {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--fd);
   font-size: 1rem;
   color: #333;
   width: 16px;
@@ -1931,12 +1939,12 @@ footer a:hover {
   flex: 1;
 }
 .sc-stat-right {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--fd);
   font-size: 1.8rem;
   color: var(--green);
   text-align: right;
   line-height: 1;
-  text-shadow: 0 0 12px rgba(0, 255, 136, 0.22);
+  text-shadow: 0 0 12px rgba(49, 208, 214, 0.22);
 }
 .sc-footer-row {
   display: flex;
@@ -2074,10 +2082,10 @@ footer a:hover {
    Data-viz, condensed length, clearer journey, green "Have Your Say"
    ═══════════════════════════════════════════════════════════════════ */
 :root {
-  --say: #00ff88; /* "Have Your Say" accent (interactive back half) */
-  --say-dim: #0a3d27;
-  --say-glow: rgba(0, 255, 136, 0.32);
-  --gold: #f5c542; /* selection highlight */
+  --say: #31d0d6; /* "Have Your Say" = the BUILD accent (interactive half) */
+  --say-dim: #0a3d3f;
+  --say-glow: rgba(49, 208, 214, 0.32);
+  --gold: #ffb020; /* selection highlight → amber, off the build/war axis */
   --ink: #c7d0d9; /* readable body on black */
   --ink-soft: #93a0ad; /* secondary readable */
   --link: #8aa7c4; /* small links, readable */
@@ -2583,7 +2591,7 @@ footer a:hover {
 }
 .em-cell.on {
   background: #4a7a55;
-  box-shadow: 0 0 6px rgba(0, 255, 136, 0.25);
+  box-shadow: 0 0 6px rgba(49, 208, 214, 0.25);
 }
 
 /* ── DOT FIELD LEGEND (displacement) ── */
@@ -2662,7 +2670,7 @@ footer a:hover {
   border-top: 1px solid var(--say-dim);
   background: radial-gradient(
     ellipse at center top,
-    rgba(0, 255, 136, 0.05),
+    rgba(49, 208, 214, 0.05),
     transparent 60%
   );
 }
@@ -2717,7 +2725,7 @@ footer a:hover {
   text-shadow: 0 0 15px var(--say-glow);
 }
 .tracker.say .ti-bar-fill {
-  background: linear-gradient(90deg, var(--say), #00e5ff);
+  background: linear-gradient(90deg, var(--say), #31d0d6);
 }
 
 /* ── COMBINED REDISTRIBUTION ── */
@@ -2813,7 +2821,7 @@ footer a:hover {
   border-color: var(--gold);
   border-left-color: var(--gold);
   background: #14110a;
-  box-shadow: 0 0 16px rgba(245, 197, 66, 0.1);
+  box-shadow: 0 0 16px rgba(255, 176, 32, 0.1);
 }
 .ix.ix-cant {
   opacity: 0.4;
@@ -3005,9 +3013,9 @@ footer a:hover {
    Dedicated teal CTA system · more data-viz · ranking overlay
    ═══════════════════════════════════════════════════════════════════ */
 :root {
-  --cta: #00e5ff; /* the ONE call-to-action colour */
-  --cta-dim: #00343d;
-  --cta-glow: rgba(0, 229, 255, 0.35);
+  --cta: #31d0d6; /* the ONE call-to-action colour = the build cyan */
+  --cta-dim: #0a3d3f;
+  --cta-glow: rgba(49, 208, 214, 0.35);
 }
 
 /* ── DEDICATED CTA STYLING (all actions look the same) ── */
@@ -3133,7 +3141,7 @@ footer a:hover {
 }
 .figcard .impact-fig.red {
   color: var(--red);
-  text-shadow: 0 0 38px rgba(255, 45, 45, 0.25);
+  text-shadow: 0 0 38px rgba(255, 59, 48, 0.25);
 }
 .piecard {
   border: 1px solid #15151c;
@@ -3310,7 +3318,7 @@ footer a:hover {
 .children-num {
   font-family: var(--fd);
   font-size: 2.4rem;
-  color: #00e5ff;
+  color: #31d0d6;
 }
 .children-lbl {
   font-family: var(--fm);
@@ -3326,7 +3334,7 @@ footer a:hover {
 .children-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #2a4fb0, #00e5ff);
+  background: linear-gradient(90deg, #2a4fb0, #31d0d6);
   transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -3480,7 +3488,7 @@ footer a:hover {
 .rank-modal {
   background: var(--near-black);
   border: 1px solid var(--say-dim);
-  box-shadow: 0 0 60px rgba(0, 255, 136, 0.12);
+  box-shadow: 0 0 60px rgba(49, 208, 214, 0.12);
   max-width: 720px;
   width: 100%;
   max-height: 88vh;
@@ -4050,7 +4058,7 @@ footer p {
   font-size: clamp(2.4rem, 6vw, 3.6rem);
   line-height: 1;
   color: var(--red);
-  text-shadow: 0 0 24px rgba(255, 45, 45, 0.2);
+  text-shadow: 0 0 24px rgba(255, 59, 48, 0.2);
 }
 .tax-lbl {
   font-family: var(--fm);
@@ -4235,7 +4243,7 @@ footer p {
   border-color: var(--say);
   border-left-color: var(--say);
   background: #04140c;
-  box-shadow: 0 0 16px rgba(0, 255, 136, 0.14);
+  box-shadow: 0 0 16px rgba(49, 208, 214, 0.14);
 }
 .ix.ix-top5 .ix-chk {
   background: var(--say);
@@ -4253,7 +4261,7 @@ footer p {
   padding: 3px 6px;
   border-radius: 3px;
   z-index: 2;
-  box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+  box-shadow: 0 0 10px rgba(49, 208, 214, 0.4);
 }
 
 /* ── BIGGER, BOLDER WHITE CHART TITLES ── */
@@ -4328,7 +4336,7 @@ footer p {
   background: #fff;
   border: 2px solid var(--red);
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(255, 45, 45, 0.5);
+  box-shadow: 0 0 10px rgba(255, 59, 48, 0.5);
 }
 .tax-slider::-moz-range-thumb {
   width: 20px;
@@ -4494,7 +4502,7 @@ footer p {
   border: 1px solid var(--say-dim);
   padding: 0.4rem 0.6rem;
   border-radius: 3px;
-  box-shadow: 0 0 14px rgba(0, 229, 255, 0.18);
+  box-shadow: 0 0 14px rgba(49, 208, 214, 0.18);
 }
 .globe-tip b {
   color: var(--say);
@@ -4621,7 +4629,7 @@ footer p {
   letter-spacing: 0.02em;
   margin: 0.45rem 0 0.3rem;
   font-weight: 400;
-  text-shadow: 0 0 40px rgba(255, 45, 45, 0.42);
+  text-shadow: 0 0 40px rgba(255, 59, 48, 0.42);
   font-variant-numeric: tabular-nums;
 }
 
@@ -4671,7 +4679,7 @@ footer p {
   line-height: 0.88;
   color: var(--red);
   letter-spacing: 0.01em;
-  text-shadow: 0 0 46px rgba(255, 45, 45, 0.4);
+  text-shadow: 0 0 46px rgba(255, 59, 48, 0.4);
 }
 .hunger-copy {
   font-family: var(--fb);
@@ -4722,16 +4730,16 @@ footer p {
   border-color: var(--say);
   border-left-color: var(--say);
   background: #07140d;
-  box-shadow: 0 0 14px rgba(0, 255, 136, 0.12);
+  box-shadow: 0 0 14px rgba(49, 208, 214, 0.12);
 }
 @keyframes ixTeach {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(0, 255, 136, 0);
+    box-shadow: 0 0 0 0 rgba(49, 208, 214, 0);
     border-left-color: var(--border);
   }
   50% {
-    box-shadow: 0 0 16px 2px rgba(0, 255, 136, 0.28);
+    box-shadow: 0 0 16px 2px rgba(49, 208, 214, 0.28);
     border-left-color: var(--say);
   }
 }
@@ -4780,7 +4788,7 @@ footer p {
   align-items: center;
   gap: 0.55rem;
   padding: 0.45rem 0.6rem;
-  background: rgba(0, 255, 136, 0.05);
+  background: rgba(49, 208, 214, 0.05);
   border: 1px solid var(--say-dim);
 }
 .prio-rank {
