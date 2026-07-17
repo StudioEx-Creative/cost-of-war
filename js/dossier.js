@@ -86,10 +86,16 @@
     titles.forEach(function (t) {
       t.textContent = t.getAttribute("data-final");
     });
-    var o1 = $("#odo01");
-    if (o1) o1.textContent = fmtMoney(DEF);
-    var o2 = $("#odo02");
-    if (o2) o2.textContent = "$" + NUKE_B + "B";
+    // every mirror rests at its final, readable figure
+    [
+      ["#odo01", fmtMoney(DEF)],
+      ["#odo02", "$" + NUKE_B + "B"],
+      ["#odo03", "$21.8T"],
+      ["#odo04", "$588B"],
+    ].forEach(function (p) {
+      var el = $(p[0]);
+      if (el) el.textContent = p[1];
+    });
     return; // no Lenis, no ScrollTrigger
   }
 
@@ -249,6 +255,10 @@
     end: px(1.7),
   });
 
+  var asB = function (v) {
+    return "$" + Math.round(v) + "B";
+  };
+
   buildMirror({
     scene: "#mirror02",
     stage: "#mirror02Stage",
@@ -256,9 +266,37 @@
     odo: "#odo02",
     seal: "#seal02",
     value: NUKE_B,
+    fmt: asB,
+    odoEnd: 0.38,
+    splitEnd: 22,
+    end: px(1.5),
+  });
+
+  // MIRROR 3 · $21.8T total cost of violence ↔ $2,650 taken from every person
+  buildMirror({
+    scene: "#mirror03",
+    stage: "#mirror03Stage",
+    mirror: "#mirror03Mirror",
+    odo: "#odo03",
+    seal: "#seal03",
+    value: 21800, // $B — IEP GPI 2026
     fmt: function (v) {
-      return "$" + Math.round(v) + "B";
+      return "$" + (v / 1000).toFixed(1) + "T"; // the site says $21.8T, not $21.80T
     },
+    odoEnd: 0.4,
+    splitEnd: 20,
+    end: px(1.5),
+  });
+
+  // MIRROR 4 · $588B to rebuild one war ↔ $114B/yr of clean water for everyone
+  buildMirror({
+    scene: "#mirror04",
+    stage: "#mirror04Stage",
+    mirror: "#mirror04Mirror",
+    odo: "#odo04",
+    seal: "#seal04",
+    value: 588, // World Bank RDNA5 2026
+    fmt: asB,
     odoEnd: 0.38,
     splitEnd: 22,
     end: px(1.5),
