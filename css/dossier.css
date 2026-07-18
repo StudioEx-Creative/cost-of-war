@@ -224,12 +224,15 @@ body.dossier .hero-title .hero-title-em {
   position: relative;
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  margin-top: 3rem;
-  margin-bottom: 3rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
 }
 .mirror-scene .stage {
   position: relative;
-  min-height: 100vh;
+  /* Deliberately NOT 100vh: two figures alone in a full viewport read as
+     swamped. Tall enough to feel like a held frame, short enough that the
+     content fills it. */
+  min-height: clamp(400px, 62vh, 600px);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -244,7 +247,7 @@ body.dossier .hero-title .hero-title-em {
   inset: 0;
   display: flex;
   align-items: center;
-  padding: 10vh clamp(1.4rem, 6vw, 7rem);
+  padding: 3vh clamp(1.4rem, 6vw, 7rem);
 }
 .half-war {
   background: radial-gradient(
@@ -622,14 +625,32 @@ body.no-motion .reticle {
 }
 .morph-svg line,
 .morph-svg path,
-.morph-svg circle {
+.morph-svg circle,
+.morph-svg ellipse {
   fill: none;
   vector-effect: non-scaling-stroke;
 }
 .mo-turbine line,
-.mo-turbine path {
+.mo-turbine path,
+.mo-turbine ellipse {
   stroke: var(--build);
   stroke-width: 2;
+}
+/* the two turbines behind sit back in the haze — depth, not detail */
+.mo-far path,
+.mo-far ellipse {
+  stroke-width: 1.2;
+  opacity: 0.34;
+}
+.mo-far .mo-hub {
+  opacity: 0.34;
+}
+.mo-ground {
+  stroke-width: 1.1 !important;
+  opacity: 0.45;
+}
+.mo-nacelle {
+  fill: rgba(49, 208, 214, 0.12);
 }
 .mo-hub {
   fill: var(--build);
@@ -643,12 +664,29 @@ body.no-motion .reticle {
   opacity: 0;
 }
 .mo-missile path,
-.mo-missile line {
+.mo-missile line,
+.mo-missile ellipse {
   stroke: var(--red);
   stroke-width: 2;
 }
 .mo-body {
   fill: rgba(255, 59, 48, 0.05);
+}
+/* cross-sections are what make a flat outline read as a cylinder */
+.mo-ring {
+  stroke-width: 1 !important;
+  opacity: 0.5;
+}
+.mo-tail {
+  stroke-width: 1.6 !important;
+  fill: rgba(255, 59, 48, 0.12);
+}
+.mo-fin {
+  fill: rgba(255, 59, 48, 0.14);
+}
+.mo-seam {
+  opacity: 0.4;
+  stroke-width: 1 !important;
 }
 .mf-labels {
   position: relative;
@@ -1135,4 +1173,12 @@ body.no-motion .sb-fill {
 }
 body.no-motion .lives-scene .stage {
   min-height: 70vh;
+}
+
+/* The Border spans the full chapter width. It previously sat in the left
+   displacement column, making that side roughly twice the height of the
+   funding box and leaving a large dead gap beside it. */
+.border-viz {
+  grid-column: 1 / -1;
+  max-width: 100%;
 }

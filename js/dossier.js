@@ -326,37 +326,28 @@
     fmt: fmtMoney,
     odoEnd: 0.42,
     splitEnd: 18,
-    end: px(1.0),
+    end: px(0.7), // shorter stage → shorter hold
   });
 
-  // ── MATCH-CUT · dial → reticle → ground ──
-  var mcGrid = $("#mcGrid");
-  if (mcGrid) {
-    var gg = "";
-    for (var i = 1; i < 10; i++) {
-      var p = i * 10;
-      gg +=
-        '<line x1="' + p + '" y1="0" x2="' + p + '" y2="100"/>' +
-        '<line x1="0" y1="' + p + '" x2="100" y2="' + p + '"/>';
-    }
-    mcGrid.innerHTML = gg;
+  // ── MATCH-CUT · the dial becomes a reticle ──
+  // The coordinate-grid phase was removed: a screen of static squares held the
+  // scroll without saying anything. Two shapes now carry the cut.
+  if ($("#matchcut"))
     gsap
       .timeline({
         scrollTrigger: {
           trigger: "#matchcut",
           start: "top top",
-          end: px(0.8),
+          end: px(0.6),
           pin: "#matchcutStage",
           scrub: true,
         },
       })
-      .to(".mc-circle", { scale: 0.05, rotate: 90, opacity: 0, ease: "power2.in", duration: 0.4 }, 0)
-      .fromTo(".mc-reticle", { scale: 1.4, opacity: 0 }, { scale: 1, opacity: 1, ease: "power2.out", duration: 0.4 }, 0.3)
-      .to(".mc-reticle", { scale: 6, opacity: 0, ease: "power2.in", duration: 0.4 }, 0.66)
-      .fromTo("#mcGrid", { scale: 1.6, opacity: 0 }, { scale: 1, opacity: 1, ease: "none", duration: 0.4 }, 0.62)
-      .fromTo("#mcCaption", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 0.4)
-      .to("#mcCaption", { opacity: 0, duration: 0.2 }, 0.82);
-  }
+      .to(".mc-circle", { scale: 0.05, rotate: 90, opacity: 0, ease: "power2.in", duration: 0.45 }, 0)
+      .fromTo(".mc-reticle", { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, ease: "power2.out", duration: 0.45 }, 0.3)
+      .to(".mc-reticle", { scale: 5.5, opacity: 0, ease: "power2.in", duration: 0.35 }, 0.78)
+      .fromTo("#mcCaption", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 0.36)
+      .to("#mcCaption", { opacity: 0, duration: 0.2 }, 0.8);
 
   // ══ THE PRODUCTION LINE ══ three different devices (not the mirror).
 
