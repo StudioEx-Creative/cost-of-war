@@ -1016,3 +1016,123 @@ body.no-motion .setback .stage {
 body.no-motion .sb-fill {
   width: 100%;
 }
+
+/* ═══════════════ 244,700 · ONE, THEN ALL ═══════════════
+   The climax. No accent colour, no chrome (it dissolved at the pivot) — just
+   white light on black. Nothing here should look designed. */
+.lives-scene {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+.lives-scene .stage {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+#livesCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.lv-overlay {
+  /* Sits BELOW the field's origin, not on it: the first point of light appears
+     at dead centre and must never be hidden behind its own number. */
+  position: absolute;
+  left: 50%;
+  bottom: 16%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 3;
+  pointer-events: none;
+  padding: 0 1.2rem;
+}
+/* a soft pool of dark so the type stays readable once the field floods */
+.lv-overlay::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 190%;
+  height: 300%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.72) 45%,
+    transparent 76%
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+.lv-count {
+  font-family: var(--fd);
+  font-size: clamp(3rem, 11vw, 8rem);
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+}
+.lv-lbl {
+  font-family: var(--fm);
+  font-weight: 300;
+  font-size: clamp(0.68rem, 1.5vw, 0.92rem);
+  letter-spacing: 0.14em;
+  color: var(--ink);
+  margin-top: 0.7rem;
+  min-height: 1.4em;
+  max-width: 34ch;
+  margin-left: auto;
+  margin-right: auto;
+  text-shadow:
+    0 0 8px rgba(0, 0, 0, 1),
+    0 0 22px rgba(0, 0, 0, 0.95);
+}
+.lv-foot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2.2rem;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
+  justify-content: center;
+  font-family: var(--fm);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint, #565b61);
+  padding: 0.9rem 1rem 0;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 1);
+}
+.lv-foot::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2.2rem;
+  height: 7rem;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.8) 45%,
+    transparent 100%
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+.lv-foot .lv-since b {
+  font-family: var(--fd);
+  font-size: 1.05rem;
+  color: #fff;
+  vertical-align: -0.1em;
+  margin-right: 0.2rem;
+}
+body.no-motion .lives-scene .stage {
+  min-height: 70vh;
+}

@@ -21,9 +21,9 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r21" />
+    <link rel="stylesheet" href="css/style.css?v=2026r25" />
     <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r21" />
+    <link rel="stylesheet" href="css/dossier.css?v=2026r25" />
   </head>
   <body class="dossier">
     <canvas id="bg"></canvas>
@@ -545,15 +545,28 @@
       <div class="hi-pies rv" id="hiPies"></div>
       <div class="human-strip rv" id="humanStrip"></div>
 
-      <div class="lives-title rv">
-        <span id="livesCount">244,700</span> lives lost to war this year
-      </div>
-      <p class="lives-intro rv">
-        Every point of light below is one person killed in armed conflict in the
-        last twelve months. They ignite as you descend. Lines mark every 50,000.
-      </p>
-      <canvas id="livesCanvas"></canvas>
-      <p class="lives-cap rv">ACLED, Nov 2024 – Nov 2025.</p>
+      <!-- ══ 244,700 · ONE, THEN ALL ══
+           Opens on a single light and holds. Each point that follows is drawn
+           smaller than the last, so a person visibly becomes a pixel and the
+           reader feels the moment counting stops being possible. -->
+      <section class="scene lives-scene" id="livesScene">
+        <div class="stage" id="livesStage">
+          <canvas id="livesCanvas"></canvas>
+          <div class="lv-overlay">
+            <div class="lv-count" id="livesCount">1</div>
+            <div class="lv-lbl" id="livesLabel">
+              one person killed in armed conflict
+            </div>
+          </div>
+          <div class="lv-foot" id="livesFoot">
+            <span class="lv-rate">one every 2 min 9 sec</span>
+            <span class="lv-since"
+              ><b id="livesSince">0</b> since you opened this page</span
+            >
+            <span class="lv-src">ACLED · Dec 2024 – Nov 2025</span>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- the emotional peak — a full breath, alone -->
@@ -1054,14 +1067,14 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r21"></script>
-    <script src="js/data.js?v=2026r21"></script>
-    <script src="js/backend.js?v=2026r21"></script>
-    <script src="js/main.js?v=2026r21"></script>
+    <script src="js/config.js?v=2026r25"></script>
+    <script src="js/data.js?v=2026r25"></script>
+    <script src="js/backend.js?v=2026r25"></script>
+    <script src="js/main.js?v=2026r25"></script>
     <!-- scroll engine + the dossier choreography, layered on top of main.js.
          Native scroll only — no smooth-scroll library (see js/dossier.js). -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="js/dossier.js?v=2026r21"></script>
+    <script src="js/dossier.js?v=2026r25"></script>
   </body>
 </html>
