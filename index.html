@@ -21,9 +21,9 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r28" />
+    <link rel="stylesheet" href="css/style.css?v=2026r29" />
     <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r28" />
+    <link rel="stylesheet" href="css/dossier.css?v=2026r29" />
   </head>
   <body class="dossier">
     <canvas id="bg"></canvas>
@@ -91,6 +91,26 @@
       </div>
       <div class="scroll-cue" id="scrollCue">
         ▼ &nbsp; BEGIN DEBRIEF &nbsp; ▼
+      </div>
+    </section>
+
+    <!-- ══ TEASER · a glimpse of The Room, six chapters early ══
+         Deliberately CSS 3D and not WebGL: this sits above the fold and must
+         not pull Three.js into first paint. Transforms only, so it stays
+         cheap. It hints at the ending without letting anyone skip to it. -->
+    <section class="teaser" id="roomTeaser">
+      <div class="tz-stage" id="tzStage">
+        <div class="tz-field" id="tzField" aria-hidden="true"></div>
+        <div class="tz-copy">
+          <div class="tz-kicker"><span class="tick">▚</span> AT THE END OF THIS FILE</div>
+          <h2 class="tz-title">There is a room</h2>
+          <p class="tz-sub">
+            Everyone who reaches it writes to their own government, and leaves
+            the letter hanging there with all the others. You will arrive at it
+            eventually. What you put in it is up to you.
+          </p>
+          <div class="tz-count" id="tzCount">&nbsp;</div>
+        </div>
       </div>
     </section>
 
@@ -1187,16 +1207,16 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r28"></script>
-    <script src="js/data.js?v=2026r28"></script>
-    <script src="js/backend.js?v=2026r28"></script>
-    <script src="js/main.js?v=2026r28"></script>
+    <script src="js/config.js?v=2026r29"></script>
+    <script src="js/data.js?v=2026r29"></script>
+    <script src="js/backend.js?v=2026r29"></script>
+    <script src="js/main.js?v=2026r29"></script>
     <!-- scroll engine + the dossier choreography, layered on top of main.js.
          Native scroll only — no smooth-scroll library (see js/dossier.js). -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="js/dossier.js?v=2026r28"></script>
+    <script src="js/dossier.js?v=2026r29"></script>
     <!-- The Room: lazy-loads Three.js only when it nears the viewport -->
-    <script src="js/room.js?v=2026r28"></script>
+    <script src="js/room.js?v=2026r29"></script>
   </body>
 </html>

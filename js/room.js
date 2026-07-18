@@ -1,4 +1,111 @@
 /* ═══════════════════════════════════════════════════════════════════════
+   THE TEASER — a glimpse of The Room, placed six chapters early.
+   CSS 3D only. It must never load Three.js: it sits near first paint and
+   the page's scroll performance is more important than fidelity here.
+   ═══════════════════════════════════════════════════════════════════════ */
+(function () {
+  "use strict";
+  var field = document.getElementById("tzField");
+  var stage = document.getElementById("tzStage");
+  var countEl = document.getElementById("tzCount");
+  if (!field || !stage) return;
+
+  var reduce =
+    (window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches) ||
+    location.search.indexOf("static") > -1;
+  var small = window.matchMedia("(max-width: 760px)").matches;
+  var N = small ? 26 : 54;
+
+  // hang the sheets through a shallow depth so parallax reads as a space
+  var html = "";
+  for (var i = 0; i < N; i++) {
+    var z = -700 + Math.random() * 780; // depth
+    var x = Math.random() * 100;
+    var y = -6 + Math.random() * 104;
+    var rz = (Math.random() - 0.5) * 26;
+    var scale = 1 + (z + 700) / 1400;
+    html +=
+      '<div class="tz-sheet" style="' +
+      "left:" + x.toFixed(2) + "%;top:" + y.toFixed(2) + "%;" +
+      "--rz:" + rz.toFixed(1) + "deg;" +
+      "transform:translateZ(" + z.toFixed(0) + "px) rotateZ(" + rz.toFixed(1) + "deg) scale(" + scale.toFixed(2) + ");" +
+      "opacity:" + (0.32 + (z + 700) / 1500).toFixed(2) + ";" +
+      (reduce
+        ? ""
+        : "animation:tzHang " + (5 + Math.random() * 5).toFixed(1) + "s ease-in-out " +
+          (-Math.random() * 6).toFixed(1) + "s infinite;") +
+      '"></div>';
+  }
+  field.innerHTML = html;
+
+  // ── the interaction: the room turns with you ──
+  if (!reduce) {
+    var tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
+    var apply = function () {
+      cx += (tx - cx) * 0.08;
+      cy += (ty - cy) * 0.08;
+      field.style.transform =
+        "rotateY(" + cx.toFixed(2) + "deg) rotateX(" + cy.toFixed(2) + "deg)";
+      raf = Math.abs(tx - cx) > 0.01 || Math.abs(ty - cy) > 0.01
+        ? requestAnimationFrame(apply)
+        : 0;
+    };
+    var aim = function (px, py) {
+      tx = (px - 0.5) * 16;
+      ty = -(py - 0.5) * 10;
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    stage.addEventListener("pointermove", function (e) {
+      var r = stage.getBoundingClientRect();
+      aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+    });
+    stage.addEventListener("pointerleave", function () {
+      aim(0.5, 0.5);
+    });
+    // touch: let the page scroll, but still give the space a slow drift
+    if (small) {
+      var t0 = performance.now();
+      (function drift() {
+        var t = (performance.now() - t0) / 1000;
+        field.style.transform =
+          "rotateY(" + (Math.sin(t * 0.25) * 7).toFixed(2) + "deg) rotateX(" +
+          (Math.cos(t * 0.2) * 3).toFixed(2) + "deg)";
+        requestAnimationFrame(drift);
+      })();
+    }
+  }
+
+  // ── the hook, and it has to stay true in both states ──
+  // An empty room is a better invitation than an inflated number, so say so.
+  function setCount(n) {
+    if (!countEl) return;
+    countEl.innerHTML = n
+      ? "<b>" + n.toLocaleString() + "</b> letters are hanging there"
+      : "No one has written yet. Yours could be the first.";
+  }
+  var io = new IntersectionObserver(
+    function (es) {
+      es.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        io.disconnect();
+        if (typeof window.__cowRoom === "function") {
+          window.__cowRoom(1)
+            .then(function (d) {
+              setCount((d && d.stats && d.stats.letters) || 0);
+            })
+            .catch(function () {
+              setCount(0);
+            });
+        } else setCount(0);
+      });
+    },
+    { rootMargin: "80px" },
+  );
+  io.observe(stage);
+})();
+
+/* ═══════════════════════════════════════════════════════════════════════
    THE COST OF WAR · THE ROOM
    ───────────────────────────────────────────────────────────────────────
    A navigable space hung with every letter written on this page — one sheet
