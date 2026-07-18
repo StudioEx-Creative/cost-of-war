@@ -588,8 +588,112 @@
       { opacity: 1, ease: "power1.inOut", immediateRender: false },
     );
 
+  // ══ 244,700 LIVES · the ignition ══
+  // The wall of light no longer arrives pre-drawn. Each point is one person
+  // killed in armed conflict this year, and they kindle top-to-bottom as the
+  // reader descends the field, the count climbing with them and each 50,000
+  // line appearing only once it is crossed. No accent colour, no chrome (it
+  // has already dissolved) — white on black, and slow, because this is the
+  // one moment on the page that should not feel designed.
+  var livesCv = $("#livesCanvas");
+  if (livesCv) {
+    var lctx = livesCv.getContext("2d");
+    var lcfg = null;
+    var livesProg = 0;
+    var countEl = $("#livesCount");
+
+    function livesSetup() {
+      // mirrors main.js drawLives() sizing so the artwork is unchanged —
+      // only WHEN each point appears is different.
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Width is guarded rather than bailed on: if the parent reports a zero /
+      // nonsense width (some embedded contexts do, mid-layout), the old
+      // `if (w <= 0) return` left a blank 300×150 canvas and the artwork simply
+      // never appeared. Fall back to something sane so the field always draws.
+      var pw = livesCv.parentElement.getBoundingClientRect().width;
+      if (!(pw > 0)) pw = window.innerWidth || 640;
+      var w = Math.max(pw - (pw <= 660 ? 40 : 64), 280);
+      var total = typeof DEATHS_PER_YEAR !== "undefined" ? DEATHS_PER_YEAR : 244700;
+      var spacing = 2;
+      var cols = Math.floor(w / spacing);
+      var rows = Math.ceil(total / cols);
+      var h = rows * spacing + 2;
+      livesCv.width = w * dpr;
+      livesCv.height = h * dpr;
+      livesCv.style.width = w + "px";
+      livesCv.style.height = h + "px";
+      lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      lctx.clearRect(0, 0, w, h);
+      lcfg = { w: w, h: h, total: total, spacing: spacing, cols: cols, drawn: 0 };
+    }
+
+    function livesDraw(reveal) {
+      if (!lcfg) livesSetup();
+      if (!lcfg) return;
+      var c = lcfg;
+      reveal = Math.max(0, Math.min(c.total, Math.floor(reveal)));
+      if (reveal < c.drawn) {
+        // scrubbed back up — clear and rebuild to this point
+        lctx.clearRect(0, 0, c.w, c.h);
+        c.drawn = 0;
+      }
+      // only the newly-lit points each frame, so this stays cheap
+      for (var i = c.drawn; i < reveal; i++) {
+        var col = i % c.cols,
+          row = (i / c.cols) | 0;
+        // deterministic twinkle so a redraw looks identical
+        var a = 0.25 + (((i * 9301 + 49297) % 233280) / 233280) * 0.55;
+        lctx.fillStyle = "rgba(255,255,255," + a.toFixed(2) + ")";
+        lctx.fillRect(col * c.spacing, row * c.spacing, 1, 1);
+      }
+      c.drawn = reveal;
+      // a 50,000 line only exists once you have passed it
+      lctx.textBaseline = "bottom";
+      lctx.font = "bold 13px 'IBM Plex Mono', monospace";
+      for (var mark = 50000; mark < c.total; mark += 50000) {
+        if (mark > reveal) break;
+        var y = Math.round((mark / c.cols) * c.spacing) + 0.5;
+        lctx.strokeStyle = "rgba(255,255,255,0.9)";
+        lctx.lineWidth = 1.5;
+        lctx.beginPath();
+        lctx.moveTo(0, y);
+        lctx.lineTo(c.w, y);
+        lctx.stroke();
+        var label = mark.toLocaleString();
+        lctx.fillStyle = "rgba(0,0,0,0.85)";
+        lctx.fillRect(0, y - 16, lctx.measureText(label).width + 8, 15);
+        lctx.fillStyle = "#fff";
+        lctx.fillText(label, 4, y - 2);
+      }
+    }
+
+    livesSetup();
+    if (countEl) countEl.textContent = "0";
+    // main.js redraws the whole field on resize — hand it our version instead,
+    // or it would repaint all 244,700 at once and kill the ignition.
+    window.drawLives = function () {
+      livesSetup();
+      livesDraw(livesProg * (lcfg ? lcfg.total : 0));
+    };
+
+    ScrollTrigger.create({
+      trigger: "#livesCanvas",
+      start: "top 85%",
+      end: "bottom 35%",
+      scrub: true,
+      onUpdate: function (self) {
+        livesProg = self.progress;
+        var t = lcfg ? lcfg.total : 244700;
+        livesDraw(livesProg * t);
+        if (countEl)
+          countEl.textContent = Math.floor(livesProg * t).toLocaleString();
+      },
+    });
+  }
+
   // the page grows as canvases/globe lazy-build — keep triggers honest
   window.addEventListener("load", function () {
+    if (window.drawLives) window.drawLives(); // re-size the lives field once laid out
     ScrollTrigger.refresh();
   });
   var rz;
