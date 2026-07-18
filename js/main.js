@@ -1712,12 +1712,26 @@ function submitCoalition() {
     }
   }
   const country = selectedCountry ? selectedCountry[0] : "Unknown";
+  const ageBand = (document.getElementById("coalitionAge")?.value || "").trim();
+  // The letter is only ever sent when they explicitly opt in to the artwork.
+  // Unticked means it is never stored anywhere — not held back, not stored.
+  const letterOptIn = !!document.getElementById("letterConsent")?.checked;
+  let letterText = "";
+  if (letterOptIn) {
+    letterText = (
+      document.getElementById("letterOutput")?.innerText || ""
+    ).trim();
+    if (letterText.length > 4000) letterText = letterText.slice(0, 4000);
+  }
   const data = {
     ranking: [...ranking],
     country,
     email,
     income: userTax.used ? userTax.income : null,
     tax_to_war: userTax.used ? userTax.toWar : null,
+    age_band: ageBand || null,
+    letter: letterText || null,
+    letter_consent: letterOptIn,
     ts: Date.now(),
   };
   saveLocalSub(data);

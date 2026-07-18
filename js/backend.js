@@ -74,6 +74,9 @@
             email: d.email || null,
             income: d.income ?? null,
             tax_to_war: d.tax_to_war ?? null,
+            age_band: d.age_band ?? null,
+            letter: d.letter ?? null,
+            letter_consent: !!d.letter_consent,
             turnstileToken: turnstileToken || null,
           }),
         });
@@ -90,6 +93,11 @@
           email: d.email || null,
           income: d.income ?? null,
           tax_to_war: d.tax_to_war ?? null,
+          age_band: d.age_band ?? null,
+          letter: d.letter ?? null,
+          letter_consent: !!d.letter_consent,
+          // letter_approved intentionally omitted — it defaults to false and
+          // only a moderator may set it. Nothing self-publishes.
         });
       }
       live.count += 1;
@@ -100,6 +108,24 @@
     } catch (e) {
       console.warn("[cow] submit failed:", e.message);
       return false;
+    }
+  };
+
+  // ── THE ROOM ── approved letters + the aggregate findings.
+  // approved_letters() returns ONLY letters that were opted in AND cleared by
+  // a moderator; there is no path here to an unapproved one.
+  window.__cowRoom = async function (limit) {
+    try {
+      const [{ data: letters }, { data: stats }, { data: ages }] =
+        await Promise.all([
+          sb.rpc("approved_letters", { p_limit: limit || 500 }),
+          sb.rpc("room_stats"),
+          sb.rpc("age_tally"),
+        ]);
+      return { letters: letters || [], stats: stats || null, ages: ages || [] };
+    } catch (e) {
+      console.warn("[cow] room load failed:", e.message);
+      return { letters: [], stats: null, ages: [] };
     }
   };
 

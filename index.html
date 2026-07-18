@@ -21,9 +21,9 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r26" />
+    <link rel="stylesheet" href="css/style.css?v=2026r28" />
     <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r26" />
+    <link rel="stylesheet" href="css/dossier.css?v=2026r28" />
   </head>
   <body class="dossier">
     <canvas id="bg"></canvas>
@@ -885,6 +885,16 @@
                     id="coalitionEmail"
                     placeholder="Your email (optional, for Six Degrees waitlist & Blueprint updates)"
                   />
+                  <!-- optional, banded rather than exact so it can't identify -->
+                  <select class="field-inp" id="coalitionAge">
+                    <option value="">Your age range (optional)</option>
+                    <option value="under-18">Under 18</option>
+                    <option value="18-24">18 – 24</option>
+                    <option value="25-34">25 – 34</option>
+                    <option value="35-49">35 – 49</option>
+                    <option value="50-64">50 – 64</option>
+                    <option value="65-plus">65 or over</option>
+                  </select>
                   <label class="consent-row">
                     <input type="checkbox" id="coalitionConsent" />
                     <span
@@ -893,6 +903,17 @@
                         >privacy policy</a
                       >. (Leave the box and email blank to take part
                       anonymously.)</span
+                    >
+                  </label>
+                  <!-- separate, explicit opt-in: publishing your words is a
+                       different decision from joining the coalition -->
+                  <label class="consent-row">
+                    <input type="checkbox" id="letterConsent" />
+                    <span
+                      >Add my letter to <b>The Room</b>, the shared artwork of
+                      every message written here. Published without your name or
+                      email, and only after review. Leave unticked and your
+                      letter is never stored.</span
                     >
                   </label>
                   <div id="turnstileBox" class="turnstile-box"></div>
@@ -915,6 +936,66 @@
               </div>
               <div class="global-prio" id="globalPrio"></div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ THE ROOM ═══ every message written here, suspended in one space.
+         A mass-participation artwork: one sheet per person. Letters appear
+         only where someone opted in AND a moderator cleared them. -->
+    <div class="room-section" id="roomSection">
+      <div class="room-head">
+        <div class="chapter-num rv" style="color: var(--say)">
+          The artwork · Everyone who has written
+        </div>
+        <div class="sec-title rv" style="color: #fff">The Room</div>
+        <p class="sec-desc rv rv-d1">
+          Every letter written on this page hangs here, one sheet for one
+          person. It is a single object made by everybody who has taken part.
+          Move through it. Open any sheet to read what a stranger told their
+          government.
+        </p>
+      </div>
+
+      <div class="room-stage" id="roomStage">
+        <canvas id="roomCanvas"></canvas>
+        <div class="room-loading" id="roomLoading">entering the room…</div>
+        <div class="room-badge" id="roomBadge" hidden></div>
+        <div class="room-hint" id="roomHint">
+          drag to look · scroll to move through · click a sheet to read it
+        </div>
+        <!-- reading happens in HTML, not in 3D: legible, selectable, accessible -->
+        <div class="room-reader" id="roomReader" hidden>
+          <button class="room-reader-x" id="roomReaderX" aria-label="Close">✕</button>
+          <div class="room-reader-meta" id="roomReaderMeta"></div>
+          <div class="room-reader-body" id="roomReaderBody"></div>
+        </div>
+      </div>
+
+      <div class="room-data">
+        <div class="rd-figs">
+          <div class="rd-fig">
+            <div class="rd-n" id="rdPeople">—</div>
+            <div class="rd-l">people have written</div>
+          </div>
+          <div class="rd-fig">
+            <div class="rd-n" id="rdCountries">—</div>
+            <div class="rd-l">countries represented</div>
+          </div>
+          <div class="rd-fig">
+            <div class="rd-n" id="rdLetters">—</div>
+            <div class="rd-l">letters in the room</div>
+          </div>
+        </div>
+        <div class="rd-split">
+          <div class="rd-block">
+            <div class="rd-h">Who is writing</div>
+            <div class="rd-ages" id="rdAges"></div>
+          </div>
+          <div class="rd-block">
+            <div class="rd-h">What the room says</div>
+            <ul class="rd-find" id="rdFindings"></ul>
           </div>
         </div>
       </div>
@@ -1106,14 +1187,16 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r26"></script>
-    <script src="js/data.js?v=2026r26"></script>
-    <script src="js/backend.js?v=2026r26"></script>
-    <script src="js/main.js?v=2026r26"></script>
+    <script src="js/config.js?v=2026r28"></script>
+    <script src="js/data.js?v=2026r28"></script>
+    <script src="js/backend.js?v=2026r28"></script>
+    <script src="js/main.js?v=2026r28"></script>
     <!-- scroll engine + the dossier choreography, layered on top of main.js.
          Native scroll only — no smooth-scroll library (see js/dossier.js). -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="js/dossier.js?v=2026r26"></script>
+    <script src="js/dossier.js?v=2026r28"></script>
+    <!-- The Room: lazy-loads Three.js only when it nears the viewport -->
+    <script src="js/room.js?v=2026r28"></script>
   </body>
 </html>

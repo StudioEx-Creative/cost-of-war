@@ -42,8 +42,10 @@ Deno.serve(async (req: Request) => {
     return fail(400, "invalid-json");
   }
 
-  const { ranking, country, email, income, tax_to_war, turnstileToken } =
-    body as Record<string, unknown>;
+  const {
+    ranking, country, email, income, tax_to_war,
+    age_band, letter, letter_consent, turnstileToken,
+  } = body as Record<string, unknown>;
 
   // ── validate ──
   if (!Array.isArray(ranking) || ranking.length < 1 || ranking.length > 5)
@@ -67,6 +69,19 @@ Deno.serve(async (req: Request) => {
   const t2w = tax_to_war == null || tax_to_war === "" ? null : Number(tax_to_war);
   if (t2w != null && (!isFinite(t2w) || t2w < 0 || t2w > 100_000_000))
     return fail(400, "tax");
+  const BANDS = ["under-18", "18-24", "25-34", "35-49", "50-64", "65-plus"];
+  const band =
+    age_band == null || age_band === "" ? null : String(age_band);
+  if (band != null && !BANDS.includes(band)) return fail(400, "age-band");
+  // The letter is only accepted alongside an explicit opt-in, and is stored
+  // unapproved: letter_approved defaults to false and is never settable here,
+  // so nothing a visitor types can publish itself.
+  const optIn = letter_consent === true;
+  let text: string | null = null;
+  if (optIn && typeof letter === "string") {
+    text = letter.trim().slice(0, 4000);
+    if (text.length < 20) text = null; // ignore empty/stub letters
+  }
 
   // ── verify Turnstile (skipped only if no secret is configured) ──
   const secret = Deno.env.get("TURNSTILE_SECRET");
@@ -99,6 +114,10 @@ Deno.serve(async (req: Request) => {
     email: (email as string) || null,
     income: inc,
     tax_to_war: t2w,
+    age_band: band,
+    letter: text,
+    letter_consent: optIn,
+    letter_approved: false, // moderator-only; never set from a request
   });
   if (error) return fail(500, "db-error");
 
