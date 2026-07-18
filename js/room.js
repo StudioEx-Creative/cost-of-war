@@ -1,7 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   THE TEASER — a glimpse of The Room, placed six chapters early.
-   CSS 3D only. It must never load Three.js: it sits near first paint and
-   the page's scroll performance is more important than fidelity here.
+   THE TEASER — a fast flight through The Room, six chapters early.
+   You rush past suspended letters that keep coming, so the SCALE registers
+   before a single figure is argued.
+
+   CSS 3D, never WebGL: this sits at first paint and the page's scroll
+   performance matters more than fidelity. Each sheet is one transform per
+   frame on a GPU-composited layer, and sheets recycle to the far distance
+   once they pass you, so the flight never ends and never seams.
    ═══════════════════════════════════════════════════════════════════════ */
 (function () {
   "use strict";
@@ -15,84 +20,138 @@
       window.matchMedia("(prefers-reduced-motion: reduce)").matches) ||
     location.search.indexOf("static") > -1;
   var small = window.matchMedia("(max-width: 760px)").matches;
-  var N = small ? 26 : 54;
 
-  // hang the sheets through a shallow depth so parallax reads as a space
-  var html = "";
+  // ── tuning ──
+  var N = small ? 46 : 110; // sheets in flight
+  var SPEED = small ? 340 : 470; // px/sec toward the viewer — the "faster"
+  var FAR = -3400,
+    NEAR = 260;
+
+  var sheets = [];
+  var frag = document.createDocumentFragment();
   for (var i = 0; i < N; i++) {
-    var z = -700 + Math.random() * 780; // depth
-    var x = Math.random() * 100;
-    var y = -6 + Math.random() * 104;
-    var rz = (Math.random() - 0.5) * 26;
-    var scale = 1 + (z + 700) / 1400;
-    html +=
-      '<div class="tz-sheet" style="' +
-      "left:" + x.toFixed(2) + "%;top:" + y.toFixed(2) + "%;" +
-      "--rz:" + rz.toFixed(1) + "deg;" +
-      "transform:translateZ(" + z.toFixed(0) + "px) rotateZ(" + rz.toFixed(1) + "deg) scale(" + scale.toFixed(2) + ");" +
-      "opacity:" + (0.32 + (z + 700) / 1500).toFixed(2) + ";" +
-      (reduce
-        ? ""
-        : "animation:tzHang " + (5 + Math.random() * 5).toFixed(1) + "s ease-in-out " +
-          (-Math.random() * 6).toFixed(1) + "s infinite;") +
-      '"></div>';
+    var d = document.createElement("div");
+    d.className = "tz-sheet";
+    frag.appendChild(d);
+    sheets.push({
+      el: d,
+      x: 0,
+      y: 0,
+      z: 0,
+      rz: 0,
+      spin: (Math.random() - 0.5) * 14,
+    });
   }
-  field.innerHTML = html;
+  field.appendChild(frag);
 
-  // ── the interaction: the room turns with you ──
-  if (!reduce) {
-    var tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
-    var apply = function () {
-      cx += (tx - cx) * 0.08;
-      cy += (ty - cy) * 0.08;
-      field.style.transform =
-        "rotateY(" + cx.toFixed(2) + "deg) rotateX(" + cy.toFixed(2) + "deg)";
-      raf = Math.abs(tx - cx) > 0.01 || Math.abs(ty - cy) > 0.01
-        ? requestAnimationFrame(apply)
-        : 0;
-    };
-    var aim = function (px, py) {
-      tx = (px - 0.5) * 16;
-      ty = -(py - 0.5) * 10;
-      if (!raf) raf = requestAnimationFrame(apply);
-    };
+  function place(s, z) {
+    // a hollow middle keeps the flight path clear so you fly THROUGH the
+    // room rather than straight into a sheet
+    var ang = Math.random() * Math.PI * 2;
+    var rad = (small ? 190 : 260) + Math.random() * (small ? 620 : 1050);
+    s.x = Math.cos(ang) * rad;
+    s.y = Math.sin(ang) * rad * 0.72;
+    s.z = z;
+    s.rz = (Math.random() - 0.5) * 40;
+  }
+  sheets.forEach(function (s, i) {
+    place(s, FAR + (i / N) * (NEAR - FAR)); // spread evenly through depth
+  });
+
+  var steerX = 0,
+    steerY = 0,
+    tgtX = 0,
+    tgtY = 0;
+
+  function draw(s) {
+    // fade in from the far dark, and out just before it clips the lens
+    var o =
+      s.z < FAR + 700
+        ? (s.z - FAR) / 700
+        : s.z > NEAR - 420
+          ? Math.max(0, (NEAR - s.z) / 420)
+          : 1;
+    s.el.style.opacity = o.toFixed(2);
+    s.el.style.transform =
+      "translate3d(" +
+      (s.x + steerX).toFixed(0) +
+      "px," +
+      (s.y + steerY).toFixed(0) +
+      "px," +
+      s.z.toFixed(0) +
+      "px) rotateZ(" +
+      s.rz.toFixed(1) +
+      "deg)";
+  }
+
+  if (reduce) {
+    // no flight: a still, legible field
+    sheets.forEach(function (s) {
+      draw(s);
+    });
+  } else {
+    var last = performance.now(),
+      running = false;
+    function frame(now) {
+      if (!running) return;
+      var dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      steerX += (tgtX - steerX) * 0.06;
+      steerY += (tgtY - steerY) * 0.06;
+      for (var i = 0; i < sheets.length; i++) {
+        var s = sheets[i];
+        s.z += SPEED * dt;
+        s.rz += s.spin * dt;
+        if (s.z > NEAR) place(s, FAR); // recycle to the far distance
+        draw(s);
+      }
+      requestAnimationFrame(frame);
+    }
+    // only fly while it is on screen
+    var io = new IntersectionObserver(
+      function (es) {
+        es.forEach(function (en) {
+          if (en.isIntersecting && !running) {
+            running = true;
+            last = performance.now();
+            requestAnimationFrame(frame);
+          } else if (!en.isIntersecting) running = false;
+        });
+      },
+      { rootMargin: "100px" },
+    );
+    io.observe(stage);
+
+    // you can still steer the flight a little
     stage.addEventListener("pointermove", function (e) {
       var r = stage.getBoundingClientRect();
-      aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+      tgtX = -((e.clientX - r.left) / r.width - 0.5) * 260;
+      tgtY = -((e.clientY - r.top) / r.height - 0.5) * 160;
     });
     stage.addEventListener("pointerleave", function () {
-      aim(0.5, 0.5);
+      tgtX = 0;
+      tgtY = 0;
     });
-    // touch: let the page scroll, but still give the space a slow drift
-    if (small) {
-      var t0 = performance.now();
-      (function drift() {
-        var t = (performance.now() - t0) / 1000;
-        field.style.transform =
-          "rotateY(" + (Math.sin(t * 0.25) * 7).toFixed(2) + "deg) rotateX(" +
-          (Math.cos(t * 0.2) * 3).toFixed(2) + "deg)";
-        requestAnimationFrame(drift);
-      })();
-    }
   }
 
-  // ── the hook, and it has to stay true in both states ──
-  // An empty room is a better invitation than an inflated number, so say so.
+  // ── the scale, and it has to stay true ──
+  // The flight shows what the room IS; the figure says how full it is. An
+  // empty room is a better invitation than an inflated number, so say so.
   function setCount(n) {
     if (!countEl) return;
     countEl.innerHTML = n
-      ? "<b>" + n.toLocaleString() + "</b> letters are hanging there"
+      ? "<b>" + n.toLocaleString() + "</b> have signed and left a letter here"
       : "No one has written yet. Yours could be the first.";
   }
-  var io = new IntersectionObserver(
+  var cio = new IntersectionObserver(
     function (es) {
       es.forEach(function (en) {
         if (!en.isIntersecting) return;
-        io.disconnect();
+        cio.disconnect();
         if (typeof window.__cowRoom === "function") {
           window.__cowRoom(1)
             .then(function (d) {
-              setCount((d && d.stats && d.stats.letters) || 0);
+              setCount((d && d.stats && d.stats.people) || 0);
             })
             .catch(function () {
               setCount(0);
@@ -102,7 +161,7 @@
     },
     { rootMargin: "80px" },
   );
-  io.observe(stage);
+  cio.observe(stage);
 })();
 
 /* ═══════════════════════════════════════════════════════════════════════

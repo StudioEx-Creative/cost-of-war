@@ -1456,19 +1456,22 @@ body.no-motion .lives-scene .stage {
 .tz-stage {
   position: absolute;
   inset: 0;
-  perspective: 900px;
-  perspective-origin: 50% 45%;
+  perspective: 620px;
+  perspective-origin: 50% 50%;
 }
 .tz-field {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  will-change: transform;
-  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 /* one suspended sheet: ruled paper, drawn entirely in CSS */
 .tz-sheet {
+  /* anchored at the centre; JS drives translate3d from there, so the flight
+     is one GPU-composited transform per sheet per frame */
   position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -42px 0 0 -31px;
   width: 62px;
   height: 84px;
   background-color: #eceae3;
@@ -1484,25 +1487,7 @@ body.no-motion .lives-scene .stage {
   transform-style: preserve-3d;
   will-change: transform;
 }
-.tz-sheet::before {
-  /* the thread it hangs from */
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 100%;
-  width: 1px;
-  height: 60vh;
-  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.09));
-}
-@keyframes tzHang {
-  0%,
-  100% {
-    transform: translateY(0) rotateZ(var(--rz, 0deg));
-  }
-  50% {
-    transform: translateY(7px) rotateZ(calc(var(--rz, 0deg) * -1));
-  }
-}
+/* deeper perspective so the flight has somewhere to come from */
 .tz-copy {
   position: absolute;
   left: 50%;
@@ -1572,10 +1557,8 @@ body.no-motion .lives-scene .stage {
   .tz-sheet {
     width: 46px;
     height: 62px;
+    margin: -31px 0 0 -23px;
   }
-}
-body.no-motion .tz-field {
-  transition: none;
 }
 body.no-motion .tz-sheet {
   animation: none !important;
