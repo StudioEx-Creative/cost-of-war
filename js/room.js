@@ -1,170 +1,4 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   THE TEASER — a fast flight through The Room, six chapters early.
-   You rush past suspended letters that keep coming, so the SCALE registers
-   before a single figure is argued.
-
-   CSS 3D, never WebGL: this sits at first paint and the page's scroll
-   performance matters more than fidelity. Each sheet is one transform per
-   frame on a GPU-composited layer, and sheets recycle to the far distance
-   once they pass you, so the flight never ends and never seams.
-   ═══════════════════════════════════════════════════════════════════════ */
-(function () {
-  "use strict";
-  var field = document.getElementById("tzField");
-  var stage = document.getElementById("tzStage");
-  var countEl = document.getElementById("tzCount");
-  if (!field || !stage) return;
-
-  var reduce =
-    (window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches) ||
-    location.search.indexOf("static") > -1;
-  var small = window.matchMedia("(max-width: 760px)").matches;
-
-  // ── tuning ──
-  var N = small ? 46 : 110; // sheets in flight
-  var SPEED = small ? 340 : 470; // px/sec toward the viewer — the "faster"
-  var FAR = -3400,
-    NEAR = 260;
-
-  var sheets = [];
-  var frag = document.createDocumentFragment();
-  for (var i = 0; i < N; i++) {
-    var d = document.createElement("div");
-    d.className = "tz-sheet";
-    frag.appendChild(d);
-    sheets.push({
-      el: d,
-      x: 0,
-      y: 0,
-      z: 0,
-      rz: 0,
-      spin: (Math.random() - 0.5) * 14,
-    });
-  }
-  field.appendChild(frag);
-
-  function place(s, z) {
-    // a hollow middle keeps the flight path clear so you fly THROUGH the
-    // room rather than straight into a sheet
-    var ang = Math.random() * Math.PI * 2;
-    var rad = (small ? 190 : 260) + Math.random() * (small ? 620 : 1050);
-    s.x = Math.cos(ang) * rad;
-    s.y = Math.sin(ang) * rad * 0.72;
-    s.z = z;
-    s.rz = (Math.random() - 0.5) * 40;
-  }
-  sheets.forEach(function (s, i) {
-    place(s, FAR + (i / N) * (NEAR - FAR)); // spread evenly through depth
-  });
-
-  var steerX = 0,
-    steerY = 0,
-    tgtX = 0,
-    tgtY = 0;
-
-  function draw(s) {
-    // fade in from the far dark, and out just before it clips the lens
-    var o =
-      s.z < FAR + 700
-        ? (s.z - FAR) / 700
-        : s.z > NEAR - 420
-          ? Math.max(0, (NEAR - s.z) / 420)
-          : 1;
-    s.el.style.opacity = o.toFixed(2);
-    s.el.style.transform =
-      "translate3d(" +
-      (s.x + steerX).toFixed(0) +
-      "px," +
-      (s.y + steerY).toFixed(0) +
-      "px," +
-      s.z.toFixed(0) +
-      "px) rotateZ(" +
-      s.rz.toFixed(1) +
-      "deg)";
-  }
-
-  if (reduce) {
-    // no flight: a still, legible field
-    sheets.forEach(function (s) {
-      draw(s);
-    });
-  } else {
-    var last = performance.now(),
-      running = false;
-    function frame(now) {
-      if (!running) return;
-      var dt = Math.min((now - last) / 1000, 0.05);
-      last = now;
-      steerX += (tgtX - steerX) * 0.06;
-      steerY += (tgtY - steerY) * 0.06;
-      for (var i = 0; i < sheets.length; i++) {
-        var s = sheets[i];
-        s.z += SPEED * dt;
-        s.rz += s.spin * dt;
-        if (s.z > NEAR) place(s, FAR); // recycle to the far distance
-        draw(s);
-      }
-      requestAnimationFrame(frame);
-    }
-    // only fly while it is on screen
-    var io = new IntersectionObserver(
-      function (es) {
-        es.forEach(function (en) {
-          if (en.isIntersecting && !running) {
-            running = true;
-            last = performance.now();
-            requestAnimationFrame(frame);
-          } else if (!en.isIntersecting) running = false;
-        });
-      },
-      { rootMargin: "100px" },
-    );
-    io.observe(stage);
-
-    // you can still steer the flight a little
-    stage.addEventListener("pointermove", function (e) {
-      var r = stage.getBoundingClientRect();
-      tgtX = -((e.clientX - r.left) / r.width - 0.5) * 260;
-      tgtY = -((e.clientY - r.top) / r.height - 0.5) * 160;
-    });
-    stage.addEventListener("pointerleave", function () {
-      tgtX = 0;
-      tgtY = 0;
-    });
-  }
-
-  // ── the scale, and it has to stay true ──
-  // The flight shows what the room IS; the figure says how full it is. An
-  // empty room is a better invitation than an inflated number, so say so.
-  function setCount(n) {
-    if (!countEl) return;
-    countEl.innerHTML = n
-      ? "<b>" + n.toLocaleString() + "</b> have signed and left a letter here"
-      : "No one has written yet. Yours could be the first.";
-  }
-  var cio = new IntersectionObserver(
-    function (es) {
-      es.forEach(function (en) {
-        if (!en.isIntersecting) return;
-        cio.disconnect();
-        if (typeof window.__cowRoom === "function") {
-          window.__cowRoom(1)
-            .then(function (d) {
-              setCount((d && d.stats && d.stats.people) || 0);
-            })
-            .catch(function () {
-              setCount(0);
-            });
-        } else setCount(0);
-      });
-    },
-    { rootMargin: "80px" },
-  );
-  cio.observe(stage);
-})();
-
-/* ═══════════════════════════════════════════════════════════════════════
    THE COST OF WAR · THE ROOM
    ───────────────────────────────────────────────────────────────────────
    A navigable space hung with every letter written on this page — one sheet
@@ -582,21 +416,9 @@
       if (moved < 6) pick(e);
     });
 
-    // wheel moves you THROUGH the room, but never traps the page scroll:
-    // at either end of the dolly the event is left alone and the page scrolls on
-    stage.addEventListener(
-      "wheel",
-      function (e) {
-        var next = R.dolly + e.deltaY * 0.012;
-        if (next > 0.2 && next < 26) {
-          R.dolly = next;
-          e.preventDefault();
-        } else {
-          R.dolly = Math.max(0, Math.min(26, next));
-        }
-      },
-      { passive: false },
-    );
+    // No wheel capture. The room now sits directly under the title, so it must
+    // never trap the page scroll; you drag to look, and the page scrolls past
+    // it normally. (Dolly stays 0.)
   }
 
   function pick(e) {
@@ -655,9 +477,14 @@
         build(THREE);
         bindControls();
         if (el.loading) el.loading.hidden = true;
-        // render once even under reduced motion, then only run when visible
         R.renderer.render(R.scene, R.camera);
         if (!reduce) {
+          // Start rendering straight away — boot only happens once the room is
+          // in view, so it IS visible now. The observer is used ONLY to pause
+          // when it scrolls off and resume when it returns. (Previously the
+          // loop's start depended on the observer firing, so if the observer
+          // never delivered a callback the room stayed a black canvas.)
+          start();
           var io = new IntersectionObserver(
             function (es) {
               es.forEach(function (en) {
@@ -682,17 +509,21 @@
       });
   }
 
-  // only build when the reader is actually approaching it
-  var bootIO = new IntersectionObserver(
-    function (es) {
-      es.forEach(function (en) {
-        if (en.isIntersecting) {
-          bootIO.disconnect();
-          boot();
-        }
-      });
-    },
-    { rootMargin: "400px" },
-  );
-  bootIO.observe(section);
+  // Boot when the reader scrolls the room up into view — never at first paint.
+  // The room now sits right at the fold, so a margin-based observer would fire
+  // on load and pull Three.js into the critical path. Requiring the section top
+  // to cross meaningfully into the viewport guarantees it waits for a real
+  // scroll, and it is trivially testable (unlike IntersectionObserver, which
+  // some embedded contexts never deliver).
+  var booted = false;
+  function maybeBoot() {
+    if (booted) return;
+    if (section.getBoundingClientRect().top < window.innerHeight * 0.82) {
+      booted = true;
+      window.removeEventListener("scroll", maybeBoot);
+      boot();
+    }
+  }
+  window.addEventListener("scroll", maybeBoot, { passive: true });
+  maybeBoot(); // covers a refresh that lands already scrolled down the page
 })();

@@ -21,9 +21,9 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r30" />
+    <link rel="stylesheet" href="css/style.css?v=2026r33" />
     <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r30" />
+    <link rel="stylesheet" href="css/dossier.css?v=2026r33" />
   </head>
   <body class="dossier">
     <canvas id="bg"></canvas>
@@ -77,9 +77,9 @@
           <span class="scramble hero-title-em" data-final="COST OF WAR">COST OF WAR</span>
         </h1>
         <p class="hero-sub">
-          An intelligence file on a civilization. Every second, violence costs
-          humanity $691,590. This page cross-references what we spend on
-          destruction against what that same money could build.
+          Every second, violence costs humanity $691,590. This page
+          cross-references what we spend on destruction against what that same
+          money could build.
         </p>
         <div class="live-spend hero-centre">
           <div class="live-spend-lbl">
@@ -94,25 +94,65 @@
       </div>
     </section>
 
-    <!-- ══ TEASER · a glimpse of The Room, six chapters early ══
-         Deliberately CSS 3D and not WebGL: this sits above the fold and must
-         not pull Three.js into first paint. Transforms only, so it stays
-         cheap. It hints at the ending without letting anyone skip to it. -->
-    <section class="teaser" id="roomTeaser">
-      <div class="tz-stage" id="tzStage">
-        <div class="tz-field" id="tzField" aria-hidden="true"></div>
-        <div class="tz-copy">
-          <div class="tz-kicker"><span class="tick">▚</span> AT THE END OF THIS FILE</div>
-          <h2 class="tz-title">There is a room</h2>
-          <p class="tz-sub">
-            Everyone who reaches it writes to their own government, and leaves
-            the letter hanging there with all the others. You will arrive at it
-            eventually. What you put in it is up to you.
-          </p>
-          <div class="tz-count" id="tzCount">&nbsp;</div>
+    <!-- ═══ THE ROOM ═══ every message written here, suspended in one space.
+         A mass-participation artwork: one sheet per person. Letters appear
+         only where someone opted in AND a moderator cleared them. -->
+    <div class="room-section" id="roomSection">
+      <div class="room-head">
+        <div class="chapter-num rv" style="color: var(--say)">
+          The artwork · Everyone who has written
+        </div>
+        <div class="sec-title rv" style="color: #fff">The Room</div>
+        <p class="sec-desc rv rv-d1">
+          Every letter written on this page hangs here, one sheet for one
+          person. It is a single object made by everybody who has taken part.
+          Move through it. Open any sheet to read what a stranger told their
+          government.
+        </p>
+      </div>
+
+      <div class="room-stage" id="roomStage">
+        <canvas id="roomCanvas"></canvas>
+        <div class="room-loading" id="roomLoading">entering the room…</div>
+        <div class="room-badge" id="roomBadge" hidden></div>
+        <div class="room-hint" id="roomHint">
+          drag to look around · click a sheet to read it
+        </div>
+        <!-- reading happens in HTML, not in 3D: legible, selectable, accessible -->
+        <div class="room-reader" id="roomReader" hidden>
+          <button class="room-reader-x" id="roomReaderX" aria-label="Close">✕</button>
+          <div class="room-reader-meta" id="roomReaderMeta"></div>
+          <div class="room-reader-body" id="roomReaderBody"></div>
         </div>
       </div>
-    </section>
+
+      <div class="room-data">
+        <div class="rd-figs">
+          <div class="rd-fig">
+            <div class="rd-n" id="rdPeople">—</div>
+            <div class="rd-l">people have written</div>
+          </div>
+          <div class="rd-fig">
+            <div class="rd-n" id="rdCountries">—</div>
+            <div class="rd-l">countries represented</div>
+          </div>
+          <div class="rd-fig">
+            <div class="rd-n" id="rdLetters">—</div>
+            <div class="rd-l">letters in the room</div>
+          </div>
+        </div>
+        <div class="rd-split">
+          <div class="rd-block">
+            <div class="rd-h">Who is writing</div>
+            <div class="rd-ages" id="rdAges"></div>
+          </div>
+          <div class="rd-block">
+            <div class="rd-h">What the room says</div>
+            <ul class="rd-find" id="rdFindings"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ═══ ITINERARY / CONTENTS ═══ -->
     <nav class="itin rv">
@@ -961,64 +1001,11 @@
       </div>
     </div>
 
-    <!-- ═══ THE ROOM ═══ every message written here, suspended in one space.
-         A mass-participation artwork: one sheet per person. Letters appear
-         only where someone opted in AND a moderator cleared them. -->
-    <div class="room-section" id="roomSection">
-      <div class="room-head">
-        <div class="chapter-num rv" style="color: var(--say)">
-          The artwork · Everyone who has written
-        </div>
-        <div class="sec-title rv" style="color: #fff">The Room</div>
-        <p class="sec-desc rv rv-d1">
-          Every letter written on this page hangs here, one sheet for one
-          person. It is a single object made by everybody who has taken part.
-          Move through it. Open any sheet to read what a stranger told their
-          government.
-        </p>
-      </div>
-
-      <div class="room-stage" id="roomStage">
-        <canvas id="roomCanvas"></canvas>
-        <div class="room-loading" id="roomLoading">entering the room…</div>
-        <div class="room-badge" id="roomBadge" hidden></div>
-        <div class="room-hint" id="roomHint">
-          drag to look · scroll to move through · click a sheet to read it
-        </div>
-        <!-- reading happens in HTML, not in 3D: legible, selectable, accessible -->
-        <div class="room-reader" id="roomReader" hidden>
-          <button class="room-reader-x" id="roomReaderX" aria-label="Close">✕</button>
-          <div class="room-reader-meta" id="roomReaderMeta"></div>
-          <div class="room-reader-body" id="roomReaderBody"></div>
-        </div>
-      </div>
-
-      <div class="room-data">
-        <div class="rd-figs">
-          <div class="rd-fig">
-            <div class="rd-n" id="rdPeople">—</div>
-            <div class="rd-l">people have written</div>
-          </div>
-          <div class="rd-fig">
-            <div class="rd-n" id="rdCountries">—</div>
-            <div class="rd-l">countries represented</div>
-          </div>
-          <div class="rd-fig">
-            <div class="rd-n" id="rdLetters">—</div>
-            <div class="rd-l">letters in the room</div>
-          </div>
-        </div>
-        <div class="rd-split">
-          <div class="rd-block">
-            <div class="rd-h">Who is writing</div>
-            <div class="rd-ages" id="rdAges"></div>
-          </div>
-          <div class="rd-block">
-            <div class="rd-h">What the room says</div>
-            <ul class="rd-find" id="rdFindings"></ul>
-          </div>
-        </div>
-      </div>
+    <!-- after the journey: a way to (re)enter the artwork, which now lives
+         at the top of the page -->
+    <div class="room-cta">
+      <a class="room-cta-btn" href="#roomSection">▸ View the room</a>
+      <div class="room-cta-sub">every letter written here, yours among them</div>
     </div>
 
     <!-- ═══ DISCLAIMER ═══ -->
@@ -1207,16 +1194,16 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r30"></script>
-    <script src="js/data.js?v=2026r30"></script>
-    <script src="js/backend.js?v=2026r30"></script>
-    <script src="js/main.js?v=2026r30"></script>
+    <script src="js/config.js?v=2026r33"></script>
+    <script src="js/data.js?v=2026r33"></script>
+    <script src="js/backend.js?v=2026r33"></script>
+    <script src="js/main.js?v=2026r33"></script>
     <!-- scroll engine + the dossier choreography, layered on top of main.js.
          Native scroll only — no smooth-scroll library (see js/dossier.js). -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="js/dossier.js?v=2026r30"></script>
+    <script src="js/dossier.js?v=2026r33"></script>
     <!-- The Room: lazy-loads Three.js only when it nears the viewport -->
-    <script src="js/room.js?v=2026r30"></script>
+    <script src="js/room.js?v=2026r33"></script>
   </body>
 </html>
