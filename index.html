@@ -21,9 +21,9 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r33" />
+    <link rel="stylesheet" href="css/style.css?v=2026r34" />
     <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r33" />
+    <link rel="stylesheet" href="css/dossier.css?v=2026r34" />
   </head>
   <body class="dossier">
     <canvas id="bg"></canvas>
@@ -102,18 +102,18 @@
         <div class="chapter-num rv" style="color: var(--say)">
           The artwork · Everyone who has written
         </div>
-        <div class="sec-title rv" style="color: #fff">The Room</div>
+        <div class="sec-title rv" style="color: #fff">The Archive</div>
         <p class="sec-desc rv rv-d1">
-          Every letter written on this page hangs here, one sheet for one
-          person. It is a single object made by everybody who has taken part.
-          Move through it. Open any sheet to read what a stranger told their
+          Every letter written on this page is kept here, one sheet for one
+          person — a single record made by everybody who has taken part. Move
+          through it. Open any sheet to read what a stranger told their
           government.
         </p>
       </div>
 
       <div class="room-stage" id="roomStage">
         <canvas id="roomCanvas"></canvas>
-        <div class="room-loading" id="roomLoading">entering the room…</div>
+        <div class="room-loading" id="roomLoading">entering the archive…</div>
         <div class="room-badge" id="roomBadge" hidden></div>
         <div class="room-hint" id="roomHint">
           drag to look around · click a sheet to read it
@@ -138,7 +138,7 @@
           </div>
           <div class="rd-fig">
             <div class="rd-n" id="rdLetters">—</div>
-            <div class="rd-l">letters in the room</div>
+            <div class="rd-l">letters in the archive</div>
           </div>
         </div>
         <div class="rd-split">
@@ -147,7 +147,7 @@
             <div class="rd-ages" id="rdAges"></div>
           </div>
           <div class="rd-block">
-            <div class="rd-h">What the room says</div>
+            <div class="rd-h">What the archive says</div>
             <ul class="rd-find" id="rdFindings"></ul>
           </div>
         </div>
@@ -970,7 +970,7 @@
                   <label class="consent-row">
                     <input type="checkbox" id="letterConsent" />
                     <span
-                      >Add my letter to <b>The Room</b>, the shared artwork of
+                      >Add my letter to <b>The Archive</b>, the shared artwork of
                       every message written here. Published without your name or
                       email, and only after review. Leave unticked and your
                       letter is never stored.</span
@@ -1004,7 +1004,7 @@
     <!-- after the journey: a way to (re)enter the artwork, which now lives
          at the top of the page -->
     <div class="room-cta">
-      <a class="room-cta-btn" href="#roomSection">▸ View the room</a>
+      <a class="room-cta-btn" href="#roomSection">▸ Enter the archive</a>
       <div class="room-cta-sub">every letter written here, yours among them</div>
     </div>
 
@@ -1194,16 +1194,16 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r33"></script>
-    <script src="js/data.js?v=2026r33"></script>
-    <script src="js/backend.js?v=2026r33"></script>
-    <script src="js/main.js?v=2026r33"></script>
+    <script src="js/config.js?v=2026r34"></script>
+    <script src="js/data.js?v=2026r34"></script>
+    <script src="js/backend.js?v=2026r34"></script>
+    <script src="js/main.js?v=2026r34"></script>
     <!-- scroll engine + the dossier choreography, layered on top of main.js.
          Native scroll only — no smooth-scroll library (see js/dossier.js). -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="js/dossier.js?v=2026r33"></script>
+    <script src="js/dossier.js?v=2026r34"></script>
     <!-- The Room: lazy-loads Three.js only when it nears the viewport -->
-    <script src="js/room.js?v=2026r33"></script>
+    <script src="js/room.js?v=2026r34"></script>
   </body>
 </html>

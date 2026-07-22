@@ -161,7 +161,7 @@
               return "<li>" + t + "</li>";
             })
             .join("")
-        : '<li class="rd-empty">The room is still empty. These findings are ' +
+        : '<li class="rd-empty">The archive is still empty. These findings are ' +
           "written from real submissions only, so they appear as people take part.</li>";
     }
   }
