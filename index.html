@@ -21,9 +21,9 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r34" />
+    <link rel="stylesheet" href="css/style.css?v=2026r35" />
     <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r34" />
+    <link rel="stylesheet" href="css/dossier.css?v=2026r35" />
   </head>
   <body class="dossier">
     <canvas id="bg"></canvas>
@@ -429,29 +429,29 @@
         </div>
       </div>
 
-      <div class="continue-wrap">
-        <button
-          class="continue-btn red"
-          onclick="document.getElementById('impact').scrollIntoView({behavior:'smooth'})"
-        >
-          The impact of all this <span class="ar">▾</span>
-        </button>
-      </div>
     </div>
 
-    <!-- ══ MATCH-CUT 01→02 · pattern recognition: dial → reticle → ground ══ -->
+    <!-- ══ THE TURN · 01 → 02 ══ the red budget contracts to a point, an amber
+         reticle locks on, and the frame warms into the impact chapter. The
+         caption carries the actual argument: cost to the spenders → cost to
+         everyone. No skip-button here — this IS the transition, scrolled through. -->
     <section class="scene matchcut" id="matchcut" aria-hidden="true">
       <div class="stage" id="matchcutStage">
+        <div class="mc-warm" id="mcWarm"></div>
         <svg class="mc" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
           <circle class="mc-circle" cx="50" cy="50" r="22" />
           <g class="mc-reticle">
             <circle cx="50" cy="50" r="30" />
             <path d="M50 12 V30 M50 70 V88 M12 50 H30 M70 50 H88" />
             <path class="mc-ticks" d="M50 18 V22 M50 78 V82 M18 50 H22 M78 50 H82" />
+            <circle class="mc-lock" cx="50" cy="50" r="3.4" />
           </g>
         </svg>
         <div class="mc-caption" id="mcCaption">
-          Cross-referencing… abstract finance → ground truth
+          <span class="mc-cap-a" id="mcCapA"
+            >That was the cost to the states that spend it.</span
+          >
+          <span class="mc-cap-b" id="mcCapB">This is what it costs everyone.</span>
         </div>
       </div>
     </section>
@@ -1194,16 +1194,16 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r34"></script>
-    <script src="js/data.js?v=2026r34"></script>
-    <script src="js/backend.js?v=2026r34"></script>
-    <script src="js/main.js?v=2026r34"></script>
+    <script src="js/config.js?v=2026r35"></script>
+    <script src="js/data.js?v=2026r35"></script>
+    <script src="js/backend.js?v=2026r35"></script>
+    <script src="js/main.js?v=2026r35"></script>
     <!-- scroll engine + the dossier choreography, layered on top of main.js.
          Native scroll only — no smooth-scroll library (see js/dossier.js). -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="js/dossier.js?v=2026r34"></script>
+    <script src="js/dossier.js?v=2026r35"></script>
     <!-- The Room: lazy-loads Three.js only when it nears the viewport -->
-    <script src="js/room.js?v=2026r34"></script>
+    <script src="js/room.js?v=2026r35"></script>
   </body>
 </html>

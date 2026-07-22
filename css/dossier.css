@@ -449,29 +449,53 @@ body.dossier .hero-title .hero-title-em {
 }
 .mc-reticle circle,
 .mc-reticle path {
-  stroke: var(--build);
+  /* amber, not cyan: this leads into the amber impact chapter, so the colour
+     path is red (spend) → amber (impact), never through the build cyan */
+  stroke: var(--amber);
   stroke-width: 0.6;
 }
-.mc-grid {
+.mc-lock {
+  fill: var(--amber);
+  stroke: none;
   opacity: 0;
 }
-.mc-grid line {
-  stroke: var(--build);
-  stroke-width: 0.3;
-  opacity: 0.5;
+/* an amber wash that warms the void into Chapter 02 as the reticle opens out */
+.mc-warm {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    60% 60% at 50% 50%,
+    rgba(255, 176, 32, 0.16),
+    transparent 70%
+  );
+  opacity: 0;
+  z-index: 1;
 }
 .mc-caption {
   position: absolute;
-  bottom: 3rem;
   left: 50%;
+  bottom: 3rem;
   transform: translateX(-50%);
+  width: min(560px, 88%);
+  text-align: center;
   font-family: var(--fm);
-  font-size: 0.58rem;
-  letter-spacing: 0.2em;
-  color: var(--build);
-  text-transform: uppercase;
-  opacity: 0;
+  font-size: clamp(0.62rem, 1.5vw, 0.82rem);
+  line-height: 1.7;
+  letter-spacing: 0.06em;
   z-index: 3;
+}
+.mc-cap-a,
+.mc-cap-b {
+  display: block;
+  opacity: 0;
+}
+.mc-cap-a {
+  color: var(--ink-soft);
+}
+.mc-cap-b {
+  color: var(--amber);
+  font-weight: 500;
+  margin-top: 0.3rem;
 }
 
 /* ══════════════ THE HUMAN PIVOT ══════════════

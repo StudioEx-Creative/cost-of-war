@@ -329,25 +329,33 @@
     end: px(0.7), // shorter stage → shorter hold
   });
 
-  // ── MATCH-CUT · the dial becomes a reticle ──
-  // The coordinate-grid phase was removed: a screen of static squares held the
-  // scroll without saying anything. Two shapes now carry the cut.
+  // ── THE TURN · 01 → 02 ──
+  // The seam from "what we spend" to "what it costs" now carries the argument,
+  // and the colour path is red → amber (never through the build cyan): the red
+  // budget contracts to a point, an amber reticle locks on, the second line of
+  // the argument lands, and an amber wash warms the void into Chapter 02.
   if ($("#matchcut"))
     gsap
       .timeline({
         scrollTrigger: {
           trigger: "#matchcut",
           start: "top top",
-          end: px(0.6),
+          end: px(0.8), // a touch longer so both caption lines can be read
           pin: "#matchcutStage",
           scrub: true,
         },
       })
-      .to(".mc-circle", { scale: 0.05, rotate: 90, opacity: 0, ease: "power2.in", duration: 0.45 }, 0)
-      .fromTo(".mc-reticle", { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, ease: "power2.out", duration: 0.45 }, 0.3)
-      .to(".mc-reticle", { scale: 5.5, opacity: 0, ease: "power2.in", duration: 0.35 }, 0.78)
-      .fromTo("#mcCaption", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 0.36)
-      .to("#mcCaption", { opacity: 0, duration: 0.2 }, 0.8);
+      // the red budget contracts to a point
+      .to(".mc-circle", { scale: 0.05, rotate: 90, opacity: 0, ease: "power2.in", duration: 0.4 }, 0)
+      .fromTo("#mcCapA", { opacity: 0 }, { opacity: 1, duration: 0.15 }, 0.05)
+      // an amber reticle locks on the real cost
+      .fromTo(".mc-reticle", { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, ease: "power2.out", duration: 0.35 }, 0.32)
+      .fromTo(".mc-lock", { opacity: 0 }, { opacity: 1, duration: 0.12 }, 0.5)
+      // the turn of the argument — this line carries into the amber chapter
+      .fromTo("#mcCapB", { opacity: 0 }, { opacity: 1, duration: 0.15 }, 0.6)
+      // it opens out and the frame warms into Chapter 02
+      .to(".mc-reticle", { scale: 6, opacity: 0, ease: "power2.in", duration: 0.34 }, 0.72)
+      .fromTo("#mcWarm", { opacity: 0 }, { opacity: 1, ease: "none", duration: 0.28 }, 0.72);
 
   // ══ THE PRODUCTION LINE ══ three different devices (not the mirror).
 
