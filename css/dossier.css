@@ -894,6 +894,11 @@ body.no-motion .mf-lab.war {
 body.no-motion .bp-line {
   stroke-dashoffset: 0;
 }
+body.no-motion .bp-anno,
+body.no-motion .bp-arrow,
+body.no-motion .bp-hatch {
+  opacity: 1;
+}
 body.no-motion .mf-unit {
   opacity: 1;
   transform: none;
@@ -1499,4 +1504,163 @@ body.no-motion .lives-scene .stage {
   text-transform: uppercase;
   color: var(--ink-faint, #565b61);
   margin-top: 0.9rem;
+}
+
+/* ═══════════════ TECHNICAL-DRAWING DETAIL (the production line) ═══════════════
+   Dimension lines, callout balloons, section cuts + hatching and a title block,
+   so the illustrations read as engineering drawings rather than icons. */
+
+/* graph-paper backing under the whole production line */
+.mf-morph .stage,
+.mf-blueprint {
+  background-image: linear-gradient(rgba(232, 230, 224, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 230, 224, 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.mf-morph .stage {
+  overflow: visible;
+}
+
+/* ── BLUEPRINT ── */
+.bp-grid line {
+  stroke: rgba(232, 230, 224, 0.07);
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+}
+.bp-frame {
+  fill: none;
+  stroke: var(--ink-faint, #565b61);
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+.bp-frame-in {
+  stroke-width: 0.4;
+  opacity: 0.6;
+}
+/* annotation lines that are also .bp-line keep the draw-on, recoloured grey */
+.bp-centre,
+.bp-ext,
+.bp-dim,
+.bp-cut {
+  stroke: var(--ink-soft) !important;
+  stroke-width: 0.6 !important;
+  opacity: 0.9;
+}
+.bp-arrow {
+  fill: var(--ink-soft);
+  stroke: none;
+  opacity: 0;
+}
+.bp-hatch {
+  opacity: 0;
+}
+.bp-hatch line {
+  stroke: var(--red);
+  stroke-width: 0.4;
+  opacity: 0.5;
+  vector-effect: non-scaling-stroke;
+}
+.bp-anno {
+  opacity: 0;
+}
+.bp-lead {
+  fill: none;
+  stroke: var(--ink-soft);
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+}
+.bp-balloon {
+  fill: var(--near-black);
+  stroke: var(--ink-soft);
+  stroke-width: 0.6;
+  vector-effect: non-scaling-stroke;
+}
+.bp-num {
+  fill: #fff;
+  font-family: var(--fm);
+  font-size: 6px;
+  text-anchor: middle;
+}
+.bp-tt {
+  fill: var(--ink-soft);
+  font-family: var(--fm);
+  font-size: 6px;
+  letter-spacing: 0.06em;
+  text-anchor: middle;
+}
+.bp-vert {
+  transform: rotate(-90deg);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.bp-a {
+  fill: #fff;
+  font-size: 6.5px;
+  font-weight: 700;
+}
+.bp-key {
+  fill: var(--ink-soft);
+  font-family: var(--fm);
+  font-size: 5.4px;
+  letter-spacing: 0.04em;
+  text-anchor: start;
+}
+.bp-title rect,
+.bp-title path {
+  fill: none;
+  stroke: var(--ink-soft);
+  stroke-width: 0.6;
+  vector-effect: non-scaling-stroke;
+}
+.bp-tb {
+  fill: var(--ink-soft);
+  font-family: var(--fm);
+  font-size: 5px;
+  letter-spacing: 0.03em;
+  text-anchor: start;
+}
+.bp-tb-b {
+  fill: #fff;
+}
+.bp-tb-r {
+  fill: var(--red);
+}
+
+/* ── MORPH annotations (turbine + missile) ── */
+.mo-dim,
+.mo-ext,
+.mo-lead {
+  stroke: var(--ink-soft) !important;
+  stroke-width: 0.7 !important;
+  fill: none !important;
+}
+.mo-ext {
+  opacity: 0.75;
+}
+.mo-arrow {
+  fill: var(--ink-soft) !important;
+  stroke: none !important;
+}
+.mo-anno {
+  fill: var(--ink-soft);
+  font-family: var(--fm);
+  font-size: 6.5px;
+  letter-spacing: 0.05em;
+  text-anchor: start;
+}
+.mo-vert {
+  transform: rotate(-90deg);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.mo-fig {
+  fill: var(--ink-faint, #565b61);
+  font-size: 6px;
+  letter-spacing: 0.12em;
+}
+.mo-hatch line {
+  stroke: var(--war);
+  stroke-width: 0.5;
+  opacity: 0.4;
+  vector-effect: non-scaling-stroke;
 }

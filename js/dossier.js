@@ -359,6 +359,15 @@
 
   // ══ THE PRODUCTION LINE ══ three different devices (not the mirror).
 
+  // section hatching for the munition's propellant casing (built once)
+  var moHatch = $("#moHatch");
+  if (moHatch && !moHatch.childNodes.length) {
+    var mh = "";
+    for (var hy = 150; hy <= 224; hy += 5)
+      mh += '<line x1="88" y1="' + hy + '" x2="' + (88 + (224 - hy) * 0.34) + '" y2="224"/>';
+    moHatch.innerHTML = mh;
+  }
+
   // 1 · CIVILIAN → WEAPON morph (short pin). Same line, different output:
   // the turbine's blades fold and it becomes a missile; cyan → red.
   if ($("#mfMorph"))
@@ -381,9 +390,47 @@
       // a slight launch-lift at the end
       .to("#moMissile", { y: -18, ease: "power1.out", duration: 0.3 }, 0.7);
 
-  // 2 · SELF-DRAWING BLUEPRINT (inline, no pin). The schematic draws itself and
-  // the record revenue counts up as it passes through the viewport.
+  // 2 · SELF-DRAWING BLUEPRINT (inline, no pin). Now a full engineering
+  // drawing: the graph-paper and section hatching are built here, the line-work
+  // draws itself, the revenue counts up, and the dimensions/callouts/title
+  // block fade in once the drawing is down.
   if ($("#mfBlueprint")) {
+    var svgNS = "http://www.w3.org/2000/svg";
+    // graph-paper grid
+    var grid = $("#bpGrid");
+    if (grid && !grid.childNodes.length) {
+      var g = "";
+      for (var gx = 12; gx < 360; gx += 12)
+        g += '<line x1="' + gx + '" y1="4" x2="' + gx + '" y2="246"/>';
+      for (var gy = 12; gy < 250; gy += 12)
+        g += '<line x1="4" y1="' + gy + '" x2="356" y2="' + gy + '"/>';
+      grid.innerHTML = g;
+    }
+    // section-cut hatching in the casing ring of SECTION A–A (centre 74,196)
+    var hatch = $("#bpHatch");
+    if (hatch && !hatch.childNodes.length) {
+      var hh = "";
+      for (var d = -34; d <= 34; d += 4) {
+        // clip each diagonal to the annulus between r=23 and r=34
+        var cx = 74,
+          cy = 196;
+        for (var s = -1; s <= 1; s += 2) {
+          var x1 = cx + d,
+            y1 = cy - 40,
+            x2 = cx + d + 80 * s,
+            y2 = cy - 40 + 80;
+          hh += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"/>';
+          break;
+        }
+      }
+      hatch.innerHTML = hh;
+      // mask the hatch to the outer ring so it reads as a cut casing
+      hatch.setAttribute("clip-path", "url(#bpRing)");
+      var defs = document.createElementNS(svgNS, "defs");
+      defs.innerHTML =
+        '<clipPath id="bpRing"><path d="M74 196 m-34 0 a34 34 0 1 0 68 0 a34 34 0 1 0 -68 0 M74 196 m-23 0 a23 23 0 1 1 46 0 a23 23 0 1 1 -46 0" clip-rule="evenodd"/></clipPath>';
+      $("#bpSvg").appendChild(defs);
+    }
     var rev = { v: 0 };
     var revEl = $("#mfRevenue");
     gsap
@@ -391,20 +438,21 @@
         scrollTrigger: {
           trigger: "#mfBlueprint",
           start: "top 82%",
-          end: "bottom 65%",
+          end: "bottom 62%",
           scrub: true,
         },
       })
-      .to(".bp-line", { strokeDashoffset: 0, ease: "none", duration: 0.8, stagger: 0.04 }, 0)
+      .to(".bp-line", { strokeDashoffset: 0, ease: "none", duration: 0.72, stagger: 0.02 }, 0)
       .to(rev, {
         v: 679,
         ease: "none",
-        duration: 0.8,
+        duration: 0.72,
         onUpdate: function () {
           if (revEl) revEl.textContent = "$" + Math.round(rev.v) + "B";
         },
       }, 0)
-      .to(".bp-tag", { opacity: 1, duration: 0.15 }, 0.7);
+      // dimensions, balloons, hatching and the title block settle in last
+      .to(".bp-anno, .bp-arrow, .bp-hatch", { opacity: 1, duration: 0.18 }, 0.74);
   }
 
   // 3 · PRODUCTION SCALE (inline). Units accumulate and the trade-growth

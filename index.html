@@ -21,9 +21,9 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r35" />
+    <link rel="stylesheet" href="css/style.css?v=2026r36" />
     <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r35" />
+    <link rel="stylesheet" href="css/dossier.css?v=2026r36" />
   </head>
   <body class="dossier">
     <canvas id="bg"></canvas>
@@ -331,6 +331,16 @@
                   <path d="M97.4 123 L29 160 Q20.5 165.5 30 167.6 L99.6 127 Z" />
                 </g>
                 <ellipse class="mo-hub" cx="100" cy="120" rx="4.6" ry="5.4" />
+                <!-- engineering annotation: tower-height dimension + callout -->
+                <path class="mo-dim mo-ext" d="M108 240 H130" />
+                <path class="mo-dim mo-ext" d="M108 121 H130" />
+                <path class="mo-dim" d="M126 123 V238" />
+                <path class="mo-arrow" d="M126 123 L123 130 L129 130 Z" />
+                <path class="mo-arrow" d="M126 238 L123 231 L129 231 Z" />
+                <text class="mo-anno mo-vert" x="139" y="182">H 120 M</text>
+                <path class="mo-lead" d="M110 117 L150 100 L163 100" />
+                <text class="mo-anno" x="165" y="102">NACELLE</text>
+                <text class="mo-anno mo-fig" x="8" y="16">FIG. 1a — TURBINE</text>
               </g>
               <g class="mo-missile" id="moMissile">
                 <!-- cylinder: silhouette + elliptical sections describing girth -->
@@ -345,6 +355,26 @@
                 <path class="mo-fin" d="M113 202 L138 240 L113 221 Z" />
                 <line class="mo-seam" x1="100" y1="206" x2="100" y2="228" />
                 <line class="mo-tip" x1="100" y1="46" x2="100" y2="18" />
+                <!-- engineering annotation: length + Ø dimensions, callouts,
+                     section hatching on the propellant casing -->
+                <path class="mo-dim mo-ext" d="M115 78 H134" />
+                <path class="mo-dim mo-ext" d="M115 230 H134" />
+                <path class="mo-dim" d="M130 80 V228" />
+                <path class="mo-arrow" d="M130 80 L127 87 L133 87 Z" />
+                <path class="mo-arrow" d="M130 228 L127 221 L133 221 Z" />
+                <text class="mo-anno mo-vert" x="143" y="156">4.1 M</text>
+                <path class="mo-dim mo-ext" d="M87 232 V250" />
+                <path class="mo-dim mo-ext" d="M113 232 V250" />
+                <path class="mo-dim" d="M89 246 H111" />
+                <path class="mo-arrow" d="M89 246 L96 243 L96 249 Z" />
+                <path class="mo-arrow" d="M111 246 L104 243 L104 249 Z" />
+                <text class="mo-anno" x="100" y="243">Ø 340</text>
+                <g class="mo-hatch" id="moHatch"></g>
+                <path class="mo-lead" d="M113 96 L150 84 L163 84" />
+                <text class="mo-anno" x="165" y="86">WARHEAD</text>
+                <path class="mo-lead" d="M113 150 L150 158 L163 158" />
+                <text class="mo-anno" x="165" y="160">PROPELLANT</text>
+                <text class="mo-anno mo-fig" x="8" y="16">FIG. 1b — MUNITION</text>
               </g>
             </svg>
             <div class="mf-labels">
@@ -358,28 +388,98 @@
           </div>
         </section>
 
-        <!-- 2 · SELF-DRAWING BLUEPRINT · $679B record arms revenue -->
+        <!-- 2 · SELF-DRAWING BLUEPRINT · $679B record arms revenue.
+             A full engineering drawing: side elevation, dimension lines with
+             arrowheads, numbered callout balloons, a Section A–A cut with
+             hatching, and a title block — all draw-on. -->
         <div class="mf-blueprint rv" id="mfBlueprint">
-          <!-- drawn as a solid of revolution, not an outline: an elliptical
-               tail cap and arced cross-sections give the schematic girth -->
-          <svg class="bp-svg" id="bpSvg" viewBox="0 0 320 130" aria-hidden="true">
-            <path class="bp-line bp-tick" d="M14 65 L306 65" />
-            <path class="bp-line" d="M42 44 L248 44 Q300 65 248 86 L42 86" />
-            <path class="bp-line" d="M42 44 A8 21 0 0 0 42 86" />
-            <path class="bp-line bp-thin" d="M42 44 A8 21 0 0 1 42 86" />
-            <path class="bp-line bp-thin" d="M104 44 A8 21 0 0 0 104 86" />
-            <path class="bp-line bp-thin" d="M166 44 A8 21 0 0 0 166 86" />
-            <path class="bp-line bp-thin" d="M228 44 A8 21 0 0 0 228 86" />
-            <path class="bp-line" d="M56 44 L36 16 L82 44" />
-            <path class="bp-line" d="M56 86 L36 114 L82 86" />
-            <path class="bp-line bp-thin" d="M66 44 L52 24" />
-            <path class="bp-line bp-tick" d="M236 44 L236 18 L272 18" />
-            <path class="bp-line bp-tick" d="M120 86 L120 110 L84 110" />
+          <svg class="bp-svg" id="bpSvg" viewBox="0 0 360 250" aria-hidden="true">
+            <!-- graph-paper grid (built in JS) + drawing border -->
+            <g class="bp-grid" id="bpGrid"></g>
+            <rect class="bp-frame" x="4" y="4" width="352" height="242" />
+            <rect class="bp-frame bp-frame-in" x="9" y="9" width="342" height="232" />
+
+            <!-- ── SIDE ELEVATION ── centreline dash-dot -->
+            <path class="bp-line bp-centre" d="M30 96 H322" />
+            <!-- body: nose cone · casing · tapered tail · end cap -->
+            <path class="bp-line" d="M272 76 L302 96 L272 116" />
+            <path class="bp-line" d="M272 76 L60 76" />
+            <path class="bp-line" d="M272 116 L60 116" />
+            <path class="bp-line" d="M60 76 L48 82 L48 110 L60 116" />
+            <path class="bp-line bp-thin" d="M48 82 A5 14 0 0 0 48 110" />
+            <!-- cross-section station arcs -->
+            <path class="bp-line bp-thin" d="M104 76 A5 20 0 0 0 104 116" />
+            <path class="bp-line bp-thin" d="M158 76 A5 20 0 0 0 158 116" />
+            <path class="bp-line bp-thin" d="M212 76 A5 20 0 0 0 212 116" />
+            <!-- internal bulkheads (hidden detail, thin) -->
+            <path class="bp-line bp-thin" d="M240 76 L240 116" />
+            <path class="bp-line bp-thin" d="M186 76 L186 116" />
+            <path class="bp-line bp-thin" d="M120 76 L120 116" />
+            <!-- fins -->
+            <path class="bp-line" d="M60 76 L40 52 L86 76" />
+            <path class="bp-line" d="M60 116 L40 140 L86 116" />
+
+            <!-- ── DIMENSION · overall length (above) ── -->
+            <path class="bp-line bp-ext" d="M48 74 V52" />
+            <path class="bp-line bp-ext" d="M302 92 V52" />
+            <path class="bp-line bp-dim" d="M48 56 H302" />
+            <path class="bp-arrow" d="M48 56 L55 53 L55 59 Z" />
+            <path class="bp-arrow" d="M302 56 L295 53 L295 59 Z" />
+            <!-- ── DIMENSION · Ø diameter (left) ── -->
+            <path class="bp-line bp-ext" d="M46 76 H30" />
+            <path class="bp-line bp-ext" d="M46 116 H30" />
+            <path class="bp-line bp-dim" d="M34 76 V116" />
+            <path class="bp-arrow" d="M34 76 L31 82 L37 82 Z" />
+            <path class="bp-arrow" d="M34 116 L31 110 L37 110 Z" />
+
+            <!-- ── SECTION marker A–A on the main view ── -->
+            <path class="bp-line bp-cut" d="M158 66 V126" />
+
+            <!-- ── SECTION A–A detail (lower-left) ── -->
+            <circle class="bp-line" cx="74" cy="196" r="34" />
+            <circle class="bp-line bp-thin" cx="74" cy="196" r="23" />
+            <circle class="bp-line bp-thin" cx="74" cy="196" r="9" />
+            <g class="bp-hatch" id="bpHatch"></g>
+
+            <!-- ── numbered callout balloons + leaders (fade in) ── -->
+            <g class="bp-anno" id="bpAnno">
+              <path class="bp-lead" d="M287 88 L287 40" />
+              <circle class="bp-balloon" cx="287" cy="34" r="6" />
+              <text class="bp-num" x="287" y="36.6">1</text>
+              <path class="bp-lead" d="M240 116 L240 150" />
+              <circle class="bp-balloon" cx="240" cy="156" r="6" />
+              <text class="bp-num" x="240" y="158.6">2</text>
+              <path class="bp-lead" d="M158 116 L158 168" />
+              <circle class="bp-balloon" cx="158" cy="174" r="6" />
+              <text class="bp-num" x="158" y="176.6">3</text>
+              <path class="bp-lead" d="M100 116 L100 150" />
+              <circle class="bp-balloon" cx="100" cy="156" r="6" />
+              <text class="bp-num" x="100" y="158.6">4</text>
+
+              <text class="bp-tt" x="177" y="49">4 100 MM</text>
+              <text class="bp-tt bp-vert" x="24" y="96">Ø 340</text>
+              <text class="bp-tt bp-a" x="158" y="63">A</text>
+              <text class="bp-tt bp-a" x="158" y="132">A</text>
+              <text class="bp-tt" x="74" y="240">SECTION A–A · 2:1</text>
+
+              <!-- key -->
+              <text class="bp-key" x="130" y="196">1 · NOSE / SEEKER</text>
+              <text class="bp-key" x="130" y="206">2 · GUIDANCE</text>
+              <text class="bp-key" x="130" y="216">3 · WARHEAD</text>
+              <text class="bp-key" x="130" y="226">4 · PROPELLANT</text>
+
+              <!-- title block (lower-right) -->
+              <g class="bp-title">
+                <rect x="240" y="188" width="106" height="46" />
+                <path d="M240 200 H346 M240 212 H346 M240 224 H346 M294 188 V234" />
+                <text class="bp-tb bp-tb-b" x="244" y="197">FIG. 2 — MUNITION</text>
+                <text class="bp-tb" x="244" y="209">SCALE 1:40</text>
+                <text class="bp-tb" x="298" y="209">SHT 1/1</text>
+                <text class="bp-tb" x="244" y="221">DWG No. 679-B</text>
+                <text class="bp-tb bp-tb-r" x="244" y="231">STATUS: IN PRODUCTION</text>
+              </g>
+            </g>
           </svg>
-          <div class="bp-labels" aria-hidden="true">
-            <span class="bp-tag t1">GUIDANCE</span>
-            <span class="bp-tag t2">WARHEAD</span>
-          </div>
           <div class="mf-fig-block">
             <div class="mf-fig red" id="mfRevenue">$0</div>
             <div class="mf-fig-lbl">
@@ -1194,16 +1294,16 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r35"></script>
-    <script src="js/data.js?v=2026r35"></script>
-    <script src="js/backend.js?v=2026r35"></script>
-    <script src="js/main.js?v=2026r35"></script>
+    <script src="js/config.js?v=2026r36"></script>
+    <script src="js/data.js?v=2026r36"></script>
+    <script src="js/backend.js?v=2026r36"></script>
+    <script src="js/main.js?v=2026r36"></script>
     <!-- scroll engine + the dossier choreography, layered on top of main.js.
          Native scroll only — no smooth-scroll library (see js/dossier.js). -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="js/dossier.js?v=2026r35"></script>
+    <script src="js/dossier.js?v=2026r36"></script>
     <!-- The Room: lazy-loads Three.js only when it nears the viewport -->
-    <script src="js/room.js?v=2026r35"></script>
+    <script src="js/room.js?v=2026r36"></script>
   </body>
 </html>
