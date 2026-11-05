@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Cost of War Storyboards</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* Layout: a long review sheet. Each scene is a band: meta on the left rail,
+   frames in a grid, notes folded under each frame. Dark by design (the brand ground). */
+:root {
+  color-scheme: dark;
+  --ground: #0A0A0A; --panel: #111214; --line: rgba(255,255,255,0.12); --line2: rgba(255,255,255,0.22);
+  --fg: #FFFFFF; --soft: #C4C9CF; --grey: #8A9099; --red: #E8362B; --blue: #3C8FDE;
+  --display: 'Archivo Black', Arial, sans-serif; --sans: 'IBM Plex Sans', Arial, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ground); color: var(--fg); margin: 0; }
+body { font: 15px/1.55 var(--sans); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; }
+a { color: var(--fg); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, summary:focus-visible, .fr:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.wrap { max-width: 1480px; margin: 0 auto; }
+.lbl { font: 500 11px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--grey); }
+.lblw { font: 500 11px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg); }
+h1 { font: 400 clamp(40px, 7vw, 96px)/.9 var(--display); text-transform: uppercase; letter-spacing: -.01em; margin: 10px 0 18px; text-wrap: balance; }
+h2 { font: 400 clamp(26px, 3.4vw, 44px)/.95 var(--display); text-transform: uppercase; margin: 6px 0 10px; text-wrap: balance; }
+h3 { font: 600 13px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; margin: 0 0 10px; color: var(--fg); }
+p { color: var(--soft); max-width: 68ch; margin: 0 0 12px; }
+header.top { padding: 48px 0 28px; border-bottom: 1px solid var(--line); }
+.topbar { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 28px; }
+.card { border-top: 1px solid var(--line2); padding-top: 12px; min-width: 0; }
+.big { font: 600 40px/1 var(--sans); font-variant-numeric: tabular-nums; margin: 6px 0 4px; }
+.big small { font: 400 16px var(--sans); color: var(--grey); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--grey); }
+td { color: var(--soft); font-size: 14px; }
+.tablewrap { overflow-x: auto; }
+section.band { padding: 48px 0 24px; border-bottom: 1px solid var(--line); }
+.band-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 24px; align-items: end; }
+@media (max-width: 860px) { .band-head { grid-template-columns: 1fr; } }
+.meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 14px; }
+.meta dt { font: 500 11px/1.9 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--grey); }
+.meta dd { margin: 0; color: var(--soft); min-width: 0; }
+.pill { display: inline-block; font: 600 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; padding: 4px 7px; border: 1px solid var(--line2); color: var(--fg); margin-right: 6px; }
+.pill.r { border-color: var(--red); }
+.row { margin-top: 26px; }
+.frames { display: grid; gap: 18px; }
+.frames.desk { grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); }
+.frames.phone { grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); }
+figure { margin: 0; min-width: 0; }
+.fr { position: relative; width: 100%; overflow: hidden; background: #000; border: 1px solid var(--line); cursor: zoom-in; display: block; padding: 0; text-align: left; font: inherit; color: inherit; line-height: normal; }
+.fr > .sb-frame { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+figcaption { margin-top: 8px; font-size: 13px; color: var(--soft); }
+figcaption .k { font: 600 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg); margin-right: 6px; }
+.cbar { display: flex; gap: 10px; flex-wrap: wrap; font: 500 11px/1.4 var(--mono); color: var(--grey); margin-top: 4px; }
+.cbar b { color: var(--fg); font-weight: 500; }
+.cbar .warn { color: var(--fg); border-bottom: 1px solid var(--red); }
+details { margin-top: 6px; }
+summary { cursor: pointer; font: 500 11px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--grey); }
+.notes { font-size: 12.5px; color: var(--soft); margin-top: 6px; display: grid; gap: 6px; }
+.notes ul { margin: 0; padding-left: 16px; }
+.notes code { font: 12px var(--mono); color: var(--fg); }
+.flag { padding-left: 10px; border-left: 2px solid var(--line2); }
+.flag.decision, .flag.not-in-data { border-left-color: var(--red); }
+.flag.new-copy { border-left-color: var(--blue); }
+.err { color: var(--fg); font: 12px var(--mono); border-left: 2px solid var(--red); padding-left: 10px; }
+#lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.92); display: flex; align-items: center; justify-content: center; z-index: 50; padding: max(16px, env(safe-area-inset-top, 0px)) 16px; }
+#lightbox .stagebox { position: relative; overflow: hidden; border: 1px solid var(--line2); text-align: left; line-height: normal; }
+#lightbox .stagebox > .sb-frame { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+#lightbox button { position: absolute; top: max(14px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); background: var(--fg); color: var(--ground); border: 0; font: 600 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; padding: 10px 14px; cursor: pointer; min-height: 44px; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 18px; }
+nav.toc a { font: 500 12px var(--mono); letter-spacing: .08em; color: var(--soft); text-decoration: none; border-bottom: 1px solid var(--line2); }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 13px; color: var(--soft); }
+.legend span { padding-left: 10px; border-left: 2px solid var(--line2); }
+.legend .d { border-left-color: var(--red); } .legend .n { border-left-color: var(--blue); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="topbar"><span class="lblw">The Cost of War · scroll rebuild</span><span class="lbl">Phase 1 · storyboards · branch scroll-rebuild</span></div>
+    <h1>Storyboards</h1>
+    <p>Still frames of every scene at 1440×900 and 375×812. Each scene shows how it enters, its move, and how it leaves, plus the still plate used when motion is off. Where a decision is open, the alternative is drawn too. Click any frame to see it full size.</p>
+    <p>Every figure is read from <code>js/data.js</code> when the page loads. Every line of copy names its source. Colour shares are measured from the rendered pixels.</p>
+    <div class="legend"><span class="d">Red rule: open decision or figure not in data.js</span><span class="n">Blue rule: new copy needing approval</span><span>Grey rule: other notes</span></div>
+    <nav class="toc" id="toc" aria-label="Scenes"></nav>
+  </header>
+
+  <section class="band" id="summary">
+    <span class="lbl">Audit baselines</span>
+    <h2>Where the live site is today</h2>
+    <div class="grid2" id="baseline"></div>
+  </section>
+
+  <section class="band" id="length">
+    <span class="lbl">Story length</span>
+    <h2>Scene map</h2>
+    <div class="tablewrap"><table id="lengthTable"></table></div>
+  </section>
+
+  <section class="band" id="decisions">
+    <span class="lbl">Raised by the storyboards</span>
+    <h2>Open decisions</h2>
+    <div id="decisionList" class="notes"></div>
+  </section>
+
+  <div id="scenes"></div>
+
+  <section class="band" id="figures">
+    <span class="lbl">Baseline · before list</span>
+    <h2>Every figure on the live page</h2>
+    <p>Each number printed on the live site, where it sits, and which <code>js/data.js</code> value it matches. This is the “before” list for the no-changed-figures check. Numbers with no match are derived by the tools, typed into copy, or invented.</p>
+    <details><summary>Show the list</summary><div class="tablewrap"><table id="figTable"></table></div></details>
+  </section>
+</div>
+
+<script>
+  // Load every script with a fresh query so a reload always shows the latest frames.
+  (function () {
+    var t = Date.now();
+    ["../js/data.js", "sb.js", "scenes/s00.js", "scenes/s01.js", "scenes/s02.js", "scenes/s03.js", "scenes/s04.js", "scenes/s05.js", "scenes/s06.js", "scenes/s07.js", "scenes/s08.js", "scenes/s09.js", "scenes/s10.js", "scenes/s11.js", "scenes/s12.js", "scenes/s13.js", "scenes/handover.js", "measure.js", "baseline.js"].forEach(function (s) { document.write('<script src="' + s + '?t=' + t + '"><\/script>'); });
+  })();
+</script>
+<script>
+(function () {
+  "use strict";
+  var esc = SB.esc, M = window.SB_MEASURE || {}, B = window.SB_BASELINE || null;
+  var $ = function (id) { return document.getElementById(id); };
+  var pos = SB.positions();
+  var decisions = [];
+
+  /* ── Baselines ── */
+  (function () {
+    var box = $("baseline");
+    if (!B) { box.innerHTML = "<p>Baseline not measured yet.</p>"; return; }
+    var first = B.sizes.filter(function (s) { return s.url.indexOf("studioex-creative.github.io") >= 0; });
+    var firstKB = first.reduce(function (a, s) { return a + s.kb; }, 0);
+    var unmatched = B.figures.filter(function (f) { return !f.dataJs.length; }).length;
+    var cards = [
+      ["Desktop · 1440×900", B.desktop.page + "<small> screens, whole page</small>", B.desktop.heroToHandover + " screens from the hero to Have your say, including the Archive (it moves out of the story)."],
+      ["Phone · 375×812", B.phone.page + "<small> screens, whole page</small>", B.phone.heroToHandover + " screens from the hero to Have your say. The brief says phone must not be longer than desktop."],
+      ["Pinned scenes", B.desktop.pins.length + "<small> pins</small>", B.desktop.pins.map(function (p) { return esc(p.id.replace("Stage", "")) + " " + p.screens; }).join(" · ") + " (screens, desktop)."],
+      ["Largest paint", (B.lcp.desktopFast4G_ms / 1000).toFixed(2) + "<small> s</small>", "Desktop, simulated fast 4G with a 4× slower CPU, in headless Chrome. An estimate; real phones are tested in phase 5."],
+      ["First-party code", Math.round(firstKB) + "<small> KB transferred</small>", "CSS and JS from the site, compressed. GSAP adds about " + Math.round(B.sizes.filter(function (s) { return /gsap/.test(s.url); }).reduce(function (a, s) { return a + s.kb; }, 0)) + " KB."],
+      ["Printed figures", B.figures.length + "<small> numbers</small>", unmatched + " have no matching data.js value (tool results, typed copy or invented drawing dimensions). See the list at the end."],
+    ];
+    box.innerHTML = cards.map(function (c) { return '<div class="card"><div class="lbl">' + c[0] + '</div><div class="big">' + c[1] + "</div><p>" + c[2] + "</p></div>"; }).join("");
+  })();
+
+  /* ── Scene map ── */
+  (function () {
+    var rows = SB.scenes.filter(function (s) { return s.screens != null; });
+    var html = "<tr><th>Scene</th><th>Move</th><th>Screens</th><th>From–to</th><th>Tone</th><th>Link</th></tr>";
+    rows.forEach(function (s) {
+      var p = pos[s.id];
+      html += "<tr><td><a href='#" + s.id + "'>" + s.id + " · " + esc(s.name) + "</a></td><td>" + esc(s.move) + "</td><td>" + s.screens.toFixed(1) + "</td><td>" + p.start.toFixed(1) + "–" + p.end.toFixed(1) + "</td><td>" + (s.restrained ? "Restrained" : "") + "</td><td>" + (s.anchor ? "<code>" + esc(s.anchor) + "</code>" : "") + "</td></tr>";
+    });
+    var through12 = rows.filter(function (s) { return s.id !== "S13"; }).reduce(function (a, s) { return a + s.screens; }, 0);
+    html += "<tr><td colspan='2'><b>Total</b></td><td><b>" + pos.total.toFixed(1) + "</b></td><td colspan='3'>Brief limit: 18 screens, hero to handover. S00–S12 alone are " + through12.toFixed(1) + ". Does S13 count?</td></tr>";
+    $("lengthTable").innerHTML = html;
+  })();
+
+  /* ── Frames ── */
+  function scaleInto(box, node, W, H) {
+    function fit() { var s = box.clientWidth / W; node.style.transform = "scale(" + s + ")"; box.style.height = H * s + "px"; }
+    fit();
+    if (window.ResizeObserver) new ResizeObserver(fit).observe(box);
+  }
+  function key(id, f, v, alt, plate) { return plate ? id + "-plate-" + v : id + "-" + f + (alt ? "-alt" + alt : "") + "-" + v; }
+  function notes(log, m) {
+    var h = "";
+    if (log.state.length) h += "<div><b class='lbl'>Sheet</b><ul>" + log.state.map(function (s) { return "<li>" + esc(s.form || "") + (s.tone ? " · " + esc(s.tone) : "") + (s.w ? " · " + Math.round(s.w) + "×" + Math.round(s.h) : "") + (s.note ? " · " + esc(s.note) : "") + "</li>"; }).join("") + "</ul></div>";
+    if (log.figs.length) {
+      var seen = {};
+      h += "<div><b class='lbl'>Figures</b><ul>" + log.figs.filter(function (f) { var k = f.shown + f.path; if (seen[k]) return false; seen[k] = 1; return true; }).map(function (f) { return "<li>" + esc(f.shown) + " ← <code>" + esc(f.path) + "</code>" + (f.note ? " · " + esc(f.note) : "") + "</li>"; }).join("") + "</ul></div>";
+    }
+    if (log.rungs.length) h += "<div><b class='lbl'>True area</b><ul>" + log.rungs.map(function (r) { return "<li><code>" + esc(r.path) + "</code> " + Math.round(r.w) + "×" + Math.round(r.h) + " · error " + (r.err * 100).toFixed(2) + "%</li>"; }).join("") + "</ul></div>";
+    if (log.copy.length) {
+      var seenC = {};
+      h += "<div><b class='lbl'>Copy</b><ul>" + log.copy.filter(function (c) { var k = c.text + c.src; if (seenC[k]) return false; seenC[k] = 1; return true; }).map(function (c) { return "<li>“" + esc(c.text) + "” · <code>" + esc(c.src) + "</code></li>"; }).join("") + "</ul></div>";
+    }
+    if (m && m.overflow && m.overflow.length) h += "<div class='err'>Overflow: " + esc(JSON.stringify(m.overflow)) + "</div>";
+    return h;
+  }
+  function flagsHTML(log) {
+    var seen = {};
+    return log.flags.filter(function (f) { if (seen[f.text]) return false; seen[f.text] = 1; return true; }).map(function (f) { return "<div class='flag " + esc(f.kind) + "'>" + esc(f.text) + "</div>"; }).join("");
+  }
+  function frameFig(s, f, v, opts) {
+    var fig = document.createElement("figure");
+    var W = SB.SIZES[v].W, H = SB.SIZES[v].H;
+    var k = key(s.id, f.k, v, opts.alt, opts.plate);
+    var m = M[k];
+    var out;
+    try { out = SB.build(s.id, f.k, v, opts); }
+    catch (e) { fig.innerHTML = "<div class='err'>" + esc(k) + ": " + esc(e.message) + "</div>"; return fig; }
+    var btn = document.createElement("button");
+    btn.className = "fr"; btn.type = "button";
+    btn.setAttribute("aria-label", "Open " + k + " full size");
+    btn.appendChild(out.node);
+    btn.addEventListener("click", function () { openBox(s.id, f.k, v, opts, k); });
+    fig.appendChild(btn);
+    scaleInto(btn, out.node, W, H);
+    out.log.flags.forEach(function (fl) { if (fl.kind === "decision" || fl.kind === "not-in-data" || fl.kind === "copy" || fl.kind === "data") decisions.push({ scene: s.id, kind: fl.kind, text: fl.text }); });
+    var cap = opts.plate ? "Still plate for no-motion mode and ?static=1." : (opts.alt ? (opts.altDef.label + (opts.altDef.note ? ". " + opts.altDef.note : "")) : (f.cap || ""));
+    var cb = m ? "<div class='cbar'><span>red <b class='" + (m.red > 5 ? "warn" : "") + "'>" + m.red + "%</b></span><span>blue <b class='" + (m.blue > 3 ? "warn" : "") + "'>" + m.blue + "%</b></span>" + (m.ember ? "<span>ember " + m.ember + "%</span>" : "") + (m.deep ? "<span>deep blue " + m.deep + "%</span>" : "") + (m.off ? "<span class='warn'>off-brand " + m.off + "%</span>" : "") + "</div>" : "";
+    var label = opts.plate ? "plate" : opts.alt ? f.k + " · alt " + opts.alt : f.k;
+    fig.insertAdjacentHTML("beforeend", "<figcaption><span class='k'>" + esc(label) + "</span>" + esc(cap) + cb +
+      (out.log.flags.length ? "<div class='notes'>" + flagsHTML(out.log) + "</div>" : "") +
+      "<details><summary>Notes</summary><div class='notes'>" + notes(out.log, m) + "</div></details></figcaption>");
+    return fig;
+  }
+  function openBox(id, fk, v, opts, k) {
+    var W = SB.SIZES[v].W, H = SB.SIZES[v].H;
+    var lb = document.createElement("div");
+    lb.id = "lightbox"; lb.setAttribute("role", "dialog"); lb.setAttribute("aria-label", k);
+    var box = document.createElement("div"); box.className = "stagebox";
+    var out = SB.build(id, fk, v, opts);
+    box.appendChild(out.node);
+    var s = Math.min((window.innerWidth - 32) / W, (window.innerHeight - 100) / H, 1);
+    box.style.width = W * s + "px"; box.style.height = H * s + "px";
+    out.node.style.transform = "scale(" + s + ")";
+    var close = document.createElement("button"); close.type = "button"; close.textContent = "Close";
+    function shut() { document.removeEventListener("keydown", onKey); lb.remove(); }
+    function onKey(e) { if (e.key === "Escape") shut(); }
+    close.addEventListener("click", shut);
+    lb.addEventListener("click", function (e) { if (e.target === lb) shut(); });
+    document.addEventListener("keydown", onKey);
+    lb.appendChild(box); lb.appendChild(close); document.body.appendChild(lb); close.focus();
+  }
+
+  var host = $("scenes"), toc = $("toc");
+  SB.scenes.forEach(function (s) {
+    var sec = document.createElement("section");
+    sec.className = "band"; sec.id = s.id;
+    var p = pos[s.id];
+    toc.insertAdjacentHTML("beforeend", "<a href='#" + s.id + "'>" + s.id + " " + esc(s.name) + "</a>");
+    sec.innerHTML =
+      "<div class='band-head'><div><span class='lbl'>" + s.id + (p ? " · screens " + p.start.toFixed(1) + "–" + p.end.toFixed(1) : " · tool, not scroll-driven") + "</span><h2>" + esc(s.name) + "</h2>" +
+      "<span class='pill" + (s.restrained ? "" : " r") + "'>" + esc(s.move) + "</span>" + (s.screens != null ? "<span class='pill'>" + s.screens.toFixed(1) + " screens</span>" : "") + (s.restrained ? "<span class='pill'>Restrained</span>" : "") + "</div>" +
+      "<dl class='meta'>" + (s.trigger ? "<dt>Trigger</dt><dd>" + esc(s.trigger) + "</dd>" : "") + (s.camera ? "<dt>Camera</dt><dd>" + esc(s.camera) + "</dd>" : "") + (s.reason ? "<dt>Transition</dt><dd>" + esc(s.reason) + "</dd>" : "") + (s.anchor ? "<dt>Link</dt><dd><code>" + esc(s.anchor) + "</code></dd>" : "") + "</dl></div>";
+    ["desktop", "phone"].forEach(function (v) {
+      var row = document.createElement("div"); row.className = "row";
+      row.innerHTML = "<h3>" + (v === "desktop" ? "Desktop · 1440×900" : "Phone · 375×812") + "</h3>";
+      var g = document.createElement("div"); g.className = "frames " + (v === "desktop" ? "desk" : "phone");
+      s.frames.forEach(function (f) { g.appendChild(frameFig(s, f, v, {})); });
+      g.appendChild(frameFig(s, { k: "plate", p: 1 }, v, { plate: true }));
+      s.alts.forEach(function (a) { (a.frames || s.frames.map(function (f) { return f.k; })).forEach(function (fk) { var f = s.frames.filter(function (x) { return x.k === fk; })[0]; if (f) g.appendChild(frameFig(s, f, v, { alt: a.k, altDef: a })); }); });
+      row.appendChild(g); sec.appendChild(row);
+    });
+    host.appendChild(sec);
+  });
+  ["decisions", "figures"].forEach(function (id) { toc.insertAdjacentHTML("beforeend", "<a href='#" + id + "'>" + (id === "decisions" ? "Open decisions" : "Figure list") + "</a>"); });
+
+  /* ── Decisions (deduplicated) ── */
+  (function () {
+    var seen = {}, by = {};
+    decisions.forEach(function (d) { var k = d.kind + d.text; if (seen[k]) return; seen[k] = 1; (by[d.kind] = by[d.kind] || []).push(d); });
+    var names = { decision: "Decisions", "not-in-data": "Figures not in data.js", data: "Data", copy: "Copy fixes" };
+    $("decisionList").innerHTML = Object.keys(names).filter(function (k) { return by[k]; }).map(function (k) {
+      return "<h3>" + names[k] + "</h3>" + by[k].map(function (d) { return "<div class='flag " + esc(d.kind) + "'><a href='#" + d.scene + "'>" + d.scene + "</a> · " + esc(d.text) + "</div>"; }).join("");
+    }).join("") || "<p>None raised.</p>";
+  })();
+
+  /* ── Figure list ── */
+  if (B) $("figTable").innerHTML = "<tr><th>Shown</th><th>Where</th><th>Context</th><th>Matches in data.js</th></tr>" + B.figures.map(function (f) {
+    return "<tr><td>" + esc(f.shown) + "</td><td><code>" + esc(f.where) + "</code></td><td>" + esc(f.context) + "</td><td>" + (f.dataJs.length ? f.dataJs.map(function (p) { return "<code>" + esc(p) + "</code>"; }).join(", ") : "<b>no match</b>") + "</td></tr>";
+  }).join("");
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Storyboard frame</title>
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html, body { margin: 0; background: #0a0a0a; }
+      #err { color: #fff; font: 14px/1.5 "IBM Plex Mono", monospace; padding: 24px; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- One frame at native size, for screenshots.
+         frame.html?s=S01&f=mid&v=desktop  (&plate=1, &alt=B) -->
+    <script src="../js/data.js"></script>
+    <script src="sb.js"></script>
+    <script src="scenes/s00.js"></script>
+    <script src="scenes/s01.js"></script>
+    <script src="scenes/s02.js"></script>
+    <script src="scenes/s03.js"></script>
+    <script src="scenes/s04.js"></script>
+    <script src="scenes/s05.js"></script>
+    <script src="scenes/s06.js"></script>
+    <script src="scenes/s07.js"></script>
+    <script src="scenes/s08.js"></script>
+    <script src="scenes/s09.js"></script>
+    <script src="scenes/s10.js"></script>
+    <script src="scenes/s11.js"></script>
+    <script src="scenes/s12.js"></script>
+    <script src="scenes/s13.js"></script>
+    <script src="scenes/handover.js"></script>
+    <script>
+      (function () {
+        var q = new URLSearchParams(location.search);
+        var report = { ok: false, overflow: [], error: null, log: null };
+        window.__SB_REPORT = report;
+        try {
+          var out = SB.build(q.get("s"), q.get("f"), q.get("v") || "desktop", {
+            plate: q.get("plate") === "1",
+            alt: q.get("alt") || null,
+          });
+          document.getElementById("root").appendChild(out.node);
+          report.log = out.log;
+          var W = out.ctx.W, H = out.ctx.H;
+          window.__SB_READY = document.fonts.ready.then(function () {
+            // Every text block must sit inside the frame.
+            // Text moved by a camera push may be cropped on purpose; skip it.
+            out.node.querySelectorAll(".sb-ui > div, .sb-world:not(.sb-cam) > div").forEach(function (el) {
+              var r = el.getBoundingClientRect();
+              if (r.left < -0.5 || r.top < -0.5 || r.right > W + 0.5 || r.bottom > H + 0.5)
+                report.overflow.push({ text: el.textContent.slice(0, 60), box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)] });
+            });
+            out.node.querySelectorAll(".sb-html > div").forEach(function (el) {
+              if (el.scrollWidth > el.clientWidth + 1 && el.style.width)
+                report.overflow.push({ text: el.textContent.slice(0, 60), clipped: "text wider than its box" });
+            });
+            report.ok = true;
+            return report;
+          });
+        } catch (e) {
+          report.error = String(e && e.stack || e);
+          document.getElementById("root").innerHTML = '<div id="err"></div>';
+          document.getElementById("err").textContent = report.error;
+          window.__SB_READY = Promise.resolve(report);
+        }
+      })();
+    </script>
+  </body>
+</html>
