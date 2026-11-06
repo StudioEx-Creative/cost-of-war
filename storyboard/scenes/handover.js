@@ -8,7 +8,15 @@
    - picks United Kingdom in the country step
    All costs, names and country figures are read from js/data.js. Anything the
    tool computes from them (remaining, allocated, tax) is shown with
-   c.sample() and the formula it comes from. */
+   c.sample() and the formula it comes from.
+
+   Art direction. The tools are interfaces and stay flat, clear and usable
+   (44px targets, visible focus). The objects are staged: the budget sheet is
+   lit paper on a desk with its drained part hatched away; the world total is a
+   plane receding into the dark with the reader's country lit in its corner;
+   the letter is a sheet of paper lying on the desk; the card is a printed
+   object; the globe is a lit sphere; the Archive is paper hanging in space,
+   with the reader's blank sheet caught in a beam of light. */
 (function () {
   "use strict";
   var S = SB.SVG, T = SB.T, TX = SB.TX, F = SB.F, esc = SB.esc;
@@ -23,13 +31,11 @@
   function allocB(rank) { return rank.reduce(function (s, i) { return s + costOf(i); }, 0); }
   // main.js fmt(): ≥1000 → "$x.xxT", else "$xB"
   function liveFmt(b) { return b >= 1000 ? "$" + (b / 1000).toFixed(2) + "T" : "$" + Math.round(b) + "B"; }
+  var FMT_FLAG = "Climate Action prints as $1.00T in the live tool (main.js fmt). SB format T would print $1T. Frames keep the live $1.00T.";
   function cost(c, i) {
     var p = "issueData[" + i + "].cost", v = SB.get(p);
     if (v >= 1000) {
-      if (!c._fmtFlag) {
-        c._fmtFlag = true;
-        c.flag("data", "Climate Action prints as $1.00T in the live tool (main.js fmt). SB format T would print $1T. Frames keep the live $1.00T.");
-      }
+      if (!c.log.flags.some(function (f) { return f.text === FMT_FLAG; })) c.flag("data", FMT_FLAG);
       return c.sample(liveFmt(v), p + " through main.js fmt(), two decimals, as the live card prints it");
     }
     return c.fig(p, "B");
@@ -77,6 +83,83 @@
     };
   }
 
+  /* ── staging: light, paper as an object in space ─────────────── */
+  // Light, all white or ground at low opacity: a top light that falls across
+  // paper, a beam from above, a soft pool, and the shading of a sphere.
+  function lightDefs(c) {
+    var W = T.white, G = T.ground;
+    c.bgSvg("<defs>" +
+      '<linearGradient id="hoLit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + W + '" stop-opacity="0.13"/><stop offset="0.35" stop-color="' + W + '" stop-opacity="0.035"/><stop offset="1" stop-color="' + W + '" stop-opacity="0"/></linearGradient>' +
+      '<linearGradient id="hoBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + W + '" stop-opacity="0.085"/><stop offset="0.75" stop-color="' + W + '" stop-opacity="0.025"/><stop offset="1" stop-color="' + W + '" stop-opacity="0"/></linearGradient>' +
+      '<radialGradient id="hoPool"><stop offset="0" stop-color="' + W + '" stop-opacity="0.07"/><stop offset="1" stop-color="' + W + '" stop-opacity="0"/></radialGradient>' +
+      '<radialGradient id="hoShade" cx="0.32" cy="0.28" r="0.9"><stop offset="0" stop-color="' + G + '" stop-opacity="0"/><stop offset="0.38" stop-color="' + G + '" stop-opacity="0.18"/><stop offset="0.68" stop-color="' + G + '" stop-opacity="0.78"/><stop offset="0.9" stop-color="' + G + '" stop-opacity="0.97"/></radialGradient>' +
+      '<radialGradient id="hoSpec" cx="0.3" cy="0.26" r="0.6"><stop offset="0" stop-color="' + W + '" stop-opacity="0.3"/><stop offset="0.45" stop-color="' + W + '" stop-opacity="0.09"/><stop offset="1" stop-color="' + W + '" stop-opacity="0"/></radialGradient>' +
+      '<linearGradient id="hoFogL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="' + G + '" stop-opacity="0.94"/><stop offset="0.6" stop-color="' + G + '" stop-opacity="0.7"/><stop offset="1" stop-color="' + G + '" stop-opacity="0"/></linearGradient>' +
+      '<linearGradient id="hoFogB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + G + '" stop-opacity="0"/><stop offset="1" stop-color="' + G + '" stop-opacity="0.92"/></linearGradient>' +
+      '<filter id="hoBlur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>' +
+      "</defs>");
+  }
+  // Where a point of a tilted object lands on screen (CSS: perspective, then
+  // rotateX · rotateY · rotateZ about the object's centre ox, oy).
+  function proj(t, ox, oy, x, y) {
+    var r = Math.PI / 180, X = x - ox, Y = y - oy, a;
+    a = t.rz * r; var x1 = X * Math.cos(a) - Y * Math.sin(a), y1 = X * Math.sin(a) + Y * Math.cos(a);
+    a = t.ry * r; var x2 = x1 * Math.cos(a), z2 = -x1 * Math.sin(a);
+    a = t.rx * r; var y3 = y1 * Math.cos(a) - z2 * Math.sin(a), z3 = y1 * Math.sin(a) + z2 * Math.cos(a);
+    var k = t.persp / (t.persp - z3);
+    return [ox + x2 * k, oy + y3 * k];
+  }
+  // A drawing context that collects into strings instead of the frame, so
+  // an object can be drawn flat in its own coordinates. Logs stay shared.
+  function capture(c) {
+    var k = Object.create(c);
+    k._svg = []; k._html = []; k._uiSvg = []; k._uiHtml = [];
+    return k;
+  }
+  // Draw fn(k) in local coordinates (0..w, 0..h), then stand the result in
+  // space: tilted in 3D about its centre. Returns local → screen.
+  function lay(c, x, y, w, h, t, fn) {
+    t = Object.assign({ rx: 0, ry: 0, rz: 0, persp: 1600 }, t || {});
+    var k = capture(c);
+    fn(k);
+    var tf = "perspective(" + t.persp + "px) rotateX(" + t.rx + "deg) rotateY(" + t.ry + "deg) rotateZ(" + t.rz + "deg)";
+    c.div(x, y, w,
+      '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + " " + h + '" style="position:absolute;left:0;top:0;overflow:visible">' + k._svg.join("") + "</svg>" + k._html.join(""),
+      "height:" + h + "px;transform-origin:50% 50%;transform:" + tf);
+    var ox = x + w / 2, oy = y + h / 2;
+    return function (lx, ly) { return proj(t, ox, oy, x + lx, y + ly); };
+  }
+  function bbox(pts) {
+    var xs = pts.map(function (q) { return q[0]; }), ys = pts.map(function (q) { return q[1]; });
+    var x = Math.min.apply(null, xs), y = Math.min.apply(null, ys);
+    return { x: Math.round(x), y: Math.round(y), w: Math.round(Math.max.apply(null, xs) - x), h: Math.round(Math.max.apply(null, ys) - y) };
+  }
+  function corners(P, r) { return bbox([P(r.x, r.y), P(r.x + r.w, r.y), P(r.x + r.w, r.y + r.h), P(r.x, r.y + r.h)]); }
+  // light falling across a sheet from above, and its top edge catching it
+  function lit(x, y, w, h, o) {
+    o = o || {};
+    return S.rect(x, y, w, h, { fill: "url(#hoLit)", opacity: o.opacity }) +
+      S.line(x + 1, y + 0.75, x + w - 1, y + 0.75, { stroke: "rgba(255,255,255," + (o.edge || 0.5) + ")", "stroke-width": 1.2 });
+  }
+  // a beam from the top of the frame down to y1 (fixed, behind the world)
+  function beam(c, cx, topW, y1, botW, op) {
+    c.bgSvg('<path d="M' + (cx - topW / 2) + " 0 L" + (cx + topW / 2) + " 0 L" + (cx + botW / 2) + " " + y1 + " L" + (cx - botW / 2) + " " + y1 + ' Z" fill="url(#hoBeam)" opacity="' + (op || 1) + '"/>' +
+      '<ellipse cx="' + cx + '" cy="' + y1 + '" rx="' + botW * 0.62 + '" ry="' + botW * 0.12 + '" fill="url(#hoPool)"/>');
+  }
+  // FIG chip: the label of a boxed inset
+  function chip(c, x, y, txt) {
+    c.div(x, y, null, txt, TX.labelW + ";font-size:10px;line-height:12px;background:" + T.ground + ";padding:3px 6px;border:1px solid rgba(255,255,255,0.7);white-space:nowrap");
+  }
+  // numbered callout disc
+  function callout(c, x, y, n) {
+    c.svg(S.circle(x, y, 9, { fill: T.ground, stroke: T.white, "stroke-width": 1 }));
+    c.div(x - 9, y - 7, 18, c.label(String(n), "callout number"), TX.labelW + ";font-size:10px;line-height:14px;text-align:center;letter-spacing:0");
+  }
+  // a short registration cross
+  function reg(x, y, n, op) {
+    return S.path("M" + (x - n) + " " + y + " H" + (x + n) + " M" + x + " " + (y - n) + " V" + (y + n), { stroke: "rgba(255,255,255," + (op || 0.45) + ")" });
+  }
+
   /* ── controls ────────────────────────────────────────────────── */
   var BTN = "box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;font-family:" + F.sans + ";font-weight:600;letter-spacing:0.01em;line-height:1.2;";
   // kind: primary (blue fill, ground text) | blueline | outline | quiet | off
@@ -96,8 +179,9 @@
   function field(c, x, y, w, h, html, o) {
     o = o || {};
     c.svg(S.rect(x + 0.5, y + 0.5, w - 1, h - 1, { fill: T.sheet, stroke: o.stroke || "rgba(255,255,255,0.3)" }));
+    c.svg(S.line(x + 1, y + h - 0.5, x + w - 1, y + h - 0.5, { stroke: "rgba(255,255,255,0.55)" }));
     if (o.wrap) // a long placeholder shown in full, on two lines
-      c.div(x + 14, y + (h - 36) / 2, w - 28, html, "font-family:" + F.sans + ";font-size:" + (o.size || 15) + "px;line-height:18px;color:" + T.grey);
+      c.div(x + 14, y + (h - 40) / 2, w - 28, html, "font-family:" + F.sans + ";font-size:" + (o.size || 15) + "px;line-height:20px;color:" + T.grey);
     else c.div(x + 14, y + (h - 22) / 2, w - (o.caret ? 44 : 28), html,
       "font-family:" + F.sans + ";font-size:" + (o.size || 15) + "px;line-height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:" + (o.value ? T.white : T.grey));
     if (o.caret) c.div(x + w - 30, y + (h - 22) / 2, 18, "▾", "font-family:" + F.sans + ";font-size:15px;line-height:22px;color:" + T.white);
@@ -117,12 +201,13 @@
     else c.svg(S.rect(x, y, s, s, { fill: T.blue }));
     c.div(x, y + (s - 16) / 2, s, String(n), "font-family:" + F.mono + ";font-size:" + (s < 22 ? 11 : 12) + "px;font-weight:600;line-height:16px;text-align:center;color:" + txt);
   }
-  // an allocated cause sheet at true area
+  // an allocated cause sheet at true area: paper, cut out and laid aside
   function causeSheet(c, x, y, w, h, n, alt) {
     var k = (n - 1) % 3;
     if (alt === "B" && k === 1) c.svg(S.sheet(x, y, w, h, { tone: "deep", mode: "solid" }));
     else if (alt === "B" && k === 2) c.svg(S.sheet(x, y, w, h, { tone: "grey", mode: "hatch", sw: 1 }));
     else c.svg(S.sheet(x, y, w, h, { tone: "blue", mode: "edge", sw: 1.5 }));
+    c.svg(lit(x + 1.5, y + 1.5, w - 3, h - 3, { edge: 0.35 }));
   }
   function logRung(c, path, value, r, box, fit) {
     var trueArea = (box.w * box.h * value) / fit;
@@ -160,45 +245,57 @@
     if (!rank.length) return c.copy("0 · select issues to begin", "index.html:820");
     return c.sample(String(rank.length), "sel.size") + c.copy(" issue", "js/main.js:578") + c.copy("s", "js/main.js:578 (plural)") + c.copy(" funded", "js/main.js:578");
   }
-  // the Sheet: ghost of the full budget, remaining sheet anchored bottom-left
-  function h1Sheet(c, box, rank, o) {
-    o = o || {};
+  // The Sheet, drawn flat in its own coordinates: the ghost of the full
+  // budget (dashed), the drained band hatched away, and what remains as lit
+  // paper, anchored bottom-left inside the ghost. The giant figure sits low.
+  function h1Sheet(c, box, rank) {
+    var ph = c.phone;
     var full = c.rung("DEFENCE", D(), box, "bl");
     var rem = D() - allocB(rank);
     var r = SB.rungAt(rem, D(), box, "bl");
     if (rank.length) {
       logRung(c, "DEFENCE − chosen causes (remaining)", rem, r, box, D());
-      c.svg(S.rect(full.x + 0.5, full.y + 0.5, full.w - 1, full.h - 1, { fill: "none", stroke: "rgba(255,255,255,0.4)", "stroke-dasharray": "5 5" }));
-      // the ghost keeps its figure: the earlier reference stays labelled
+      c.svg('<path d="M' + full.x + " " + full.y + " h" + full.w + " v" + full.h + " h" + -full.w + " Z M" + r.x + " " + r.y + " v" + r.h + " h" + r.w + " v" + -r.h + ' Z" fill="url(#hatch-grey)" fill-rule="evenodd" opacity="0.7"/>');
+      c.svg(S.rect(full.x + 0.5, full.y + 0.5, full.w - 1, full.h - 1, { fill: "none", stroke: "rgba(255,255,255,0.5)", "stroke-dasharray": "5 5" }));
+      // the ghost keeps its figure: the earlier reference stays labelled. It
+      // ends over the remaining sheet's right edge, so the drained band to its
+      // right stays clear for the leader to ALLOCATED.
       var gl = (r.y - full.y) >= 30 ? 12 : 10;
-      c.div(full.x + full.w - 152, full.y + Math.max(3, (r.y - full.y - gl * 1.35) / 2), 140, c.fig("DEFENCE", "T"),
-        TX.label + ";font-size:" + gl + "px;text-align:right");
+      c.div(r.x + r.w - 150, full.y + Math.max(3, (r.y - full.y - gl * 1.35) / 2), 140,
+        '<span style="background:' + T.ground + ';padding:0 4px">' + c.fig("DEFENCE", "T") + "</span>",
+        TX.labelW + ";font-size:" + gl + "px;text-align:right");
     }
-    c.svg(S.sheet(r.x, r.y, r.w, r.h, { tone: "red", mode: "edge", sw: 2, tab: true, tabSize: c.phone ? 8 : 12 }));
-    var ph = c.phone, pad = ph ? 14 : 28;
-    c.div(r.x + pad, r.y + (ph ? 16 : 30), r.w - pad * 2, c.copy("budget remaining", "index.html:806"), TX.label + ";font-size:" + (ph ? 10 : 12) + "px");
-    c.div(r.x + pad - 2, r.y + (ph ? 34 : 56), null, rank.length ? remFig(c, rank) : c.fig("DEFENCE", "T"),
-      TX.value + ";font-size:" + (ph ? 40 : 72) + "px");
-    c.state({
-      form: rank.length ? "budget sheet, drained" : "budget sheet, full",
-      x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h),
-      tone: "red edge, neutral paper" + (rank.length ? "; dashed ghost at the full budget" : ""),
-      note: rank.length ? "remaining = DEFENCE − chosen, true area, anchored bottom-left inside the ghost" : "area = DEFENCE; the reader has chosen nothing",
-    });
+    c.svg(S.sheet(r.x, r.y, r.w, r.h, { tone: "red", mode: "edge", sw: 2, tab: true, tabSize: ph ? 8 : 12 }));
+    c.svg(lit(r.x + 2, r.y + 2, r.w - 4, r.h - 4));
+    var pad = ph ? 14 : 30, gs = ph ? 60 : 128;
+    c.div(r.x + pad, r.y + (ph ? 18 : 32), r.w - pad * 2, c.copy("budget remaining", "index.html:806"), TX.label + ";font-size:" + (ph ? 10 : 12) + "px;color:" + T.soft);
+    c.div(r.x + pad - (ph ? 2 : 5), r.y + r.h - gs * 0.9 - (ph ? 12 : 26), r.w - pad, rank.length ? remFig(c, rank) : c.fig("DEFENCE", "T"),
+      TX.giant + ";font-size:" + gs + "px;white-space:nowrap");
     return { full: full, rem: r };
   }
-  function h1Card(c, i, x, y, w, h, pos, alt, focus) {
-    var on = pos > -1;
-    if (on && alt !== "B") c.svg(S.rect(x + 0.75, y + 0.75, w - 1.5, h - 1.5, { fill: T.sheet, stroke: T.blue, "stroke-width": 1.5 }));
-    else c.svg(S.rect(x + 0.5, y + 0.5, w - 1, h - 1, { fill: on ? T.sheet : "none", stroke: on ? "rgba(255,255,255,0.6)" : T.rule }));
-    var ix = x + 12;
-    if (on) { badge(c, x + 10, y + (h - 24) / 2, pos + 1, 24, alt); ix = x + 46; }
-    c.div(ix, y + (c.phone ? 7 : 9), 120, isdg(c, i), TX.label + ";font-size:10px");
-    c.div(ix, y + (c.phone ? 23 : 25), w - (ix - x) - 76, iname(c, i),
-      "font-family:" + F.sans + ";font-size:" + (c.phone ? 15 : 16) + "px;font-weight:500;line-height:1.3;white-space:nowrap;color:" + (on ? T.white : T.soft));
-    c.div(x + w - 112, y + (h - 22) / 2, 100, cost(c, i) + '<span style="' + TX.src + ';font-size:11px;font-weight:400"> ' + c.copy("/yr", "js/main.js:489") + "</span>",
-      TX.value + ";font-size:18px;line-height:22px;text-align:right;color:" + (on ? T.white : T.soft));
-    if (focus) focusRing(c, x, y, w, h);
+  function sheetState(c, rect, rank) {
+    c.state({
+      form: rank.length ? "budget sheet, drained" : "budget sheet, full",
+      x: rect.x, y: rect.y, w: rect.w, h: rect.h,
+      tone: "red edge, neutral lit paper" + (rank.length ? "; dashed ghost at the full budget, drained band hatched" : ""),
+      note: (rank.length ? "remaining = DEFENCE − chosen, true area, anchored bottom-left inside the ghost" : "area = DEFENCE; the reader has chosen nothing") +
+        ". Lies on the desk, tipped back a few degrees; rect is where it sits on screen.",
+    });
+  }
+  // one cause in the ledger: a 44px line, hairline above; a hollow mark, or
+  // the blue rank square once chosen
+  function ledgerRow(c, i, x, y, w, h, pos, alt, focus) {
+    var on = pos > -1, ph = c.phone;
+    c.svg(S.line(x, y + 0.5, x + w, y + 0.5, { stroke: on ? "rgba(255,255,255,0.34)" : T.rule }));
+    if (on) badge(c, x, y + (h - 22) / 2, pos + 1, 22, alt);
+    else c.svg(S.rect(x + 5.5, y + h / 2 - 5.5, 11, 11, { fill: "none", stroke: "rgba(255,255,255,0.45)" }));
+    c.div(x + 32, y + (h - 14) / 2, 52, isdg(c, i), TX.label + ";font-size:10px;line-height:14px;white-space:nowrap");
+    var nx = x + 86, cw = ph ? 96 : 100;
+    c.div(nx, y + (h - 22) / 2, w - (nx - x) - cw, iname(c, i),
+      "font-family:" + F.sans + ";font-size:" + (ph ? 15 : 16) + "px;font-weight:" + (on ? 600 : 400) + ";line-height:22px;white-space:nowrap;color:" + (on ? T.white : T.soft));
+    c.div(x + w - cw, y + (h - 22) / 2, cw, cost(c, i) + '<span style="' + TX.src + ';font-size:10px;font-weight:400"> ' + c.copy("/yr", "js/main.js:489") + "</span>",
+      TX.value + ";font-size:" + (ph ? 15 : 16) + "px;line-height:22px;text-align:right;color:" + (on ? T.white : T.soft));
+    if (focus) focusRing(c, x, y + 3, w, h - 6);
   }
   // the summary's second sentence (main.js:601), a tool output
   function h1Stmt(c, rank) {
@@ -215,96 +312,100 @@
       '<b style="color:' + T.white + ';font-weight:600">' + allocFig(c, rank) + "</b>" + c.copy(" redirected to ", "js/main.js:600") +
       c.sample(String(n), "sel.size") + c.copy(" issue", "js/main.js:600") + c.copy("s", "js/main.js:600 (plural)") + c.copy(".", "js/main.js:600") + "<br>" +
       '<b style="color:' + T.white + ';font-weight:600">' + remFig(c, rank) + "</b>" + c.copy(" still goes to weapons.", "js/main.js:600"),
-      TX.bodySm + ";font-size:17px;line-height:1.4;color:" + T.soft);
-    c.div(x, y + 62, w, h1Stmt(c, rank), TX.bodySm + ";font-size:14px;line-height:1.45;color:" + T.grey);
-  }
-  // phone plate: every figure of the step, still. The drained sheet, all
-  // fourteen causes with their costs (chosen ones ranked), the summary.
-  function h1PhonePlate(c, rank, alt) {
-    c.div(16, 16, 343, h1Prompt(c, rank), TX.labelW + ";font-size:11px");
-    var box = { x: 16, y: 40, w: 343, h: 190 };
-    h1Sheet(c, box, rank);
-    var n = SB.get("issueData").length, y0 = 244, rh = 32;
-    for (var i = 0; i < n; i++) {
-      var y = y0 + i * rh, pos = rank.indexOf(i), on = pos > -1;
-      c.svg(S.line(16, y, 359, y, { stroke: T.rule }));
-      if (on) badge(c, 16, y + 6, pos + 1, 20, alt);
-      c.div(on ? 44 : 16, y + 6, 220, iname(c, i),
-        "font-family:" + F.sans + ";font-size:14px;font-weight:" + (on ? 600 : 400) + ";line-height:20px;white-space:nowrap;color:" + (on ? T.white : T.soft));
-      c.div(239, y + 6, 120, cost(c, i) + '<span style="' + TX.src + ';font-size:10px;font-weight:400"> ' + c.copy("/yr", "js/main.js:489") + "</span>",
-        TX.value + ";font-size:14px;line-height:20px;text-align:right;color:" + (on ? T.white : T.soft));
-    }
-    c.svg(S.line(16, y0 + n * rh, 359, y0 + n * rh, { stroke: T.rule }));
-    c.div(16, y0 + n * rh + 10, 343, h1Stmt(c, rank), TX.bodySm + ";font-size:14px;line-height:1.4;color:" + T.grey);
+      TX.bodySm + ";font-size:18px;line-height:1.4;color:" + T.soft);
+    c.div(x, y + 62, w, h1Stmt(c, rank), TX.bodySm + ";font-size:18px;line-height:1.45;color:" + T.grey);
   }
   // the journey gate, still locked: Step 01 sits blurred behind its message
-  function h1Gate(c, x, y, w, h) {
+  function h1Gate(c, x, y, w) {
     c.svg(S.line(x, y, x + w, y, { stroke: T.rule, "stroke-dasharray": "4 4" }));
-    c.div(x, y + 20, w, c.copy("Step 01", "index.html:895"), TX.label + ";opacity:0.35");
-    c.div(x, y + 40, w, c.copy("Your country", "index.html:896"), TX.title + ";font-size:40px;opacity:0.12;filter:blur(3px)");
-    c.div(x, y + 30, w,
+    c.div(x, y + 16, w, c.copy("Step 01", "index.html:895"), TX.label + ";opacity:0.35");
+    c.div(x, y + 36, w, c.copy("Your country", "index.html:896"), TX.title + ";font-size:40px;opacity:0.12;filter:blur(3px)");
+    c.div(x, y + 22, w,
       c.copy("Your letter writes itself from your choices.", "index.html:880") + "<br>" + c.copy("Make one above to continue.", "index.html:880-881"),
-      TX.bodySm + ";font-size:15px;text-align:center;color:" + T.white);
-    button(c, x + (w - 260) / 2, y + 92, 260, 44, c.copy("▲ Choose what you'd fund", "index.html:887"), "outline", 14);
+      TX.bodySm + ";font-size:18px;text-align:center;color:" + T.white);
+    button(c, x + (w - 280) / 2, y + 96, 280, 44, c.copy("▲ Choose what you'd fund", "index.html:887"), "outline", 15);
   }
   function h1Desk(c, rank, alt) {
-    c.div(56, 36, 1328, h1Title(c), TX.title + ";font-size:34px;text-align:center");
-    c.div(300, 84, 840, h1Sub(c), TX.bodySm + ";font-size:16px;text-align:center");
-    // causes: two columns, as the live layout (7 left, 7 right)
-    var n = SB.get("issueData").length, half = Math.ceil(n / 2);
-    for (var i = 0; i < n; i++) {
-      var x = i < half ? 56 : 1064, y = 172 + (i % half) * 70;
-      h1Card(c, i, x, y, 320, 60, rank.indexOf(i), alt, !rank.length && i === 0);
+    lightDefs(c);
+    var on = rank.length > 0;
+    // the ledger: every cause on one 44px line
+    var LX = 64, LW = 344, LY = 96, RH = 44, n = SB.get("issueData").length;
+    c.div(LX, 66, LW, h1Count(c, rank), (on ? TX.labelW : TX.label) + ";font-size:12px");
+    for (var i = 0; i < n; i++) ledgerRow(c, i, LX, LY + i * RH, LW, RH, rank.indexOf(i), alt, !on && i === 0);
+    c.svg(S.line(LX, LY + n * RH + 0.5, LX + LW, LY + n * RH + 0.5, { stroke: T.rule }));
+    var cy = LY + n * RH + 18;
+    button(c, LX, cy, LW, 48, c.copy("Continue → Your country", "index.html:869") + ' <span style="margin-left:6px">▾</span>', on ? "primary" : "off", 16);
+    if (on) {
+      button(c, LX, cy + 58, 166, 44, c.copy("↺ Reset", "index.html:858"), "quiet", 15);
+      button(c, LX + 178, cy + 58, 166, 44, c.copy("↗ Share this", "index.html:859"), "quiet", 15);
     }
-    var box = { x: 440, y: 192, w: 560, h: 350 };
-    c.div(box.x, 158, box.w, h1Prompt(c, rank), TX.labelW + ";font-size:12px;text-align:center");
-    h1Sheet(c, box, rank);
+    // the title and the lead
+    c.div(456, 62, 920, h1Title(c), TX.title + ";font-size:30px;white-space:nowrap");
+    c.div(456, 104, 590, h1Sub(c), TX.bodySm + ";font-size:18px");
+    // the Sheet: lit paper on the desk, tipped back
+    var box = { x: 456, y: 248, w: 590, h: 364 }, m = 28;
+    beam(c, box.x + box.w * 0.42, 70, box.y + box.h + 30, box.w * 1.15, 0.9);
+    c.div(box.x, 216, 590, h1Prompt(c, rank), TX.labelW + ";font-size:12px");
+    var res, t = { rx: 7, rz: -0.6, persp: 1900 };
+    var P = lay(c, box.x - m, box.y - m, box.w + m * 2, box.h + m * 2, t, function (k) {
+      res = h1Sheet(k, { x: m, y: m, w: box.w, h: box.h }, rank);
+    });
+    sheetState(c, corners(P, res.rem), rank);
+    var f = res.full, r = res.rem;
+    // registration marks at the ghost's corners
+    [[f.x, f.y], [f.x + f.w, f.y], [f.x + f.w, f.y + f.h], [f.x, f.y + f.h]].forEach(function (q) { var s = P(q[0], q[1]); c.svg(reg(s[0] + (q[0] > f.x ? 12 : -12), s[1] + (q[1] > f.y ? 12 : -12), 5, 0.4)); });
 
-    if (!rank.length) {
-      c.div(box.x, box.y + box.h + 24, box.w, h1Count(c, rank), TX.label + ";text-align:center");
-      button(c, 1064, 700, 320, 48, c.copy("Continue → Your country", "index.html:869") + ' <span style="margin-left:6px">▾</span>', "off");
-      h1Gate(c, box.x, 700, box.w, 170);
+    if (!on) {
+      h1Gate(c, box.x, 648, box.w);
       return;
     }
-    // drained → allocated: one leader from the emptied band to the ranked row
-    var bandX = box.x + box.w - 14;
-    var hy = box.y + box.h + 22;
-    c.svg(S.leader([[bandX, box.y + 40], [bandX, hy - 6]], { color: "rgba(255,255,255,0.45)" }));
-    // the ranked row (live: "Your priorities, in order")
-    c.div(box.x, hy, 400, c.copy("Your priorities, in order", "index.html:846"), TX.labelW + ";font-size:12px");
-    c.div(box.x, hy + 20, 420, c.copy("use ↑ ↓ to reorder · your top priority first", "index.html:847"), TX.src);
-    c.div(box.x + box.w - 170, hy, 156, c.copy("allocated", "index.html:815"), TX.label + ";text-align:right");
-    c.div(box.x + box.w - 170, hy + 18, 156, allocFig(c, rank), TX.value + ";font-size:26px;text-align:right");
-    c.svg(S.line(box.x, hy + 52, box.x + box.w - 22, hy + 52, { stroke: T.rule }));
-    var base = hy + 196, xs = box.x;
+    // drained → allocated: a leader from the hatched band to the figure
+    var a = P((r.x + r.w + f.x + f.w) / 2, f.y + 46);
+    c.svg(S.leader([a, [a[0] + 24, 214], [1078, 214]], {}));
+    callout(c, 1090, 214, 1);
+    c.div(1108, 192, 268, c.copy("allocated", "index.html:815"), TX.label);
+    c.div(1108, 210, 268, allocFig(c, rank), TX.value + ";font-size:30px");
+    // the chosen causes, cut out at true area and laid in the margin, in rank order
+    var CX = 1082;
+    c.div(CX, 274, 294, c.copy("Your priorities, in order", "index.html:846"), TX.labelW + ";font-size:12px");
+    c.div(CX, 294, 294, c.copy("use ↑ ↓ to reorder · your top priority first", "index.html:847"), TX.src + ";font-size:11px");
+    var ey = 344, rot = [-1.4, 1.2, -0.7];
     rank.forEach(function (idx, p) {
-      var r = c.rung("issueData[" + idx + "].cost", D(), box, "bl");
-      var x = xs, y = base - r.h;
-      causeSheet(c, x, y, r.w, r.h, p + 1, alt);
-      var lx = x, lw = Math.max(r.w, 120);
-      badge(c, lx, base + 12, p + 1, 22, alt);
-      c.div(lx + 30, base + 13, lw, iname(c, idx), "font-family:" + F.sans + ";font-size:14px;font-weight:600;line-height:20px;white-space:nowrap;color:" + T.white);
-      c.div(lx + 30, base + 33, lw, cost(c, idx) + c.copy("/yr", "js/main.js:941"), TX.src + ";font-size:12px");
-      // reorder controls (live: ↑ ↓ ✕), 28px on desktop
+      var cr = c.rung("issueData[" + idx + "].cost", D(), box, "bl");
+      c.svg('<g transform="rotate(' + rot[p] + " " + (CX + cr.w / 2) + " " + (ey + cr.h / 2) + ')">');
+      causeSheet(c, CX, ey, cr.w, cr.h, p + 1, alt);
+      c.svg("</g>");
+      var ry = ey + cr.h + 10;
+      badge(c, CX, ry + 11, p + 1, 22, alt);
+      c.div(CX + 30, ry + 2, 118, iname(c, idx), "font-family:" + F.sans + ";font-size:15px;font-weight:600;line-height:20px;white-space:nowrap;color:" + T.white);
+      c.div(CX + 30, ry + 23, 118, cost(c, idx) + c.copy("/yr", "js/main.js:941"), TX.src + ";font-size:11px");
+      // reorder controls (live: ↑ ↓ ✕), 44px
       ["↑", "↓", "✕"].forEach(function (g, k) {
         var off = (g === "↑" && p === 0) || (g === "↓" && p === rank.length - 1);
-        button(c, lx + 30 + k * 34, base + 58, 28, 28, g, off ? "off" : "quiet", 14);
+        button(c, 1232 + k * 50, ry, 44, 44, g, off ? "off" : "quiet", 15);
       });
-      xs += lw + 34;
+      ey = ry + 44 + 20;
     });
-    c.div(56, 690, 320, h1Count(c, rank), TX.labelW);
-    h1Summary(c, rank, 56, 718, 320);
-    button(c, 1064, 700, 320, 48, c.copy("Continue → Your country", "index.html:869") + ' <span style="margin-left:6px">▾</span>', "primary");
-    button(c, 1064, 762, 154, 44, c.copy("↺ Reset", "index.html:858"), "quiet", 14);
-    button(c, 1230, 762, 154, 44, c.copy("↗ Share this", "index.html:859"), "quiet", 14);
+    h1Summary(c, rank, box.x, 646, box.w);
+  }
+  // phone: the Sheet fills the stage; the causes follow as a ledger
+  function h1PhoneSheet(c, rank, box) {
+    var res, m = 8;
+    var P = lay(c, box.x - m, box.y - m, box.w + m * 2, box.h + m * 2, { rx: 6, rz: -0.5, persp: 1100 }, function (k) {
+      res = h1Sheet(k, { x: m, y: m, w: box.w, h: box.h }, rank);
+    });
+    sheetState(c, corners(P, res.rem), rank);
+    return res;
   }
   function h1Phone(c, rank, alt) {
+    lightDefs(c);
     var st = c.stage, tb = c.textBox;
-    c.div(st.x, st.y, st.w, h1Prompt(c, rank), TX.labelW + ";font-size:11px");
-    var box = { x: st.x, y: st.y + 24, w: st.w, h: 214 };
-    h1Sheet(c, box, rank);
+    c.div(st.x, 44, st.w, h1Prompt(c, rank), TX.labelW + ";font-size:11px");
+    beam(c, 160, 40, 300, 360, 0.8);
     if (!rank.length) {
-      [0, 1, 2, 3].forEach(function (i) { h1Card(c, i, st.x, box.y + box.h + 18 + i * 60, st.w, 52, -1, alt, i === 0); });
+      h1PhoneSheet(c, rank, { x: st.x, y: 76, w: st.w, h: 206 });
+      [0, 1, 2, 3].forEach(function (i) { ledgerRow(c, i, st.x, 300 + i * 50, st.w, 50, -1, alt, i === 0); });
+      c.div(st.x, 506, st.w, "", "height:40px;background:linear-gradient(to bottom, rgba(10,10,10,0), " + T.ground + ")");
       c.div(tb.x, tb.y, tb.w, h1Title(c), TX.title + ";font-size:22px;line-height:1");
       c.div(tb.x, tb.y + 54, tb.w,
         c.copy("Tap the causes you'd fund, ", "index.html:829") +
@@ -316,35 +417,61 @@
       c.flag("copy", "Phone keeps the first sentence of the redistribute lead only; ‘Watch the military budget in the centre drain’ is dropped there (audit RED-1).");
       return;
     }
-    var hy = box.y + box.h + 14;
+    var box = { x: st.x, y: 76, w: st.w, h: 196 };
+    h1PhoneSheet(c, rank, box);
+    var hy = 288;
     c.div(st.x, hy, 200, c.copy("Your priorities, in order", "index.html:846"), TX.labelW + ";font-size:10px");
     c.div(st.x + st.w - 150, hy - 2, 150, c.copy("allocated", "index.html:815") + " " +
       '<span style="' + TX.value + ';font-size:16px;letter-spacing:0;text-transform:none">' + allocFig(c, rank) + "</span>", TX.label + ";font-size:10px;text-align:right");
-    // sheets at true area, in rank order, on one baseline
+    // sheets at true area, in rank order, on one baseline: cut out and laid down
     var rs = rank.map(function (idx) { return c.rung("issueData[" + idx + "].cost", D(), box, "bl"); });
-    var base = hy + 24 + Math.max.apply(null, rs.map(function (r) { return r.h; })), xs = st.x;
+    var base = hy + 26 + Math.max.apply(null, rs.map(function (r) { return r.h; })), xs = st.x, rot = [-2, 1.5, -0.8];
     rs.forEach(function (r, p) {
+      c.svg('<g transform="rotate(' + rot[p] + " " + (xs + r.w / 2) + " " + (base - r.h / 2) + ')">');
       causeSheet(c, xs, base - r.h, r.w, r.h, p + 1, alt);
+      c.svg("</g>");
       c.div(xs + 5, base - r.h + 4, 20, String(p + 1), TX.labelW + ";font-size:10px;line-height:12px");
-      xs += r.w + 16;
+      xs += r.w + 18;
     });
     // stacked label rail with 44px reorder controls
     rank.forEach(function (idx, p) {
-      var y = base + 10 + p * 46;
+      var y = base + 12 + p * 48;
       c.svg(S.line(st.x, y, st.x + st.w, y, { stroke: T.rule }));
-      badge(c, st.x, y + 11, p + 1, 22, alt);
-      c.div(st.x + 32, y + 4, 150, iname(c, idx), "font-family:" + F.sans + ";font-size:14px;font-weight:600;line-height:20px;white-space:nowrap;color:" + T.white);
-      c.div(st.x + 32, y + 24, 150, cost(c, idx) + c.copy("/yr", "js/main.js:941"), TX.src + ";font-size:11px");
+      badge(c, st.x, y + 12, p + 1, 22, alt);
+      c.div(st.x + 32, y + 5, 150, iname(c, idx), "font-family:" + F.sans + ";font-size:15px;font-weight:600;line-height:20px;white-space:nowrap;color:" + T.white);
+      c.div(st.x + 32, y + 25, 150, cost(c, idx) + c.copy("/yr", "js/main.js:941"), TX.src + ";font-size:11px");
       ["↑", "↓", "✕"].forEach(function (g, k) {
         var off = (g === "↑" && p === 0) || (g === "↓" && p === rank.length - 1);
-        button(c, st.x + st.w - 132 + k * 44, y + 1, 44, 44, g, off ? "off" : "quiet", 15);
+        button(c, st.x + st.w - 140 + k * 48, y + 2, 44, 44, g, off ? "off" : "quiet", 15);
       });
     });
     c.div(tb.x, tb.y, tb.w, h1Count(c, rank), TX.value + ";font-size:20px");
     c.div(tb.x, tb.y + 30, tb.w, c.copy("The order you choose them in is your ranking.", "index.html:830"), TX.bodySm + ";font-size:14px");
-    button(c, tb.x, tb.y + 72, tb.w, 48, c.copy("Continue → Your country", "index.html:869") + " ▾", "blueline");
-    button(c, tb.x, tb.y + 132, 166, 44, c.copy("↺ Reset", "index.html:858"), "quiet", 14);
-    button(c, tb.x + 177, tb.y + 132, 166, 44, c.copy("↗ Share this", "index.html:859"), "quiet", 14);
+    button(c, tb.x, tb.y + 66, tb.w, 48, c.copy("Continue → Your country", "index.html:869") + " ▾", "blueline");
+    button(c, tb.x, tb.y + 126, 166, 44, c.copy("↺ Reset", "index.html:858"), "quiet", 14);
+    button(c, tb.x + 177, tb.y + 126, 166, 44, c.copy("↗ Share this", "index.html:859"), "quiet", 14);
+  }
+  // phone plate: every figure of the step, still. The drained sheet, all
+  // fourteen causes with their costs (chosen ones ranked), the summary.
+  function h1PhonePlate(c, rank, alt) {
+    lightDefs(c);
+    c.div(16, 44, 343, h1Prompt(c, rank), TX.labelW + ";font-size:11px");
+    var box = { x: 16, y: 68, w: 343, h: 170 }, res;
+    var P = lay(c, box.x - 6, box.y - 6, box.w + 12, box.h + 12, {}, function (k) { res = h1Sheet(k, { x: 6, y: 6, w: box.w, h: box.h }, rank); });
+    sheetState(c, corners(P, res.rem), rank);
+    var n = SB.get("issueData").length, y0 = 252, rh = 31;
+    for (var i = 0; i < n; i++) {
+      var y = y0 + i * rh, pos = rank.indexOf(i), on = pos > -1;
+      c.svg(S.line(16, y, 359, y, { stroke: on ? "rgba(255,255,255,0.34)" : T.rule }));
+      if (on) badge(c, 16, y + 5, pos + 1, 20, alt);
+      else c.svg(S.rect(20.5, y + 10.5, 10, 10, { fill: "none", stroke: "rgba(255,255,255,0.4)" }));
+      c.div(44, y + 5, 200, iname(c, i),
+        "font-family:" + F.sans + ";font-size:14px;font-weight:" + (on ? 600 : 400) + ";line-height:20px;white-space:nowrap;color:" + (on ? T.white : T.soft));
+      c.div(239, y + 5, 120, cost(c, i) + '<span style="' + TX.src + ';font-size:10px;font-weight:400"> ' + c.copy("/yr", "js/main.js:489") + "</span>",
+        TX.value + ";font-size:14px;line-height:20px;text-align:right;color:" + (on ? T.white : T.soft));
+    }
+    c.svg(S.line(16, y0 + n * rh, 359, y0 + n * rh, { stroke: T.rule }));
+    c.div(16, y0 + n * rh + 10, 343, h1Stmt(c, rank), TX.bodySm + ";font-size:14px;line-height:1.4;color:" + T.grey);
   }
 
   SB.scene({
@@ -425,8 +552,9 @@
       var cst = costOf(i), ry = y + i * rowH;
       var fill = Math.min(spend / cst, 1), canFund = spend >= cst;
       c.div(x, ry, nameW, iname(c, i), "font-family:" + F.sans + ";font-size:" + size + "px;line-height:" + rowH + "px;white-space:nowrap;color:" + T.soft);
-      c.svg(S.rect(trX, ry + rowH / 2 - 3, trW, 6, { fill: "rgba(255,255,255,0.12)" }));
-      c.svg(S.rect(trX, ry + rowH / 2 - 3, trW * fill, 6, { fill: T.blue }));
+      c.svg(S.line(trX, ry + rowH / 2, trX + trW, ry + rowH / 2, { stroke: "rgba(255,255,255,0.16)" }));
+      c.svg(S.line(trX + trW, ry + rowH / 2 - 4, trX + trW, ry + rowH / 2 + 4, { stroke: "rgba(255,255,255,0.3)" }));
+      c.svg(S.rect(trX, ry + rowH / 2 - 2.5, trW * fill, 5, { fill: T.blue }));
       c.div(trX + trW + 8, ry, pctW, c.sample(((spend / cst) * 100).toFixed(0) + "%", "tool output: country spend ÷ " + "issueData[" + i + "].cost × 100, 0 dp (main.js:1036)"),
         TX.value + ";font-size:" + size + "px;line-height:" + rowH + "px;text-align:right;color:" + (canFund ? T.white : T.grey));
     }
@@ -442,25 +570,41 @@
       TX.src + ";font-size:" + small + "px");
   }
   function cur(c) { return c.fig("CURRENCY." + SB.get(CP + "[0]"), "raw"); }
-  // UK rung inside the ghost of the world total (it is part of that total)
-  function h2Sheet(c, box) {
-    var full = c.rung("DEFENCE", D(), box, "bl");
-    c.svg(S.rect(full.x + 0.5, full.y + 0.5, full.w - 1, full.h - 1, { fill: "none", stroke: "rgba(255,255,255,0.4)", "stroke-dasharray": "5 5" }));
-    var r = c.rung(CP + "[2]", D(), box, "bl");
-    c.svg(S.sheet(r.x, r.y, r.w, r.h, { tone: "red", mode: "edge", sw: 2, tab: true, tabSize: c.phone ? 6 : 10 }));
-    var ph = c.phone;
-    var small = full.w < 240;
-    c.div(full.x + (ph ? (small ? 8 : 12) : 22), full.y + (ph ? (small ? 8 : 12) : 20), Math.min(400, full.w - 24), c.fig("DEFENCE", "T") + " · " + c.copy("global military total", "js/main.js:1077"),
-      TX.label + ";font-size:" + (ph ? 10 : 12) + "px;text-transform:uppercase;letter-spacing:" + (small ? "0.06em" : "0.14em"));
-    var lx = r.x + r.w + (ph ? (small ? 22 : 30) : 60), ly = r.y - (ph ? (small ? 30 : 34) : 60);
-    c.svg(S.leader([[r.x + r.w - 6, r.y + 6], [lx - 8, ly + 10]], {}));
-    var lw = Math.min(260, c.W - lx - 8);
-    if (!small) c.div(lx, ly, lw, c.fig(CP + "[0]", "raw"), TX.labelW + ";font-size:" + (ph ? 10 : 12) + "px");
-    c.div(lx, ly + (small ? 2 : ph ? 16 : 20), lw, h2Spend(c), TX.value + ";font-size:" + (small ? 14 : ph ? 18 : 26) + "px");
-    c.state({ form: "budget sheet as a frame, country rung inside", x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h), tone: "country rung red edge; world total dashed ghost", note: "true area: the country's spend is part of the world total, so nesting is honest here" });
+  // The world total as a plane receding into the dark (dashed ghost on a
+  // cross grid), the country's sheet lit in its near corner at true area:
+  // its spend is part of the world total, so nesting is honest here.
+  function h2Plane(c, X, Y, W, H, t, o) {
+    o = o || {};
+    var ph = c.phone, res;
+    var P = lay(c, X, Y, W, H, t, function (k) {
+      var box = { x: 0, y: 0, w: W, h: H };
+      var full = k.rung("DEFENCE", D(), box, "bl");
+      k.svg(S.grid(0, 0, W, H, ph ? 34 : 50, { color: "rgba(255,255,255,0.045)", ticks: !ph }));
+      k.svg(S.rect(full.x + 0.5, full.y + 0.5, full.w - 1, full.h - 1, { fill: "none", stroke: "rgba(255,255,255,0.45)", "stroke-dasharray": "5 5" }));
+      var r = k.rung(CP + "[2]", D(), box, "bl");
+      k.svg('<ellipse cx="' + (r.x + r.w / 2) + '" cy="' + (r.y + r.h / 2) + '" rx="' + r.w * 1.6 + '" ry="' + r.h * 2.2 + '" fill="url(#hoPool)"/>');
+      k.svg(S.sheet(r.x, r.y, r.w, r.h, { tone: "red", mode: "edge", sw: 2, tab: true, tabSize: ph ? 6 : 10 }));
+      k.svg(lit(r.x + 2, r.y + 2, r.w - 4, r.h - 4, { edge: 0.6 }));
+      var small = W < 240, tipped = !!(t && t.rx);
+      // set a size up on a tipped plane, which foreshortens it; o.labelRight
+      // keeps it clear of a leader rising from the country's sheet
+      if (o.label !== false)
+        k.div(full.x + (ph ? (small ? 8 : 12) : 22), full.y + (ph ? (small ? 8 : 12) : 18), o.labelRight ? full.w - 24 : Math.min(400, full.w - 24),
+          c.fig("DEFENCE", "T") + " · " + c.copy("global military total", "js/main.js:1077"),
+          TX.label + ";font-size:" + ((ph ? 10 : 12) + (tipped ? 1 : 0)) + "px;text-transform:uppercase;letter-spacing:" + (small ? "0.06em" : "0.14em") + (o.labelRight ? ";text-align:right" : ""));
+      res = { r: r, full: full };
+    });
+    var rr = corners(P, res.r);
+    c.state({ form: "budget sheet as a frame, country rung inside", x: rr.x, y: rr.y, w: rr.w, h: rr.h, tone: "country rung red edge, lit; world total dashed ghost on a grid, receding", note: "true area: the country's spend is part of the world total, so nesting is honest here. The plane tips back like a map on a table; rect is where the rung sits on screen." });
+    return { P: P, r: res.r, full: res.full, rr: rr };
   }
+  // the slider as an instrument: a ruled track
   function slider(c, x, y, w, pos, focused) {
     var t = pos / 1000, tx = x + w * t;
+    for (var i = 0; i <= 30; i++) {
+      var gx = x + (w * i) / 30, major = i % 10 === 0;
+      c.svg(S.line(gx, y + 9, gx, y + (major ? 19 : 13), { stroke: "rgba(255,255,255," + (major ? 0.5 : 0.22) + ")" }));
+    }
     c.svg(S.line(x, y, x + w, y, { stroke: "rgba(255,255,255,0.25)", "stroke-width": 4 }));
     c.svg(S.line(x, y, tx, y, { stroke: T.white, "stroke-width": 4 }));
     c.svg(S.circle(tx, y, 11, { fill: T.white }));
@@ -494,80 +638,90 @@
   function income(c, t, size) {
     return '<span style="color:' + T.grey + '">' + cur(c) + "</span>" +
       c.sample(fmtMoney(t.income), "sliderToIncome(" + t.pos + "), main.js:1110") +
-      '<span style="' + TX.src + ";font-size:" + Math.round(size * 0.5) + 'px"> ' + c.copy("/yr income", "js/main.js:1086") + "</span>";
+      '<span style="' + TX.src + ";font-size:" + Math.max(10, Math.round(size * 0.5)) + 'px"> ' + c.copy("/yr income", "js/main.js:1086") + "</span>";
   }
   function h2Desk(c, focused) {
+    lightDefs(c);
     var t = tax(focused ? TAX_KEY : TAX_START);
-    // the country card
-    h2Head(c, 96, 48, 560, 52);
-    c.div(96, 132, 520, h2Desc(c), TX.bodySm + ";font-size:16px");
-    field(c, 96, 196, 420, 48, c.fig(CP + "[0]", "raw"), { value: true, caret: true, size: 17 });
-    c.svg(S.line(96, 264, 616, 264, { stroke: "rgba(255,255,255,0.3)" }));
-    c.div(96, 276, 400, c.fig(CP + "[0]", "raw"), TX.labelW);
-    c.div(92, 296, 400, h2Spend(c), TX.giant + ";font-size:80px");
-    c.div(96, 382, 580, h2Meta(c), TX.src + ";font-size:11px;white-space:nowrap");
-    c.div(96, 408, 540, h2Note(c), TX.bodySm + ";font-size:15px;line-height:1.45");
-    h2Sheet(c, { x: 704, y: 56, w: 640, h: 252 });
-    h2Compare(c, 704, 334, 330, 24, 13);
-    h2Trend(c, 1074, 334, 270, 30, 11);
-    // tax box
-    c.svg(S.line(96, 498, 1344, 498, { stroke: T.rule }));
-    c.div(96, 522, 600, c.copy("Where does your tax money go?", "js/main.js:1083"), TX.title + ";font-size:26px");
-    c.div(96, 560, 580, c.copy("Slide to your income and see how much of your tax funds the military each year.", "js/main.js:1084"), TX.bodySm + ";font-size:15px");
-    c.div(96, 622, 540, income(c, t, 30), TX.value + ";font-size:30px");
-    slider(c, 106, 692, 520, t.pos, focused);
-    sliderScale(c, 96, 726, 540, 12);
+    // the step, on the left
+    h2Head(c, 96, 62, 440, 48);
+    c.div(96, 140, 424, h2Desc(c), TX.bodySm + ";font-size:18px");
+    field(c, 96, 232, 424, 48, c.fig(CP + "[0]", "raw"), { value: true, caret: true, size: 17 });
+    c.div(96, 298, 424, h2Meta(c), TX.src + ";font-size:11px;line-height:1.7");
+    c.div(96, 352, 424, h2Note(c), TX.bodySm + ";font-size:18px");
+    // the world total as a plane receding into the dark; the country's sheet lit in its near corner
+    beam(c, 640, 60, 330, 360, 0.9);
+    var pl = h2Plane(c, 584, 40, 792, 300, { rx: 36, persp: 1500 });
+    // the country's spend, set giant in front of the plane, with a leader down to its sheet
+    var tip = pl.P(pl.r.x + pl.r.w, pl.r.y);
+    c.svg(S.leader([[tip[0] - 4, tip[1] + 4], [770, 214]], {}));
+    c.div(780, 190, 420, c.fig(CP + "[0]", "raw"), TX.labelW + ";font-size:12px");
+    c.div(772, 206, 600, h2Spend(c), TX.giant + ";font-size:150px;white-space:nowrap");
+    // what that spend could cover, and the trend, as marginalia under the plane
+    h2Compare(c, 584, 380, 380, 21, 14);
+    h2Trend(c, 1024, 380, 352, 30, 11);
+    // the tax instrument
+    c.svg(S.line(96, 520, 1376, 520, { stroke: T.rule }));
+    c.div(96, 540, 600, c.copy("Where does your tax money go?", "js/main.js:1083"), TX.title + ";font-size:28px");
+    c.div(96, 582, 540, c.copy("Slide to your income and see how much of your tax funds the military each year.", "js/main.js:1084"), TX.bodySm + ";font-size:18px");
+    c.div(96, 652, 540, income(c, t, 32), TX.value + ";font-size:32px");
+    slider(c, 106, 724, 520, t.pos, focused);
+    sliderScale(c, 96, 762, 540, 12);
     var r = taxResult(c, t);
-    c.div(704, 522, 640, r.amt + '<span style="' + TX.src + ';font-size:15px"> ' + c.copy("/yr", "js/main.js:1147") + "</span>", TX.value + ";font-size:52px;color:" + (focused ? T.white : T.soft));
-    c.div(704, 590, 640, r.lbl, TX.bodySm + ";font-size:16px");
-    c.div(704, 652, 620, r.note, TX.src + ";font-size:11px");
-    button(c, 704, 740, 300, 48, c.copy("Continue → Write the letter", "index.html:925"), "primary");
+    c.div(700, 532, 676, r.amt + '<span style="' + TX.src + ';font-size:15px;letter-spacing:0.06em"> ' + c.copy("/yr", "js/main.js:1147") + "</span>", TX.giant + ";font-size:76px;color:" + (focused ? T.white : T.soft));
+    c.div(704, 626, 640, r.lbl, TX.bodySm + ";font-size:18px");
+    c.div(704, 696, 620, r.note, TX.src + ";font-size:12px");
+    button(c, 704, 778, 320, 48, c.copy("Continue → Write the letter", "index.html:925"), "primary", 16);
   }
   function h2Phone(c, k) {
+    lightDefs(c);
     var st = c.stage, tb = c.textBox;
     if (k === "state") {
-      h2Head(c, st.x, st.y, st.w, 30);
-      field(c, st.x, st.y + 66, st.w, 48, c.fig(CP + "[0]", "raw"), { value: true, caret: true, size: 16 });
-      c.div(st.x, st.y + 130, 300, c.fig(CP + "[0]", "raw"), TX.labelW + ";font-size:10px");
-      c.div(st.x - 2, st.y + 146, 300, h2Spend(c), TX.giant + ";font-size:60px");
-      c.div(st.x, st.y + 206, st.w, h2Meta(c), TX.src + ";font-size:11px");
-      h2Sheet(c, { x: st.x, y: st.y + 262, w: st.w, h: 214 });
-      c.div(tb.x, tb.y, tb.w, h2Note(c, false), TX.bodySm + ";font-size:15px");
-      button(c, tb.x, tb.y + 74, tb.w, 48, c.copy("Continue → Write the letter", "index.html:925"), "blueline");
+      h2Head(c, st.x, 44, st.w, 30);
+      field(c, st.x, 106, st.w, 48, c.fig(CP + "[0]", "raw"), { value: true, caret: true, size: 16 });
+      c.div(st.x, 172, 300, c.fig(CP + "[0]", "raw"), TX.labelW + ";font-size:10px");
+      c.div(st.x - 4, 186, 360, h2Spend(c), TX.giant + ";font-size:100px;white-space:nowrap");
+      beam(c, 50, 30, 540, 220, 0.9);
+      var pl = h2Plane(c, st.x + 12, 330, st.w - 24, 210, { rx: 38, persp: 900 }, { labelRight: true });
+      var tip = pl.P(pl.r.x + pl.r.w * 0.6, pl.r.y);
+      c.svg(S.leader([[tip[0], tip[1] - 2], [tip[0], 290]], {}));
+      c.div(tb.x, tb.y, tb.w, h2Meta(c), TX.src + ";font-size:11px;line-height:1.6");
+      c.div(tb.x, tb.y + 44, tb.w, h2Note(c, false), TX.bodySm + ";font-size:15px");
+      button(c, tb.x, tb.y + 116, tb.w, 48, c.copy("Continue → Write the letter", "index.html:925"), "blueline");
       return;
     }
     if (k === "plate") {
       // every figure of the step, still, in reading order
       var t0 = tax(TAX_KEY), r0 = taxResult(c, t0); // the reader's own reading, as the letter quotes it
-      c.div(16, 20, 200, c.copy("Step 01", "index.html:895"), TX.label + ";font-size:10px");
-      c.div(16, 36, 343, c.copy("Your country", "index.html:896"), TX.title + ";font-size:24px");
-      c.div(16, 70, 160, c.fig(CP + "[0]", "raw"), TX.labelW + ";font-size:10px");
-      c.div(14, 84, 180, h2Spend(c), TX.giant + ";font-size:40px");
-      h2Sheet(c, { x: 200, y: 64, w: 159, h: 92 });
-      c.div(16, 164, 343, h2Meta(c), TX.src + ";font-size:10px");
-      c.div(16, 200, 343, h2Note(c), TX.bodySm + ";font-size:14px;line-height:1.4");
-      h2Compare(c, 16, 290, 343, 20, 12);
-      h2Trend(c, 16, 420, 343, 18, 10);
-      c.svg(S.line(16, 504, 359, 504, { stroke: T.rule }));
-      c.div(16, 514, 343, income(c, t0, 18), TX.value + ";font-size:18px");
+      c.div(16, 44, 200, c.copy("Step 01", "index.html:895"), TX.label + ";font-size:10px");
+      c.div(16, 60, 343, c.copy("Your country", "index.html:896"), TX.title + ";font-size:24px");
+      c.div(16, 94, 160, c.fig(CP + "[0]", "raw"), TX.labelW + ";font-size:10px");
+      c.div(14, 108, 180, h2Spend(c), TX.giant + ";font-size:44px");
+      h2Plane(c, 200, 92, 159, 74, {});
+      c.div(16, 176, 343, h2Meta(c), TX.src + ";font-size:10px");
+      c.div(16, 210, 343, h2Note(c), TX.bodySm + ";font-size:14px;line-height:1.4");
+      h2Compare(c, 16, 298, 343, 20, 12);
+      h2Trend(c, 16, 424, 343, 18, 10);
+      c.svg(S.line(16, 506, 359, 506, { stroke: T.rule }));
+      c.div(16, 516, 343, income(c, t0, 18), TX.value + ";font-size:18px");
       slider(c, 26, 554, 323, t0.pos, false);
-      c.div(16, 574, 343, r0.amt + '<span style="' + TX.src + ';font-size:12px"> ' + c.copy("/yr", "js/main.js:1147") + "</span>", TX.value + ";font-size:28px");
-      c.div(16, 610, 343, r0.lbl, TX.bodySm + ";font-size:14px;line-height:1.4");
-      c.div(16, 676, 343, r0.note, TX.src + ";font-size:10px");
+      c.div(16, 582, 343, r0.amt + '<span style="' + TX.src + ';font-size:12px"> ' + c.copy("/yr", "js/main.js:1147") + "</span>", TX.giant + ";font-size:28px");
+      c.div(16, 618, 343, r0.lbl, TX.bodySm + ";font-size:14px;line-height:1.4");
+      c.div(16, 704, 343, r0.note, TX.src + ";font-size:10px");
       return;
     }
     var t = tax(TAX_KEY), r = taxResult(c, t);
-    c.div(st.x, st.y, 200, c.fig(CP + "[0]", "raw"), TX.label + ";font-size:11px");
-    c.div(st.x, st.y + 22, st.w, c.copy("Where does your tax money go?", "js/main.js:1083"), TX.title + ";font-size:28px");
-    c.div(st.x, st.y + 100, st.w, c.copy("Slide to your income and see how much of your tax funds the military each year.", "js/main.js:1084"), TX.bodySm + ";font-size:15px");
-    c.div(st.x, st.y + 170, st.w, income(c, t, 30), TX.value + ";font-size:30px");
-    slider(c, st.x + 18, st.y + 248, st.w - 36, t.pos, true);
-    sliderScale(c, st.x, st.y + 286, st.w, 11);
-    c.div(st.x, st.y + 330, st.w, r.amt + '<span style="' + TX.src + ';font-size:13px"> ' + c.copy("/yr", "js/main.js:1147") + "</span>", TX.value + ";font-size:40px");
-    c.div(st.x, st.y + 382, st.w, r.lbl, TX.bodySm + ";font-size:14px;line-height:1.45");
+    c.div(st.x, 44, 200, c.fig(CP + "[0]", "raw"), TX.label + ";font-size:11px");
+    c.div(st.x, 64, st.w, c.copy("Where does your tax money go?", "js/main.js:1083"), TX.title + ";font-size:28px");
+    c.div(st.x, 130, st.w, c.copy("Slide to your income and see how much of your tax funds the military each year.", "js/main.js:1084"), TX.bodySm + ";font-size:15px");
+    c.div(st.x, 204, st.w, income(c, t, 30), TX.value + ";font-size:30px");
+    slider(c, st.x + 18, 282, st.w - 36, t.pos, true);
+    sliderScale(c, st.x, 318, st.w, 11);
+    c.div(st.x, 352, st.w, r.amt + '<span style="' + TX.src + ';font-size:13px;letter-spacing:0.06em"> ' + c.copy("/yr", "js/main.js:1147") + "</span>", TX.giant + ";font-size:72px");
+    c.div(st.x, 436, st.w, r.lbl, TX.bodySm + ";font-size:14px;line-height:1.45");
     c.div(tb.x, tb.y, tb.w, r.note, TX.src + ";font-size:10px");
-    button(c, tb.x, tb.y + 74, tb.w, 48, c.copy("Continue → Write the letter", "index.html:925"), "blueline");
-    c.state({ form: "slider (no sheet on screen)", x: st.x, y: st.y + 248, w: st.w, h: 0, tone: "neutral", note: "phone shows the tax step on its own screen; the sheet with the country rung is one swipe up" });
+    button(c, tb.x, tb.y + 82, tb.w, 48, c.copy("Continue → Write the letter", "index.html:925"), "blueline");
+    c.state({ form: "slider (no sheet on screen)", x: st.x, y: 282, w: st.w, h: 0, tone: "neutral", note: "phone shows the tax step on its own screen; the sheet with the country rung is one swipe up" });
   }
 
   SB.scene({
@@ -605,8 +759,8 @@
      ════════════════════════════════════════════════════════════════ */
   var NAME_DEFAULT = "A concerned citizen";
   var CARET = '<span style="display:inline-block;width:2px;height:1.15em;margin-left:2px;vertical-align:-0.2em;background:' + T.white + '"></span>';
-  // part: 'full' (desktop), 'top' / 'end' (phone, the two ends of the same letter),
-  // 'plate' (phone no-motion plate: every figure of the letter, with the
+  // part: 'full' / 'top' (the letter from its start), 'end' (scrolled to its
+  // end), 'plate' (no-motion plate: every figure of the letter, with the
   // figure-free passages elided as […])
   function letterParas(c, part, editing) {
     var cname = c.fig(CP + "[0]", "raw");
@@ -653,39 +807,39 @@
     P.push(c.copy("Yours sincerely,", "js/main.js:1228") + "<br><br>" + mark(name) + "<br>" + cname);
     return P;
   }
-  function letterSheet(c, b, part, editing, size) {
-    // the Sheet as paper: neutral, white hairline, blue tab (the alternative)
-    var ph = c.phone, pad = ph ? 14 : 36;
-    c.svg(S.sheet(b.x, b.y, b.w, b.h, { tone: "white", mode: "edge", sw: 1 }));
-    c.svg(S.rect(b.x, b.y, 10, 10, { fill: T.blue }));
-    if (editing) focusRing(c, b.x, b.y, b.w, b.h);
-    var ty;
-    if (part === "plate") {
-      c.div(b.x + pad, b.y + 14, 260, c.copy("Your letter · editable", "index.html:963"), TX.label + ";font-size:10px");
-      ty = b.y + 42;
-      c.svg(S.line(b.x + pad, ty - 10, b.x + b.w - pad, ty - 10, { stroke: T.rule }));
-    } else if (part !== "end") {
-      // toolbar
-      c.div(b.x + pad, b.y + (ph ? 14 : 22), 260, c.copy("Your letter · editable", "index.html:963"), TX.label + ";font-size:" + (ph ? 10 : 11) + "px");
+  // The letter as a sheet of paper lying on the desk, drawn flat in its own
+  // box (w × h). o.paper: [top, bottom] of the paper in local y (it may run
+  // past the box: the paper bleeds off the frame, the text fades before it).
+  // o.text: [top, bottom] of the text block.
+  function letterPaper(k, w, part, editing, size, o) {
+    var ph = k.phone, pad = ph ? 16 : 44;
+    var p0 = o.paper[0], p1 = o.paper[1];
+    k.svg(S.sheet(0, p0, w, p1 - p0, { tone: "white", mode: "edge", sw: 1 }));
+    k.svg(lit(1, p0 + 1, w - 2, Math.min(p1 - p0, 700) - 2));
+    k.svg(S.rect(0, p0, 10, 10, { fill: T.blue }));
+    if (editing) k.svg(S.rect(-5, p0 - 5, w + 10, p1 - p0 + 10, { fill: "none", stroke: T.white, "stroke-width": 2 }));
+    var ty = o.text[0];
+    if (o.toolbar) {
+      var by = p0 + (ph ? 12 : 14);
+      k.div(pad, p0 + (ph ? 16 : 28), 240, k.copy("Your letter · editable", "index.html:963"), TX.label + ";font-size:" + (ph ? 10 : 11) + "px");
       var tools = [["Copy", "index.html:965"], ["Email", "index.html:966"], ["Post to X", "index.html:968"]];
-      if (ph) {
-        tools.forEach(function (t, i) { button(c, b.x + pad + i * 106, b.y + 36, 98, 44, c.copy(t[0], t[1]), "quiet", 14); });
-      } else {
-        var bx = b.x + b.w - pad - 3 * 96 + 8;
-        tools.forEach(function (t, i) { button(c, bx + i * 96, b.y + 14, 88, 32, c.copy(t[0], t[1]), "quiet", 13); });
-      }
-      ty = b.y + (ph ? 96 : 66);
-      c.svg(S.line(b.x + pad, ty - 10, b.x + b.w - pad, ty - 10, { stroke: T.rule }));
-    } else ty = Math.max(b.y + 16, 16);
-    var body = letterParas(c, part, editing).map(function (p) { return '<p style="margin:0 0 ' + (ph ? 9 : 10) + 'px">' + p + "</p>"; }).join("");
-    var hBody = b.y + b.h - ty - (ph ? 12 : 20);
-    c.div(b.x + pad, ty, b.w - pad * 2, body, "font-family:" + F.sans + ";font-size:" + size + "px;line-height:1.48;color:" + T.soft + ";height:" + hBody + "px;overflow:hidden");
-    if (part === "top") // the letter runs on below
-      c.div(b.x + 1, b.y + b.h - 70, b.w - 2, "", "height:69px;background:linear-gradient(to bottom, transparent, " + T.sheet + ")");
+      if (ph) tools.forEach(function (t, i) { button(k, pad + i * 106, p0 + 38, 98, 44, k.copy(t[0], t[1]), "quiet", 14); });
+      else tools.forEach(function (t, i) { button(k, w - pad - 3 * 96 + 8 + i * 96, by, 88, 44, k.copy(t[0], t[1]), "quiet", 14); });
+      k.svg(S.line(pad, ty - 14, w - pad, ty - 14, { stroke: T.rule }));
+    } else if (o.header) {
+      k.div(pad, p0 + 16, 260, k.copy("Your letter · editable", "index.html:963"), TX.label + ";font-size:10px");
+      k.svg(S.line(pad, ty - 10, w - pad, ty - 10, { stroke: T.rule }));
+    }
+    var body = letterParas(k, part, editing).map(function (p) { return '<p style="margin:0 0 ' + (o.gap || (ph ? 9 : 12)) + 'px">' + p + "</p>"; }).join("");
+    var mask = o.fade === "bottom" ? "-webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 78%, rgba(0,0,0,0));mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 78%, rgba(0,0,0,0));" :
+      o.fade === "top" ? "-webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,1) 56px);mask-image:linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,1) 56px);" : "";
+    k.div(pad, ty, w - pad * 2, body, "font-family:" + F.sans + ";font-size:" + size + "px;line-height:" + (o.lh || 1.5) + ";color:" + T.soft + ";height:" + (o.text[1] - ty) + "px;overflow:hidden;" + mask);
+  }
+  function letterState(c, rect, part, editing) {
     c.state({
-      form: "letter (the Sheet as paper)", x: b.x, y: b.y, w: b.w, h: b.h, tone: "neutral paper, white hairline, blue tab",
+      form: "letter (the Sheet as paper)", x: rect.x, y: rect.y, w: rect.w, h: rect.h, tone: "neutral paper, white hairline, blue tab; lit from above, lying on the desk",
       note: (editing ? "contenteditable has focus: white ring and caret. " : "generated from the reader's choices; editable in full. ") +
-        (part === "top" ? "Phone: top of the letter; it runs on below." : part === "end" ? "Phone: scrolled to the end of the letter." : part === "plate" ? "Phone plate: every figure in the letter, figure-free passages elided." : ""),
+        (part === "top" || part === "full" ? "The top of the letter; it runs on below the frame." : part === "end" ? "Scrolled to the end of the letter." : part === "plate" ? "Plate: every figure in the letter, figure-free passages elided." : ""),
     });
   }
   function letterConsent(c, x, y, w, size, on, focus) {
@@ -700,45 +854,93 @@
     c.div(x, y, w, c.copy("Find your representative: ", "js/main.js:1102") +
       '<span style="color:' + T.white + ';text-decoration:underline">' + c.fig(CP + "[0]", "raw") + c.copy(" government contact page ↗", "js/main.js:1102") + "</span>", TX.src + ";font-size:" + size + "px");
   }
-  function h3Desk(c, editing) {
-    c.div(64, 56, 360, c.copy("Step 02", "index.html:934"), TX.label);
-    c.div(64, 80, 360, c.copy("Write the letter", "index.html:935"), TX.title + ";font-size:48px");
-    c.div(64, 186, 360, c.copy("A personal letter, pre-written from your choices and editable in full. Address it to your head of state. Send it, post it, or screenshot it.", "index.html:937-939"), TX.bodySm + ";font-size:15px");
-    field(c, 64, 314, 360, 48, c.copy("Your name (optional, defaults to 'A concerned citizen')", "index.html:950"), { size: 13 });
-    field(c, 64, 372, 360, 48, c.copy("Your leader's name / title (e.g. Prime Minister Starmer)", "index.html:957"), { size: 13 });
-    c.svg(S.line(64, 448, 424, 448, { stroke: T.rule }));
-    letterConsent(c, 64, 466, 360, 14, false, false);
-    letterSheet(c, { x: 470, y: 40, w: 600, h: 820 }, "full", editing, 14);
+  function h3Left(c) {
+    c.div(72, 62, 380, c.copy("Step 02", "index.html:934"), TX.label);
+    c.div(72, 84, 380, c.copy("Write the letter", "index.html:935"), TX.title + ";font-size:52px");
+    c.div(72, 196, 372, c.copy("A personal letter, pre-written from your choices and editable in full. Address it to your head of state. Send it, post it, or screenshot it.", "index.html:937-939"), TX.bodySm + ";font-size:18px");
+    field(c, 72, 298, 372, 56, c.copy("Your name (optional, defaults to 'A concerned citizen')", "index.html:950"), { size: 15, wrap: true });
+    field(c, 72, 364, 372, 56, c.copy("Your leader's name / title (e.g. Prime Minister Starmer)", "index.html:957"), { size: 15, wrap: true });
+    c.svg(S.line(72, 438, 444, 438, { stroke: T.rule }));
+    letterConsent(c, 72, 454, 372, 18, false, false);
+    // the one primary action, the contact note, two quiet links
+    button(c, 72, 608, 372, 56, c.copy("✉ Send this letter to your representative", "index.html:983"), "primary", 16);
+    contactNote(c, 72, 676, 372, 12);
+    button(c, 72, 732, 180, 44, c.copy("Generate shareable card", "index.html:988"), "quiet", 14);
+    button(c, 264, 732, 180, 44, c.copy("Skip to the coalition", "index.html:992"), "quiet", 14);
+  }
+  function h3Right(c) {
     // storyboard key (not page UI): what the dashed marks in the letter are
-    c.svg(S.rect(1110.5, 62.5, 22, 13, { fill: "none", stroke: "rgba(255,255,255,0.7)", "stroke-dasharray": "2 2" }));
-    c.div(1144, 61, 256, c.label("TYPED NAME · AUDIT CON-1", "storyboard key for the dashed marks"), TX.label + ";font-size:11px");
-    // after the letter: contact note, the one primary action, two quiet links
-    button(c, 1110, 676, 290, 64, c.copy("✉ Send this letter to your representative", "index.html:983"), "primary", 15);
-    contactNote(c, 1110, 756, 290, 12);
-    button(c, 1110, 816, 140, 44, c.copy("Generate shareable card", "index.html:988"), "quiet", 13);
-    button(c, 1260, 816, 140, 44, c.copy("Skip to the coalition", "index.html:992"), "quiet", 13);
+    c.svg(S.rect(1214.5, 66.5, 22, 13, { fill: "none", stroke: "rgba(255,255,255,0.7)", "stroke-dasharray": "2 2" }));
+    c.div(1246, 64, 130, c.label("TYPED NAME · AUDIT CON-1", "storyboard key for the dashed marks"), TX.label + ";font-size:10px");
+  }
+  var LET_D = { x: 500, w: 684 };
+  function h3Desk(c, editing) {
+    lightDefs(c);
+    h3Left(c);
+    beam(c, LET_D.x + LET_D.w * 0.45, 80, 300, 760, 0.45);
+    var P, part, rect;
+    if (!editing) {
+      // the top of the letter; the paper runs off the bottom of the frame
+      part = "full";
+      P = lay(c, LET_D.x, 62, LET_D.w, 772, { rx: 5, rz: -1.1, persp: 2200 }, function (k) {
+        letterPaper(k, LET_D.w, "full", false, 18, { paper: [0, 1180], text: [88, 772], toolbar: true, fade: "bottom" });
+      });
+      rect = corners(P, { x: 0, y: 0, w: LET_D.w, h: 1180 });
+    } else {
+      // scrolled to the end: the paper runs off the top, its foot rests on the desk
+      part = "end";
+      P = lay(c, LET_D.x, 56, LET_D.w, 640, { rx: 5, rz: -1.1, persp: 2200 }, function (k) {
+        letterPaper(k, LET_D.w, "end", true, 18, { paper: [-520, 640], text: [8, 628], fade: "top" });
+      });
+      rect = corners(P, { x: 0, y: -520, w: LET_D.w, h: 1160 });
+    }
+    letterState(c, rect, part, editing);
+    h3Right(c);
+  }
+  function h3DeskPlate(c) {
+    lightDefs(c);
+    h3Left(c);
+    var P = lay(c, LET_D.x, 58, LET_D.w, 780, {}, function (k) {
+      letterPaper(k, LET_D.w, "plate", false, 18, { paper: [0, 780], text: [50, 772], header: true, lh: 1.42, gap: 9 });
+    });
+    letterState(c, corners(P, { x: 0, y: 0, w: LET_D.w, h: 780 }), "plate", false);
+    h3Right(c);
   }
   function h3Phone(c, editing) {
-    var st = c.stage, tb = c.textBox;
+    lightDefs(c);
+    var st = c.stage, tb = c.textBox, P;
+    beam(c, 190, 40, 200, 300, 0.7);
     if (!editing) {
-      c.div(st.x, 22, st.w, c.copy("Step 02", "index.html:934") + " · " + c.copy("Write the letter", "index.html:935"), TX.label + ";font-size:10px");
-      letterSheet(c, { x: st.x, y: st.y - 12, w: st.w, h: st.h + 12 }, "top", false, 14);
-      // sticky action bar while the letter is on screen
-      button(c, tb.x, tb.y, tb.w, 56, c.copy("✉ Send this letter to your representative", "index.html:983"), "blueline", 15);
-      button(c, tb.x, tb.y + 68, 166, 44, c.copy("Generate shareable card", "index.html:988"), "quiet", 14);
-      button(c, tb.x + 177, tb.y + 68, 166, 44, c.copy("Skip to the coalition", "index.html:992"), "quiet", 14);
-      contactNote(c, tb.x, tb.y + 126, tb.w, 11);
+      c.div(st.x, 44, st.w, c.copy("Step 02", "index.html:934") + " · " + c.copy("Write the letter", "index.html:935"), TX.label + ";font-size:10px");
+      P = lay(c, st.x, 64, st.w, 494, { rx: 4, rz: -0.8, persp: 1200 }, function (k) {
+        letterPaper(k, st.w, "top", false, 14, { paper: [0, 560], text: [100, 494], toolbar: true, fade: "bottom", lh: 1.48 });
+      });
+      letterState(c, corners(P, { x: 0, y: 0, w: st.w, h: 560 }), "top", false);
+      // sticky action bar while the letter is on screen: the paper runs on under it
+      c.div(0, 552, 375, "", "height:260px;background:linear-gradient(to bottom, rgba(10,10,10,0), " + T.ground + " 22px)");
+      c.svg(S.line(0, 566.5, 375, 566.5, { stroke: T.rule }));
+      button(c, tb.x, tb.y + 4, tb.w, 56, c.copy("✉ Send this letter to your representative", "index.html:983"), "blueline", 15);
+      button(c, tb.x, tb.y + 72, 166, 44, c.copy("Generate shareable card", "index.html:988"), "quiet", 14);
+      button(c, tb.x + 177, tb.y + 72, 166, 44, c.copy("Skip to the coalition", "index.html:992"), "quiet", 14);
+      contactNote(c, tb.x, tb.y + 130, tb.w, 11);
       return;
     }
-    letterSheet(c, { x: st.x, y: -24, w: st.w, h: st.y + st.h + 24 }, "end", true, 14);
+    P = lay(c, st.x, 40, st.w, 512, { rx: 4, rz: -0.8, persp: 1200 }, function (k) {
+      letterPaper(k, st.w, "end", true, 14, { paper: [-300, 512], text: [10, 500], fade: "top", lh: 1.48 });
+    });
+    letterState(c, corners(P, { x: 0, y: -300, w: st.w, h: 812 }), "end", true);
     letterConsent(c, tb.x, tb.y + 6, tb.w, 14, false, false);
     // the one primary action stays in reach below the letter
-    button(c, tb.x, tb.y + 104, tb.w, 56, c.copy("✉ Send this letter to your representative", "index.html:983"), "blueline", 15);
+    button(c, tb.x, tb.y + 128, tb.w, 56, c.copy("✉ Send this letter to your representative", "index.html:983"), "blueline", 15);
   }
   // phone plate: one still sheet with every figure the letter carries
   function h3PhonePlate(c) {
-    c.div(16, 4, 343, c.copy("Step 02", "index.html:934") + " · " + c.copy("Write the letter", "index.html:935"), TX.label + ";font-size:10px");
-    letterSheet(c, { x: 16, y: 24, w: 343, h: 776 }, "plate", false, 14);
+    lightDefs(c);
+    c.div(16, 44, 343, c.copy("Step 02", "index.html:934") + " · " + c.copy("Write the letter", "index.html:935"), TX.label + ";font-size:10px");
+    var P = lay(c, 16, 62, 343, 726, {}, function (k) {
+      letterPaper(k, 343, "plate", false, 14, { paper: [0, 726], text: [44, 718], header: true, lh: 1.42 });
+    });
+    letterState(c, corners(P, { x: 0, y: 0, w: 343, h: 726 }), "plate", false);
   }
 
   SB.scene({
@@ -761,6 +963,7 @@
       var k = c.plate ? "state" : c.k;
       if (c.phone && c.plate) h3PhonePlate(c);
       else if (c.phone) h3Phone(c, k === "edit");
+      else if (c.plate) h3DeskPlate(c);
       else h3Desk(c, k === "edit");
       c.flag("decision", "Consent says ‘Published without your name’ but the letter body writes the typed name twice (dashed). Strip the name line before storing, or redact at moderation? (audit CON-1)");
       c.flag("decision", "The letter consent lives in the coalition form on the live page (index.html:1070-1077). Shown beside the letter here for review. Keep it in the coalition form, or move it to the letter?");
@@ -772,9 +975,12 @@
   /* ════════════════════════════════════════════════════════════════
      H4 · COALITION (globe + consent)
      ════════════════════════════════════════════════════════════════ */
-  function globe(c, cx, cy, R, lat0, lon0, bars) {
+  // A lit sphere: paper-dark base, graticule, shading from the upper left,
+  // a rim of light, and the blue bar(s) on top. Returns the svg and the
+  // bars' screen points.
+  function globeSvg(cx, cy, R, lat0, lon0, bars) {
     var rad = Math.PI / 180, p0 = lat0 * rad;
-    function proj(lat, lon) {
+    function proj3(lat, lon) {
       var phi = lat * rad, lam = (lon - lon0) * rad;
       return [
         R * Math.cos(phi) * Math.sin(lam),
@@ -785,19 +991,26 @@
     function line(pts) {
       var d = "", on = false;
       pts.forEach(function (q) {
-        var v = proj(q[0], q[1]);
+        var v = proj3(q[0], q[1]);
         if (v[2] > 0) { d += (on ? " L" : " M") + (cx + v[0]).toFixed(1) + " " + (cy - v[1]).toFixed(1); on = true; }
         else on = false;
       });
-      return d ? S.path(d, { stroke: "rgba(255,255,255,0.2)", "stroke-width": 1 }) : "";
+      return d ? S.path(d, { stroke: "rgba(255,255,255,0.34)", "stroke-width": 1 }) : "";
     }
-    var s = S.circle(cx, cy, R, { fill: T.sheet, stroke: "rgba(255,255,255,0.35)", "stroke-width": 1 });
+    var s = '<circle cx="' + cx + '" cy="' + cy + '" r="' + R * 1.35 + '" fill="url(#hoPool)"/>';
+    s += S.circle(cx, cy, R, { fill: T.sheet });
     var lat, lon, pts, q;
     for (lon = -180; lon < 180; lon += 20) { pts = []; for (lat = -90; lat <= 90; lat += 3) pts.push([lat, lon]); s += line(pts); }
     for (lat = -60; lat <= 60; lat += 20) { pts = []; for (q = -180; q <= 180; q += 3) pts.push([lat, q]); s += line(pts); }
+    s += S.circle(cx, cy, R, { fill: "url(#hoSpec)" });
+    s += S.circle(cx, cy, R, { fill: "url(#hoShade)" });
+    // rim light on the upper-left limb
+    var a0 = 196 * rad, a1 = 292 * rad;
+    s += S.path("M" + (cx + R * Math.cos(a0)).toFixed(1) + " " + (cy + R * Math.sin(a0)).toFixed(1) + " A" + R + " " + R + " 0 0 1 " + (cx + R * Math.cos(a1)).toFixed(1) + " " + (cy + R * Math.sin(a1)).toFixed(1), { stroke: "rgba(255,255,255,0.7)", "stroke-width": 1.5 });
+    s += S.circle(cx, cy, R, { fill: "none", stroke: "rgba(255,255,255,0.14)", "stroke-width": 1 });
     var tips = [];
     (bars || []).forEach(function (b) {
-      var v = proj(b.lat, b.lon);
+      var v = proj3(b.lat, b.lon);
       if (v[2] <= 0) return;
       // a radial bar of height h·R, projected: its tip is the surface point scaled by (1 + h)
       var x0 = cx + v[0], y0 = cy - v[1], x1 = cx + v[0] * (1 + b.h), y1 = cy - v[1] * (1 + b.h);
@@ -805,8 +1018,23 @@
       s += S.line(x0, y0, x1, y1, { stroke: T.blue, "stroke-width": 4 });
       tips.push({ x: x1, y: y1, bx: x0, by: y0 });
     });
-    c.svg(s);
-    return tips;
+    return { s: s, tips: tips };
+  }
+  function globe(c, cx, cy, R, lat0, lon0, bars) {
+    var g = globeSvg(cx, cy, R, lat0, lon0, bars);
+    c.svg(g.s);
+    return g.tips;
+  }
+  // a boxed inset: the globe again at k×, centred on point q, in a 1px box
+  var INSET_N = 0;
+  function globeInset(c, box, cx, cy, R, lat0, lon0, bars, q, k, fig) {
+    var id = "hoInset" + INSET_N++;
+    var g = globeSvg(cx, cy, R, lat0, lon0, bars);
+    c.svg('<defs><clipPath id="' + id + '"><rect x="' + box.x + '" y="' + box.y + '" width="' + box.w + '" height="' + box.h + '"/></clipPath></defs>' +
+      S.rect(box.x, box.y, box.w, box.h, { fill: T.ground }) +
+      '<g clip-path="url(#' + id + ')"><g transform="translate(' + (box.x + box.w / 2) + " " + (box.y + box.h / 2) + ") scale(" + k + ") translate(" + -q[0] + " " + -q[1] + ')">' + g.s + "</g></g>" +
+      S.rect(box.x + 0.5, box.y + 0.5, box.w - 1, box.h - 1, { fill: "none", stroke: T.white }));
+    chip(c, box.x - 1, box.y - 19, fig);
   }
   function coalitionWords(c, x, y, w, big, small) {
     c.div(x, y, w, c.copy("A growing coalition", "js/main.js:1659"), TX.title + ";font-size:" + big + "px;text-transform:none;letter-spacing:-0.01em");
@@ -814,20 +1042,20 @@
   }
   function coalitionForm(c, x, y, w, o) {
     o = o || {};
-    var ph = c.phone, fs = ph ? 14 : 13, gap = 10, eh = ph ? 56 : 48;
+    var ph = c.phone, fs = ph ? 14 : 15, gap = 10, eh = ph ? 56 : 48, bs = ph ? 14 : 18;
     field(c, x, y, w, eh, c.copy("Your email (optional, for Six Degrees waitlist & Blueprint updates)", "index.html:1046"), { size: fs, wrap: ph });
     field(c, x, y + eh + gap, w, 48, c.copy("Your age range (optional)", "index.html:1050"), { size: fs, caret: true });
-    var cy = y + eh + gap + 48 + 14;
+    var cy = y + eh + gap + 48 + 16;
     checkbox(c, x, cy + 3, false, 20);
     c.div(x + 32, cy, w - 32,
       c.copy("Email me Blueprint & Six Degrees updates. I agree to the ", "index.html:1061") +
       '<span style="color:' + T.white + ';text-decoration:underline">' + c.copy("privacy policy", "index.html:1063") + "</span>" +
       c.copy(". (Leave the box and email blank to take part anonymously.)", "index.html:1063-1065"),
-      TX.bodySm + ";font-size:14px;line-height:1.45");
-    var cy2 = cy + (ph ? 74 : 58);
-    letterConsent(c, x, cy2, w, 14, !!o.letterOn, !!o.focus);
-    var by = cy2 + (ph ? 108 : 84);
-    button(c, x, by, w, 52, c.copy("Submit my priorities + generate shareable card", "index.html:1085"), o.sent ? "off" : (ph ? "blueline" : "primary"), 15);
+      TX.bodySm + ";font-size:" + bs + "px;line-height:1.45");
+    var cy2 = cy + (ph ? 86 : 96);
+    letterConsent(c, x, cy2, w, bs, !!o.letterOn, !!o.focus);
+    var by = cy2 + (ph ? 122 : 132);
+    button(c, x, by, w, 52, c.copy("Submit my priorities + generate shareable card", "index.html:1085"), o.sent ? "off" : (ph ? "blueline" : "primary"), ph ? 15 : 16);
     return by + 52;
   }
   function thanks(c, x, y, w, size) {
@@ -838,46 +1066,56 @@
     var ll = SB.get("countryCoords." + SB.get(CP + "[0]"));
     return { lat: ll[0], lon: ll[1], h: 0.24, ring: 8 };
   }
-  // the reader's own country, labelled at the tip of its bar
-  // the label sits up and to the left, clear of the sphere; the leader runs from its end to the bar's tip
-  function barLabel(c, tip, lx, ly, size) {
-    var tw = size < 11 ? 108 : 120;
-    c.svg(S.leader([[tip.x, tip.y], [lx + tw + 6, ly + 8]], {}));
-    c.div(lx, ly, tw + 4, c.fig(CP + "[0]", "raw"), TX.labelW + ";font-size:" + size + "px;white-space:nowrap");
-  }
   var G_LAT = 22, G_LON = 22; // view: Europe and Africa toward the viewer, the reader's country off-centre so its bar reads
   function h4Desk(c, sent) {
-    c.div(96, 56, 300, c.copy("Step 03", "index.html:1005"), TX.label);
-    c.div(96, 80, 520, c.copy("Join the coalition", "index.html:1007"), TX.title + ";font-size:48px");
-    c.div(96, 184, 500, '<span style="display:inline-block;width:8px;height:8px;background:' + T.blue + ';margin-right:10px;vertical-align:1px"></span>' +
-      c.copy("People choosing to fund the planet, from around the world. Add your voice to the global tally.", "index.html:1010-1011"), TX.bodySm + ";font-size:16px");
-    coalitionWords(c, 96, 258, 520, 34, 15);
-    var end = coalitionForm(c, 96, 350, 500, { letterOn: true, focus: !sent, sent: sent });
-    if (sent) thanks(c, 96, end + 14, 500, 15);
-    c.div(700, 64, 640, c.copy("The coalition, lighting up the map", "index.html:1016"), TX.labelW + ";text-align:center");
-    c.div(700, 88, 640, c.copy("Each bar is a country's sign-ups. Drag to spin · scroll to zoom.", "index.html:1018"), TX.src + ";font-size:12px;text-align:center");
-    var tips = globe(c, 1020, 486, 300, G_LAT, G_LON, sent ? [ukBar()] : []);
-    if (sent && tips[0]) barLabel(c, tips[0], 700, tips[0].y - 120, 11);
-    c.state({ form: "globe (no sheet)", x: 720, y: 186, w: 600, h: 600, tone: "neutral sphere; blue only for the reader's own sign-up", note: sent ? "one bar: the reader's country, after submit" : "no bars: seeded sign-ups removed (decision 4)" });
+    lightDefs(c);
+    c.div(96, 62, 300, c.copy("Step 03", "index.html:1005"), TX.label);
+    c.div(96, 84, 560, c.copy("Join the coalition", "index.html:1007"), TX.title + ";font-size:40px");
+    c.div(96, 140, 540, '<span style="display:inline-block;width:8px;height:8px;background:' + T.blue + ';margin-right:10px;vertical-align:2px"></span>' +
+      c.copy("People choosing to fund the planet, from around the world. Add your voice to the global tally.", "index.html:1010-1011"), TX.bodySm + ";font-size:18px");
+    coalitionWords(c, 96, 216, 540, 30, 18);
+    var end = coalitionForm(c, 96, 330, 540, { letterOn: true, focus: !sent, sent: sent });
+    if (sent) thanks(c, 96, end + 14, 540, 18);
+    // the globe: a lit sphere, cropped by the right edge of the frame
+    var GX = 1132, GY = 478, GR = 350;
+    c.div(940, 62, 436, c.copy("The coalition, lighting up the map", "index.html:1016"), TX.labelW + ";text-align:right");
+    c.div(940, 82, 436, c.copy("Each bar is a country's sign-ups. Drag to spin · scroll to zoom.", "index.html:1018"), TX.src + ";font-size:12px;text-align:right");
+    var tips = globe(c, GX, GY, GR, G_LAT, G_LON, sent ? [ukBar()] : []);
+    if (sent && tips[0]) {
+      var tp = tips[0], ib = { x: 676, y: 168, w: 216, h: 150 };
+      c.svg(S.leader([[tp.x, tp.y], [ib.x + ib.w + 18, tp.y], [ib.x + ib.w, ib.y + ib.h / 2]], {}));
+      globeInset(c, ib, GX, GY, GR, G_LAT, G_LON, [ukBar()], [tp.bx, (tp.by + tp.y) / 2], 3, c.label("FIG. 1 · ×3", "storyboard marginalia: inset scale"));
+      c.div(ib.x, ib.y + ib.h + 10, ib.w, c.fig(CP + "[0]", "raw"), TX.labelW + ";font-size:11px;white-space:nowrap");
+    }
+    c.state({ form: "globe (no sheet)", x: GX - GR, y: GY - GR, w: 1440 - (GX - GR), h: GR * 2, tone: "neutral lit sphere; blue only for the reader's own sign-up", note: (sent ? "one bar: the reader's country, after submit, with a 3× inset" : "no bars: seeded sign-ups removed (decision 4)") + ". Sphere cropped by the frame's right edge." });
   }
   function h4Phone(c, sent) {
+    lightDefs(c);
     var st = c.stage, tb = c.textBox;
     if (!sent) {
-      c.div(st.x, st.y - 4, 300, c.copy("Step 03", "index.html:1005"), TX.label + ";font-size:11px");
-      c.div(st.x, st.y + 16, st.w, c.copy("Join the coalition", "index.html:1007"), TX.title + ";font-size:28px");
-      coalitionForm(c, st.x, st.y + 90, st.w, { letterOn: true, focus: true, sent: false });
-      coalitionWords(c, tb.x, tb.y + 22, tb.w, 24, 14);
-      c.div(tb.x, tb.y + 104, tb.w, c.copy("People choosing to fund the planet, from around the world. Add your voice to the global tally.", "index.html:1010-1011"), TX.bodySm + ";font-size:14px;color:" + T.grey);
-      c.state({ form: "form (no sheet)", x: st.x, y: st.y, w: st.w, h: st.h, tone: "neutral", note: "letter opt-in ticked, keyboard focus on it; the globe is one swipe down" });
+      c.div(st.x, 44, 300, c.copy("Step 03", "index.html:1005"), TX.label + ";font-size:11px");
+      c.div(st.x, 62, st.w, c.copy("Join the coalition", "index.html:1007"), TX.title + ";font-size:26px");
+      coalitionForm(c, st.x, 106, st.w, { letterOn: true, focus: true, sent: false });
+      coalitionWords(c, tb.x, tb.y, tb.w, 24, 14);
+      c.div(tb.x, tb.y + 76, tb.w, c.copy("People choosing to fund the planet, from around the world. Add your voice to the global tally.", "index.html:1010-1011"), TX.bodySm + ";font-size:14px;color:" + T.grey);
+      // the globe is one swipe down: its lit limb rises at the foot of the frame
+      c.svg(globeSvg(250, 1050, 320, G_LAT, G_LON, []).s);
+      c.state({ form: "form (no sheet)", x: st.x, y: st.y, w: st.w, h: st.h, tone: "neutral", note: "letter opt-in ticked, keyboard focus on it; the globe is one swipe down (its limb shows at the foot)" });
       return;
     }
-    c.div(st.x, st.y, st.w, c.copy("The coalition, lighting up the map", "index.html:1016"), TX.labelW + ";font-size:10px;text-align:center");
-    var tips = globe(c, st.x + st.w / 2, st.y + 236, 160, G_LAT, G_LON, [ukBar()]);
-    if (tips[0]) barLabel(c, tips[0], st.x, tips[0].y - 64, 10);
-    c.div(st.x, st.y + 420, st.w, c.copy("Each bar is a country's sign-ups. Drag to spin · scroll to zoom.", "index.html:1018"), TX.src + ";font-size:11px;text-align:center");
-    coalitionWords(c, tb.x, tb.y, tb.w, 24, 14);
-    thanks(c, tb.x, tb.y + 90, tb.w, 15);
-    c.state({ form: "globe (no sheet)", x: st.x + 11, y: st.y + 76, w: 320, h: 320, tone: "neutral sphere; blue only for the reader's own sign-up", note: "after submit: one bar for the reader's country; no seeded bars or count" });
+    c.div(st.x, 44, st.w, c.copy("The coalition, lighting up the map", "index.html:1016"), TX.labelW + ";font-size:10px");
+    var GX = 214, GY = 334, GR = 172;
+    var tips = globe(c, GX, GY, GR, G_LAT, G_LON, [ukBar()]);
+    if (tips[0]) {
+      var tp = tips[0], ib = { x: 16, y: 86, w: 120, h: 90 };
+      c.svg(S.leader([[tp.x, tp.y], [ib.x + ib.w + 10, ib.y + ib.h / 2], [ib.x + ib.w, ib.y + ib.h / 2]], {}));
+      globeInset(c, ib, GX, GY, GR, G_LAT, G_LON, [ukBar()], [tp.bx, (tp.by + tp.y) / 2], 2.5, c.label("FIG. 1 · ×2.5", "storyboard marginalia: inset scale"));
+      c.div(ib.x + ib.w + 12, ib.y + 2, 120, c.fig(CP + "[0]", "raw"), TX.labelW + ";font-size:10px;white-space:nowrap");
+    }
+    c.div(st.x, 528, st.w, c.copy("Each bar is a country's sign-ups. Drag to spin · scroll to zoom.", "index.html:1018"), TX.src + ";font-size:11px");
+    coalitionWords(c, tb.x, tb.y + 6, tb.w, 24, 14);
+    thanks(c, tb.x, tb.y + 92, tb.w, 15);
+    c.state({ form: "globe (no sheet)", x: GX - GR, y: GY - GR, w: 375 - (GX - GR), h: GR * 2, tone: "neutral lit sphere; blue only for the reader's own sign-up", note: "after submit: one bar for the reader's country, with an inset; no seeded bars or count" });
   }
 
   SB.scene({
@@ -916,6 +1154,7 @@
     var pad = Math.round(28 * s), ph = c.phone;
     b.h = cardH(s, ph);
     c.svg(S.sheet(b.x, b.y, b.w, b.h, { tone: "white", mode: "edge", sw: 1 }));
+    c.svg(lit(b.x + 1, b.y + 1, b.w - 2, b.h - 2));
     c.svg(S.rect(b.x, b.y, 10, 10, { fill: T.blue }));
     var y = b.y + pad, ls = ph ? ";letter-spacing:0.05em" : "";
     var lab = Math.max(10, Math.round(11 * s));
@@ -950,22 +1189,44 @@
       TX.src + ";font-size:" + lab + "px");
     c.div(b.x + b.w * 0.62, y, b.w * 0.38 - pad, c.copy("studioex.co", "index.html:1269") + "<br>" + c.copy("@404blueprint", "index.html:1269"),
       TX.src + ";font-size:" + lab + "px;text-align:right");
-    c.state({ form: "share card (the reader's sheet, portable)", x: b.x, y: b.y, w: b.w, h: b.h, tone: "neutral paper, blue tab; blue squares mark the ranked causes", note: "not true area: the card lists, it does not measure" });
+  }
+  // the card as a printed object: a second print under it, trim marks at its corners
+  function printed(c, x, y, w, s, t) {
+    var h = cardH(s, c.phone), res = {};
+    var P = lay(c, x, y, w, h, t, function (k) {
+      k.svg('<g transform="rotate(-4 ' + w / 2 + " " + h / 2 + ')">' + S.sheet(c.phone ? 10 : 18, c.phone ? 8 : 14, w, h, { tone: "white", mode: "edge", sw: 1, opacity: 0.55 }) + "</g>");
+      card(k, { x: 0, y: 0, w: w }, s);
+      var g = c.phone ? 8 : 14, n = c.phone ? 8 : 14, tm = "";
+      [[0, 0, -1, -1], [w, 0, 1, -1], [w, h, 1, 1], [0, h, -1, 1]].forEach(function (q) {
+        tm += S.line(q[0], q[1] + q[3] * g, q[0], q[1] + q[3] * (g + n), { stroke: "rgba(255,255,255,0.6)" }) +
+          S.line(q[0] + q[2] * g, q[1], q[0] + q[2] * (g + n), q[1], { stroke: "rgba(255,255,255,0.6)" });
+      });
+      k.svg(tm);
+    });
+    var r = corners(P, { x: 0, y: 0, w: w, h: h });
+    c.state({ form: "share card (the reader's sheet, portable)", x: r.x, y: r.y, w: r.w, h: r.h, tone: "neutral lit paper, blue tab; blue squares mark the ranked causes; a second print beneath, trim marks", note: "not true area: the card lists, it does not measure. Drawn as a print lying on the desk; rect is where it sits on screen." });
+    return P;
   }
   function h5Desk(c) {
-    c.svg(S.rect(0, 0, c.W, c.H, { fill: "rgba(255,255,255,0.03)" }));
-    card(c, { x: 450, y: 40, w: 540 }, 1.15);
-    var y = 40 + cardH(1.15) + 24;
-    button(c, 450, y, 164, 48, c.copy("↓ Download PNG", "index.html:1274"), "primary", 15);
-    focusRing(c, 450, y, 164, 48);
-    button(c, 622, y, 104, 48, c.copy("Post to X", "index.html:1277"), "outline", 14);
-    button(c, 734, y, 104, 48, c.copy("LinkedIn", "index.html:1280"), "outline", 14);
-    button(c, 846, y, 144, 48, c.copy("Copy for Instagram", "index.html:1283"), "outline", 13);
-    button(c, 670, y + 70, 100, 44, c.copy("Close", "index.html:1291"), "quiet", 14);
+    lightDefs(c);
+    c.bgSvg(S.rect(0, 0, c.W, c.H, { fill: "rgba(255,255,255,0.02)" }));
+    beam(c, 560, 90, 760, 760, 1);
+    printed(c, 292, 92, 520, 1.12, { rx: 9, ry: -9, rz: 1.6, persp: 2000 });
+    // the actions, as a column in the margin
+    var ax = 944, aw = 300, y = 300;
+    button(c, ax, y, aw, 52, c.copy("↓ Download PNG", "index.html:1274"), "primary", 16);
+    focusRing(c, ax, y, aw, 52);
+    button(c, ax, y + 70, aw, 48, c.copy("Post to X", "index.html:1277"), "outline", 15);
+    button(c, ax, y + 128, aw, 48, c.copy("LinkedIn", "index.html:1280"), "outline", 15);
+    button(c, ax, y + 186, aw, 48, c.copy("Copy for Instagram", "index.html:1283"), "outline", 15);
+    c.svg(S.line(ax, y + 256, ax + aw, y + 256, { stroke: T.rule }));
+    button(c, ax, y + 274, 120, 44, c.copy("Close", "index.html:1291"), "quiet", 15);
   }
   function h5Phone(c) {
+    lightDefs(c);
     var st = c.stage, tb = c.textBox;
-    card(c, { x: st.x, y: st.y + 4, w: st.w }, 0.82);
+    beam(c, 180, 40, 520, 340, 0.9);
+    printed(c, st.x + 4, 68, 335, 0.8, { rx: 6, ry: -4, rz: 1.2, persp: 1200 });
     button(c, tb.x, tb.y, 166, 48, c.copy("↓ Download PNG", "index.html:1274"), "primary", 15);
     focusRing(c, tb.x, tb.y, 166, 48);
     button(c, tb.x + 177, tb.y, 166, 48, c.copy("Post to X", "index.html:1277"), "outline", 14);
@@ -1000,72 +1261,117 @@
   /* ════════════════════════════════════════════════════════════════
      H6 · ARCHIVE (+ the small link near the top)
      ════════════════════════════════════════════════════════════════ */
-  function room(c, R, mine) {
+  // The room: paper hanging in space on threads, far sheets small and dim,
+  // a few near ones out of focus; the reader's sheet in a beam of light.
+  function room(c, R, mine, avoid) {
     var rnd = rng(c.phone ? 11 : 7);
-    var n = c.phone ? 90 : 220, list = [];
-    for (var i = 0; i < n; i++) {
-      var d = rnd();
-      list.push({ d: d, x: rnd(), y: rnd() });
-    }
+    var n = c.phone ? 110 : 240, list = [];
+    for (var i = 0; i < n; i++) list.push({ d: rnd(), x: rnd(), y: rnd(), r: rnd() });
     list.sort(function (a, b) { return b.d - a.d; }); // far first
-    var base = c.phone ? 40 : 64;
+    var base = c.phone ? 44 : 70;
     var s = '<defs><clipPath id="roomClip"><rect x="' + R.x + '" y="' + R.y + '" width="' + R.w + '" height="' + R.h + '"/></clipPath></defs><g clip-path="url(#roomClip)">';
-    s += S.rect(R.x, R.y, R.w, R.h, { fill: T.ground });
     list.forEach(function (q) {
-      var k = 0.22 + 0.78 * Math.pow(1 - q.d, 1.8);
-      var w = base * 0.72 * k, h = base * k;
+      var k = 0.2 + 0.8 * Math.pow(1 - q.d, 1.8);
+      var w = base * 0.71 * k, h = base * k;
       var x = R.x + q.x * (R.w + w) - w;
-      var top = R.y + R.h * (0.06 + 0.7 * q.y * (0.4 + 0.6 * (1 - q.d)));
-      var op = 0.18 + 0.7 * (1 - q.d);
-      s += S.line(x + w / 2, R.y, x + w / 2, top, { stroke: "rgba(255,255,255," + (0.04 + 0.08 * (1 - q.d)).toFixed(3) + ")" });
-      s += '<g opacity="' + op.toFixed(3) + '">' + S.rect(x, top, w, h, { fill: T.sheet, stroke: "rgba(255,255,255,0.45)", "stroke-width": 0.75 }) + "</g>";
+      var top = R.y + R.h * (0.04 + 0.78 * q.y * (0.35 + 0.65 * (1 - q.d)));
+      if (mine && Math.abs(x + w / 2 - (mine.x + mine.w / 2)) < mine.w * 0.9 && top < mine.y + mine.h + 20 && top + h > mine.y - 30) return; // keep the reader's sheet clear
+      var op = 0.16 + 0.62 * (1 - q.d);
+      var rot = (q.r - 0.5) * 10 * (1 - q.d * 0.6);
+      s += S.line(x + w / 2, R.y, x + w / 2, top, { stroke: "rgba(255,255,255," + (0.03 + 0.07 * (1 - q.d)).toFixed(3) + ")" });
+      s += '<g opacity="' + op.toFixed(3) + '" transform="rotate(' + rot.toFixed(2) + " " + (x + w / 2).toFixed(1) + " " + top.toFixed(1) + ')">' +
+        S.rect(x, top, w, h, { fill: "url(#paper)", stroke: "rgba(255,255,255,0.4)", "stroke-width": 0.75 }) +
+        S.line(x + 0.5, top + 0.5, x + w - 0.5, top + 0.5, { stroke: "rgba(255,255,255,0.55)" }) + "</g>";
+    });
+    // two near sheets, out of focus, framing the room
+    (c.phone ? [[R.x - 30, R.y + R.h * 0.5, 120, -6]] : [[R.x + R.w - 150, R.y + R.h * 0.42, 210, 7], [R.x + R.w * 0.34, R.y + R.h * 0.78, 170, -4]]).forEach(function (f) {
+      s += S.line(f[0] + f[2] * 0.35, R.y, f[0] + f[2] * 0.35, f[1], { stroke: "rgba(255,255,255,0.05)" });
+      s += '<g filter="url(#hoBlur)" opacity="0.45" transform="rotate(' + f[3] + " " + f[0] + " " + f[1] + ')">' + S.rect(f[0], f[1], f[2], f[2] * 1.41, { fill: "url(#paper)", stroke: "rgba(255,255,255,0.3)" }) + "</g>";
     });
     if (mine) {
-      s += S.line(mine.x + mine.w / 2, R.y, mine.x + mine.w / 2, mine.y, { stroke: "rgba(255,255,255,0.35)" });
-      s += S.rect(mine.x - 6, mine.y - 6, mine.w + 12, mine.h + 12, { fill: T.ground });
+      // a beam from above, the thread, then the sheet catching the light
+      var mx = mine.x + mine.w / 2;
+      s += '<path d="M' + (mx - 18) + " " + R.y + " L" + (mx + 18) + " " + R.y + " L" + (mx + mine.w * 1.5) + " " + (mine.y + mine.h + 60) + " L" + (mx - mine.w * 1.5) + " " + (mine.y + mine.h + 60) + ' Z" fill="url(#hoBeam)"/>';
+      s += S.line(mx, R.y, mx, mine.y, { stroke: "rgba(255,255,255,0.4)" });
       s += S.sheet(mine.x, mine.y, mine.w, mine.h, { tone: "white", mode: "edge", sw: 1.5 });
+      s += S.rect(mine.x + 1, mine.y + 1, mine.w - 2, mine.h - 2, { fill: "url(#hoLit)" }) + S.rect(mine.x + 1, mine.y + 1, mine.w - 2, mine.h - 2, { fill: "url(#hoLit)" }) +
+        S.rect(mine.x + 1, mine.y + 1, mine.w - 2, mine.h - 2, { fill: "rgba(255,255,255,0.04)" });
+      s += '<ellipse cx="' + mx + '" cy="' + (mine.y + mine.h + 70) + '" rx="' + mine.w * 1.6 + '" ry="' + mine.w * 0.3 + '" fill="url(#hoPool)"/>';
+      s += S.line(mine.x + 1, mine.y + 0.75, mine.x + mine.w - 1, mine.y + 0.75, { stroke: T.white, "stroke-width": 1.5 });
       s += S.rect(mine.x, mine.y, 8, 8, { fill: T.blue });
     }
-    s += "</g>" + S.rect(R.x + 0.5, R.y + 0.5, R.w - 1, R.h - 1, { fill: "none", stroke: T.rule });
+    s += "</g>";
     c.svg(s);
+  }
+  // the reader's sheet again at k×: its top-left corner, tab and blank paper
+  function sheetInset(c, box, mine, k, fig) {
+    var id = "hoSheetInset" + INSET_N++;
+    var ns = "non-scaling-stroke";
+    var g = S.rect(mine.x, mine.y, mine.w, mine.h, { fill: "url(#paper)" }) +
+      S.rect(mine.x, mine.y, mine.w, mine.h, { fill: "url(#hoLit)" }) + S.rect(mine.x, mine.y, mine.w, mine.h, { fill: "url(#hoLit)" }) +
+      S.rect(mine.x, mine.y, mine.w, mine.h, { fill: "none", stroke: T.white, "stroke-width": 1.5, "vector-effect": ns }) +
+      S.line(mine.x + 2, mine.y + 2, mine.x + mine.w - 2, mine.y + 2, { stroke: "rgba(255,255,255,0.35)", "vector-effect": ns }) +
+      S.rect(mine.x, mine.y, 8, 8, { fill: T.blue });
+    var q = [mine.x + box.w / (2 * k) - 10, mine.y + box.h / (2 * k) - 10];
+    c.svg('<defs><clipPath id="' + id + '"><rect x="' + box.x + '" y="' + box.y + '" width="' + box.w + '" height="' + box.h + '"/></clipPath></defs>' +
+      S.rect(box.x, box.y, box.w, box.h, { fill: T.ground }) +
+      '<g clip-path="url(#' + id + ')"><g transform="translate(' + (box.x + box.w / 2) + " " + (box.y + box.h / 2) + ") scale(" + k + ") translate(" + -q[0] + " " + -q[1] + ')">' + g + "</g></g>" +
+      S.rect(box.x + 0.5, box.y + 0.5, box.w - 1, box.h - 1, { fill: "none", stroke: T.white }));
+    chip(c, box.x - 1, box.y - 19, fig);
   }
   function badgeTxt(c) {
     return c.copy("PREVIEW · these are sample sheets, not real participants", "js/room.js:470");
   }
   function h6Desk(c) {
-    c.div(64, 40, 600, c.copy("The artwork · Everyone who has written", "index.html:103"), TX.label);
-    c.div(64, 62, 600, c.copy("The Archive", "index.html:105"), TX.title + ";font-size:52px");
-    c.div(700, 50, 676, c.copy("Every letter written on this page is kept here, one sheet for one person — a single record made by everybody who has taken part. Move through it. Open any sheet to read what a stranger told their government.", "index.html:107-110"), TX.bodySm + ";font-size:15px");
-    var R = { x: 64, y: 150, w: 1312, h: 600 };
-    var mine = { x: 800, y: 330, w: 92, h: 130 };
+    lightDefs(c);
+    var R = { x: 0, y: 0, w: c.W, h: c.H };
+    var mine = { x: 862, y: 318, w: 112, h: 158 };
     room(c, R, mine);
-    c.div(R.x + 16, R.y + 16, null, badgeTxt(c), TX.labelW + ";font-size:11px;background:" + T.ground + ";padding:6px 10px;border:1px solid " + T.rule);
+    // fog behind the words, so they read over the room
+    c.svg(S.rect(0, 0, 760, c.H, { fill: "url(#hoFogL)" }) + S.rect(0, 640, c.W, 260, { fill: "url(#hoFogB)" }));
+    c.div(72, 62, 600, c.copy("The artwork · Everyone who has written", "index.html:103"), TX.label);
+    c.div(72, 84, 700, c.copy("The Archive", "index.html:105"), TX.title + ";font-size:84px");
+    c.div(72, 184, 540, c.copy("Every letter written on this page is kept here, one sheet for one person — a single record made by everybody who has taken part. Move through it. Open any sheet to read what a stranger told their government.", "index.html:107-110"), TX.bodySm + ";font-size:18px");
+    c.div(72, 336, null, badgeTxt(c), TX.labelW + ";font-size:11px;background:" + T.ground + ";padding:6px 10px;border:1px solid rgba(255,255,255,0.45);white-space:nowrap");
     // the reader's own sheet: blank, unnamed, awaiting review
-    c.svg(S.leader([[mine.x + mine.w + 4, mine.y + 30], [mine.x + mine.w + 70, mine.y + 30]], {}));
-    c.div(mine.x + mine.w + 78, mine.y + 20, null, c.newCopy("Awaiting review", "audit ARC-5: the reader's sheet in the same session, blank and unnamed; never the unapproved text"),
+    c.svg(S.leader([[mine.x + mine.w + 4, mine.y + 34], [mine.x + mine.w + 64, mine.y + 34]], {}));
+    callout(c, mine.x + mine.w + 76, mine.y + 34, 1);
+    c.div(mine.x + mine.w + 94, mine.y + 24, null, c.newCopy("Awaiting review", "audit ARC-5: the reader's sheet in the same session, blank and unnamed; never the unapproved text"),
       TX.labelW + ";font-size:11px;white-space:nowrap;background:" + T.ground + ";padding:4px 8px;border:1px solid " + T.rule);
-    c.div(R.x, R.y + R.h - 34, R.w, c.copy("drag to look around · click a sheet to read it", "index.html:119"), TX.label + ";font-size:11px;text-align:center");
+    // an inset: its corner at 2.5×, blank paper and the blue tab
+    var ib = { x: 1090, y: 520, w: 230, h: 150 };
+    c.svg(S.leader([[mine.x + mine.w - 6, mine.y + mine.h - 6], [ib.x - 20, ib.y + 40], [ib.x, ib.y + 40]], { color: "rgba(255,255,255,0.4)" }));
+    sheetInset(c, ib, mine, 2.5, c.label("FIG. 1 · ×2.5", "storyboard marginalia: inset scale"));
+    c.div(1376 - 420, 820, 420, c.copy("drag to look around · click a sheet to read it", "index.html:119"), TX.label + ";font-size:11px;text-align:right");
     var figs = [["people have written", "index.html:133"], ["countries represented", "index.html:137"], ["letters in the archive", "index.html:141"]];
     figs.forEach(function (f, i) {
-      var x = 64 + i * 240;
-      c.div(x, 776, 220, c.copy("—", "index.html:132"), TX.value + ";font-size:34px;color:" + T.grey);
-      c.div(x, 818, 220, c.copy(f[0], f[1]), TX.label + ";font-size:11px");
+      var x = 72 + i * 236;
+      c.svg(S.line(x, 744, x + 200, 744, { stroke: T.rule }));
+      c.div(x, 756, 220, c.copy("—", "index.html:132"), TX.value + ";font-size:34px;color:" + T.grey);
+      c.div(x, 800, 220, c.copy(f[0], f[1]), TX.label + ";font-size:11px");
     });
-    c.state({ form: "hanging sheet in the Archive", x: mine.x, y: mine.y, w: mine.w, h: mine.h, tone: "neutral paper, white edge, blue tab (the reader's)", note: "blank and unnamed until a moderator approves the letter; joins only if the reader ticked the letter opt-in" });
+    c.state({ form: "hanging sheet in the Archive", x: mine.x, y: mine.y, w: mine.w, h: mine.h, tone: "neutral paper, white edge, blue tab (the reader's), caught in a beam of light", note: "blank and unnamed until a moderator approves the letter; joins only if the reader ticked the letter opt-in" });
   }
   function h6Phone(c) {
+    lightDefs(c);
     var st = c.stage, tb = c.textBox;
-    var R = { x: st.x, y: st.y + 52, w: st.w, h: st.h - 52 };
-    var mine = { x: st.x + 196, y: st.y + 214, w: 52, h: 74 };
-    c.div(st.x, st.y, st.w, badgeTxt(c), TX.labelW + ";font-size:10px;line-height:1.5");
+    var R = { x: 0, y: 0, w: 375, h: 566 };
+    var mine = { x: 204, y: 228, w: 62, h: 88 };
     room(c, R, mine);
+    c.svg(S.rect(0, 440, 375, 372, { fill: "url(#hoFogB)" }) + S.rect(0, 566, 375, 246, { fill: T.ground, opacity: 0.6 }));
+    c.div(st.x, 44, st.w, badgeTxt(c), TX.labelW + ";font-size:10px;line-height:1.5;background:" + T.ground + ";padding:4px 8px;border:1px solid rgba(255,255,255,0.45);box-sizing:border-box");
     c.svg(S.leader([[mine.x + mine.w / 2, mine.y + mine.h + 4], [mine.x + mine.w / 2, mine.y + mine.h + 40]], {}));
     c.div(mine.x + mine.w / 2 - 66, mine.y + mine.h + 42, 132, c.newCopy("Awaiting review", "audit ARC-5: the reader's sheet in the same session, blank and unnamed; never the unapproved text"),
       TX.labelW + ";font-size:10px;text-align:center;box-sizing:border-box;background:" + T.ground + ";padding:4px 8px;border:1px solid " + T.rule);
+    var ib = { x: 16, y: 380, w: 130, h: 92 };
+    // elbowed, so it passes left of the "Awaiting review" tag instead of under it
+    var lx = ib.x + ib.w + 14;
+    c.svg(S.leader([[mine.x + 2, mine.y + mine.h - 4], [lx, mine.y + mine.h - 4], [lx, ib.y + 30], [ib.x + ib.w, ib.y + 30]], { color: "rgba(255,255,255,0.4)" }));
+    sheetInset(c, ib, mine, 2.5, c.label("FIG. 1 · ×2.5", "storyboard marginalia: inset scale"));
     c.div(tb.x, tb.y, tb.w, c.copy("The artwork · Everyone who has written", "index.html:103"), TX.label + ";font-size:10px");
-    c.div(tb.x, tb.y + 20, tb.w, c.copy("The Archive", "index.html:105"), TX.title + ";font-size:32px");
-    c.div(tb.x, tb.y + 64, tb.w, c.copy("drag to look around · click a sheet to read it", "index.html:119"), TX.bodySm + ";font-size:14px");
-    c.state({ form: "hanging sheet in the Archive", x: mine.x, y: mine.y, w: mine.w, h: mine.h, tone: "neutral paper, white edge, blue tab", note: "blank and unnamed, awaiting review" });
+    c.div(tb.x, tb.y + 20, tb.w, c.copy("The Archive", "index.html:105"), TX.title + ";font-size:40px");
+    c.div(tb.x, tb.y + 72, tb.w, c.copy("drag to look around · click a sheet to read it", "index.html:119"), TX.bodySm + ";font-size:14px");
+    c.state({ form: "hanging sheet in the Archive", x: mine.x, y: mine.y, w: mine.w, h: mine.h, tone: "neutral paper, white edge, blue tab, caught in a beam of light", note: "blank and unnamed, awaiting review" });
   }
   // the small link near the top: in the contents nav
   var NAV = [
@@ -1102,45 +1408,50 @@
   }
   var LINK_ST = "box-sizing:border-box;height:44px;display:flex;align-items:center;font-family:" + F.mono + ";font-size:13px;letter-spacing:0.04em;color:" + T.white + ";text-decoration:underline;text-underline-offset:4px";
   function h6LinkDesk(c) {
-    // bottom of the hero file, for place
-    c.svg(S.rect(210, -40, 1020, 160, { fill: T.sheet, stroke: T.sheetLine }));
+    lightDefs(c);
+    // bottom of the hero file, for place: lit paper running off the top
+    c.svg(S.sheet(210, -60, 1020, 180, { tone: "white", mode: "edge", sw: 1 }) + lit(211, -59, 1018, 178, { edge: 0 }));
     c.div(210, 142, 1020, c.copy("▼   BEGIN DEBRIEF   ▼", "index.html:93"), TX.label + ";text-align:center;font-size:11px");
-    var y = 250, x = 120, w = 360;
-    c.svg(S.line(120, y - 20, 1320, y - 20, { stroke: T.rule }));
+    // the contents, set as a typographic index: giant numerals, names beside them
+    var y = 262, x = 120, w = 380;
+    c.svg(S.line(120, y - 26, 1320, y - 26, { stroke: T.rule }));
     NAV.forEach(function (n, i) {
       var nx = x + i * (w + 30);
-      c.div(nx, y, 50, c.copy(n[0], n[3]), TX.title + ";font-size:30px");
-      c.div(nx + 56, y + 2, w - 56, c.copy(n[1], n[3]), "font-family:" + F.sans + ";font-size:19px;font-weight:600;color:" + T.white);
-      c.div(nx + 56, y + 32, w - 56, c.copy(n[2], n[3]), TX.label + ";font-size:11px");
+      c.div(nx - 4, y - 6, 124, c.copy(n[0], n[3]), TX.giant + ";font-size:" + (n[0] === "▾" ? 64 : 88) + "px;line-height:1");
+      c.div(nx + 126, y + 6, w - 126, c.copy(n[1], n[3]), "font-family:" + F.sans + ";font-size:20px;font-weight:600;color:" + T.white);
+      c.div(nx + 126, y + 38, w - 126, c.copy(n[2], n[3]), TX.label + ";font-size:11px");
     });
     // the small link, at the end of the nav
-    var ly = 352, lw = 196, lx = 1320 - lw;
-    c.svg(S.line(120, ly - 18, 1320, ly - 18, { stroke: T.rule }));
+    var ly = 394, lw = 196, lx = 1320 - lw;
+    c.svg(S.line(120, ly - 20, 1320, ly - 20, { stroke: T.rule }));
     c.div(lx, ly, lw, c.copy("▸ Enter the archive", "index.html:1107"), LINK_ST + ";justify-content:center");
     focusRing(c, lx, ly, lw, 44);
     var m = pageMap(c, 120, 700, 1200, 11);
     var mx = lx + lw / 2;
-    c.svg(S.leader([[m.land.x, 700], [m.land.x, 600], [mx, 600], [mx, ly + 52]], {}));
+    c.svg(S.leader([[m.land.x, 700], [m.land.x, 580], [mx, 580], [mx, ly + 52]], {}));
+    callout(c, mx, 580, 1);
+    c.svg(reg(196, 134, 6) + reg(1244, 134, 6));
     c.state({ form: "none (page top)", x: null, y: null, w: 0, h: 0, tone: "none", note: "the link jumps to the Archive at the end; the Sheet is not on this screen" });
   }
   function h6LinkPhone(c) {
+    lightDefs(c);
     var st = c.stage, tb = c.textBox;
-    c.svg(S.rect(st.x, st.y - 80, st.w, 120, { fill: T.sheet, stroke: T.sheetLine }));
-    c.div(st.x, st.y + 54, st.w, c.copy("▼   BEGIN DEBRIEF   ▼", "index.html:93"), TX.label + ";text-align:center;font-size:10px");
+    c.svg(S.sheet(st.x, -60, st.w, 140, { tone: "white", mode: "edge", sw: 1 }) + lit(st.x + 1, -59, st.w - 2, 138, { edge: 0 }));
+    c.div(st.x, 100, st.w, c.copy("▼   BEGIN DEBRIEF   ▼", "index.html:93"), TX.label + ";text-align:center;font-size:10px");
     var y = st.y + 100;
     NAV.forEach(function (n, i) {
       var ny = y + i * 76;
       c.svg(S.line(st.x, ny - 10, st.x + st.w, ny - 10, { stroke: T.rule }));
-      c.div(st.x, ny + 4, 40, c.copy(n[0], n[3]), TX.title + ";font-size:24px");
-      c.div(st.x + 44, ny, st.w - 44, c.copy(n[1], n[3]), "font-family:" + F.sans + ";font-size:17px;font-weight:600;color:" + T.white);
-      c.div(st.x + 44, ny + 26, st.w - 44, c.copy(n[2], n[3]), TX.label + ";font-size:10px");
+      c.div(st.x - 2, ny - 2, 60, c.copy(n[0], n[3]), TX.giant + ";font-size:" + (n[0] === "▾" ? 30 : 44) + "px;line-height:1");
+      c.div(st.x + 66, ny, st.w - 66, c.copy(n[1], n[3]), "font-family:" + F.sans + ";font-size:17px;font-weight:600;color:" + T.white);
+      c.div(st.x + 66, ny + 26, st.w - 66, c.copy(n[2], n[3]), TX.label + ";font-size:10px");
     });
     var ly = y + 3 * 76;
     c.svg(S.line(st.x, ly - 10, st.x + st.w, ly - 10, { stroke: T.rule }));
-    c.div(st.x + 44, ly + 4, 190, c.copy("▸ Enter the archive", "index.html:1107"), LINK_ST + ";justify-content:center");
-    focusRing(c, st.x + 44, ly + 4, 190, 44);
+    c.div(st.x + 66, ly + 4, 190, c.copy("▸ Enter the archive", "index.html:1107"), LINK_ST + ";justify-content:center");
+    focusRing(c, st.x + 66, ly + 4, 190, 44);
     var m = pageMap(c, tb.x, tb.y + 120, tb.w, 10);
-    var mx = st.x + 44 + 95;
+    var mx = st.x + 66 + 95;
     c.svg(S.leader([[m.land.x, tb.y + 120], [m.land.x, ly + 90], [mx, ly + 90], [mx, ly + 56]], {}));
     c.state({ form: "none (page top)", x: null, y: null, w: 0, h: 0, tone: "none", note: "link in the contents nav, 44px tall" });
   }

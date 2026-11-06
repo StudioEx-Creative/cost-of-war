@@ -79,7 +79,10 @@
       var px = Math.floor(x * o.dpr), py = Math.floor(y * o.dpr), i = py * W + px;
       if (occ[i]) continue;
       occ[i] = 1;
-      g.globalAlpha = 0.1 + 0.8 * Math.pow(rnd(), 2.4);
+      // a night sky: most points faint, a thin tail of bright ones, and the
+      // bright ones gathered where o.glow (0..1) is high, like cloud in a sky.
+      // The floor stays at 0.1 so every point still shows.
+      g.globalAlpha = 0.1 + 0.85 * Math.pow(rnd(), 4.6) * (o.glow ? 0.3 + 0.7 * o.glow(x, y) : 1);
       g.fillStyle = rnd() < 0.35 ? T.grey : T.white;
       g.fillRect(px, py, 1, 1);
       placed++;
@@ -97,6 +100,45 @@
     return restField(T, { w: w, h: h, dpr: dpr, n: 1, held: at, drawHeld: true }).url;
   }
   function pctOf(f) { return Math.round(f * 100) + "%"; }
+  // The faintest bloom around the held point: white, very low opacity.
+  // Light, not an effect: it never pulses and never changes colour.
+  function bloom(T, id, x, y, r, peak) {
+    peak = peak || 0.085;
+    return '<defs><radialGradient id="' + id + '">' +
+      '<stop offset="0" stop-color="' + T.white + '" stop-opacity="' + peak + '"/>' +
+      '<stop offset="0.07" stop-color="' + T.white + '" stop-opacity="' + (peak * 0.62) + '"/>' +
+      '<stop offset="0.26" stop-color="' + T.white + '" stop-opacity="' + (peak * 0.24) + '"/>' +
+      '<stop offset="0.6" stop-color="' + T.white + '" stop-opacity="' + (peak * 0.06) + '"/>' +
+      '<stop offset="1" stop-color="' + T.white + '" stop-opacity="0"/></radialGradient></defs>' +
+      '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="url(#' + id + ')"/>';
+  }
+  // Soft, slow variation in density (value noise, two octaves), so the field
+  // reads as a night sky rather than even grain. Seeded: 0.0 … 1.0.
+  function cloud(seed, cell) {
+    function h(i, j) {
+      var v = Math.sin(i * 127.1 + j * 311.7 + seed * 74.7) * 43758.5453;
+      return v - Math.floor(v);
+    }
+    function vn(x, y) {
+      var i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j;
+      fx = fx * fx * (3 - 2 * fx);
+      fy = fy * fy * (3 - 2 * fy);
+      var a = h(i, j), b = h(i + 1, j), c2 = h(i, j + 1), d = h(i + 1, j + 1);
+      return a + (b - a) * fx + (c2 - a) * fy + (a - b - c2 + d) * fx * fy;
+    }
+    return function (x, y) {
+      return 0.65 * vn(x / cell, y / cell) + 0.35 * vn(x / (cell * 0.42) + 9.3, y / (cell * 0.42) + 4.1);
+    };
+  }
+  // One kept figure as a run-in line: the value leads its own sentence,
+  // the source sits under it in mono. No rule, no cell, no grid.
+  function runIn(c, d, o) {
+    var TX = c.TX;
+    return '<div style="margin-top:' + (o.gap || 0) + 'px">' +
+      '<div style="' + TX.body + ";font-size:" + o.fs + "px;line-height:" + o.lh + '">' +
+      '<span style="' + TX.value + ';font-size:inherit;line-height:inherit">' + d.value + "</span>&nbsp;" + d.text + "</div>" +
+      '<div style="' + TX.src + ";font-size:" + o.sfs + "px;margin-top:" + o.sgap + 'px">' + d.src + "</div></div>";
+  }
   // The CURRENT flood (js/dossier.js:697-735), reproduced for comparison:
   // grows outward from the centre, radius decays 5.5px → speck, first 40 glow.
   function floodField(T, o) {
@@ -258,48 +300,65 @@
   });
 
   /* ── desktop ───────────────────────────────────────────────────── */
-  var D_LIGHT = { x: 720, y: 330 };
+  // Composition: the light lives on the upper-right third (960, 300); the
+  // scene's voice lives on one quiet text axis at the lower left (x 216).
+  // Everything else is black. No camera, no tilt: stillness and light only.
+  var D_LIGHT = { x: 960, y: 300 };
   var D_SEED = 2447;
+  var AX = 216; // the text axis
+  var D_CLOUD = cloud(31, 260);
   // The one slow fade runs p 0.30 → 0.44 (see the 'fade' caption).
   function FADE(p) { return smooth(0.30, 0.44, p); }
-  // The field fills the frame. A soft clearing at the foot holds the text.
+  // The field as a night sky: it fills the frame and falls away toward a
+  // dark horizon at the lower left, where the figure sits on black.
+  // Density only; every point is still placed (the count is checked).
   function dMask(x, y) {
-    var dx = (x - 720) / 640, dy = (y - 740) / 205;
-    return smooth(0.55, 1.05, dx * dx + dy * dy);
+    var t = y / 900 - 0.42 * (x / 1440); // 0 upper right … 1 lower left
+    var sky = smooth(0.74, 0.30, t);
+    var ex = (x - 450) / 460, ey = (y - 716) / 165;
+    var clear = smooth(0.3, 1.7, ex * ex + ey * ey);
+    return sky * clear * (0.78 + 0.22 * D_CLOUD(x, y));
   }
+  // where the brighter points gather (brightness only; it moves no point)
+  function dGlow(x, y) { return smooth(0.22, 0.82, D_CLOUD(x, y)); }
 
   function drawDesk(c) {
     var T = c.T, TX = c.TX, k = c.k;
     var N = SB.get("DEATHS_PER_YEAR");
 
     if (k === "in") {
-      c.div(120, 362, 1200, c.copy("The Human Impact", "index.html:739"), TX.label + ";text-align:center");
-      c.div(120, 394, 1200, openLine(c), TX.body + ";font-size:38px;line-height:1.32;color:" + T.white + ";text-align:center");
-      c.state({ form: "none (black)", tone: "neutral", note: "S11 ended with the ladder drained to grey; it fades to black here. Only the line." });
+      // Small and low, with the whole upper right left empty for the light to come.
+      c.div(AX, 560, 760, c.copy("The Human Impact", "index.html:739"), TX.label);
+      c.div(AX, 590, 760,
+        '<span style="color:' + T.soft + '">' + c.copy("Everything above can be counted in dollars.", "index.html:742") + "</span><br>" +
+        '<span style="color:' + T.white + '">' + c.copy("What follows cannot.", "index.html:742") + "</span>",
+        TX.body + ";font-size:28px;line-height:1.42");
+      c.state({ form: "none (black)", tone: "neutral", note: "S11 ended with the ladder drained to grey; it fades to black here. Only the line, small, low on the left; the upper right is kept empty for the point that follows." });
       return;
     }
 
     if (k === "one") {
+      c.svg(bloom(T, "s12b1", D_LIGHT.x, D_LIGHT.y, 300));
       c.svg(image(heldOnly(T, c.W, c.H, 1, D_LIGHT), 0, 0, c.W, c.H));
-      c.div(120, 732, 1200, c.copy("one person killed in armed conflict", "index.html:757"), TX.body + ";font-size:22px;text-align:center");
-      c.state({ form: "one point of light", x: D_LIGHT.x, y: D_LIGHT.y, w: 11, h: 11, tone: "white", note: "the Sheet at its smallest: one person. Held still; no counter beside it." });
+      c.div(AX, 604, 640, c.copy("one person killed in armed conflict", "index.html:757"), TX.body + ";font-size:20px;color:" + T.soft);
+      c.state({ form: "one point of light", x: D_LIGHT.x - 5.5, y: D_LIGHT.y - 5.5, w: 11, h: 11, tone: "white", note: "the Sheet at its smallest: one person. Held still on the upper-right third with the faintest white bloom (8.5% at its core); the line sits far below-left on black. No counter beside it." });
       return;
     }
 
     if (k === "fade" || k === "field") {
       var fade = k === "fade";
       var op = fade ? Math.round(FADE(c.p) * 100) / 100 : 1;
-      var fld = restField(T, { w: c.W, h: c.H, dpr: 1, n: N, held: D_LIGHT, seed: D_SEED, mask: dMask });
+      var fld = restField(T, { w: c.W, h: c.H, dpr: 1, n: N, held: D_LIGHT, seed: D_SEED, mask: dMask, glow: dGlow });
+      c.svg(bloom(T, "s12b2", D_LIGHT.x, D_LIGHT.y, 300));
       c.svg(image(fld.url, 0, 0, c.W, c.H, op));
       // the first point (one of the N) holds at full strength through the fade
       c.svg(image(heldOnly(T, c.W, c.H, 1, D_LIGHT), 0, 0, c.W, c.H));
       var f = figure(c);
       var fo = fade ? ";opacity:" + op : "";
-      c.div(120, 628, 1200, f.value, TX.giant + ";font-size:104px;text-align:center" + fo);
-      c.div(120, 732, 1200, f.unit, TX.body + ";font-size:22px;text-align:center" + fo);
-      var sp = '<span style="display:inline-block;width:36px"></span>';
-      c.div(120, 790, 1200, f.rate + sp + f.live + sp + f.src, TX.label + ";text-align:center" + fo);
-      c.state({ form: fade ? "point + field fading in (opacity " + op + ")" : "field at rest", x: 0, y: 0, w: c.W, h: c.H, tone: "white / grey points", note: "exactly " + SB.FMT.int(N) + " points: the held point + " + SB.FMT.int(fld.scatter) + " distinct device pixels (DPR 1, checked by reading the canvas back), seeded scatter, " + pctOf(fld.fill) + " of the free pixels lit; soft clearing for the text" });
+      c.div(AX - 4, 612, 760, f.value, TX.giant + ";font-size:76px" + fo);
+      c.div(AX, 696, 760, f.unit, TX.body + ";font-size:20px" + fo);
+      c.div(AX, 744, 760, f.rate + "<br>" + f.live + "<br>" + f.src, TX.label + ";font-size:11px;line-height:1.85" + fo);
+      c.state({ form: fade ? "point + field fading in (opacity " + op + ")" : "field at rest", x: 0, y: 0, w: c.W, h: c.H, tone: "white / grey points", note: "exactly " + SB.FMT.int(N) + " points: the held point + " + SB.FMT.int(fld.scatter) + " distinct device pixels (DPR 1, checked by reading the canvas back), seeded scatter, " + pctOf(fld.fill) + " of the free pixels lit. Set as a night sky: most points faint, a few bright, density falling away to a dark horizon at the lower left where the figure sits" });
       if (!fade) {
         c.flag("decision", "Open decision 7: removing the flood changes Blueprint's artwork. Main frames show the brief's version (one point held longer, the whole field at rest in one slow fade, no counter, no shrinking, no changing labels). Alt B shows today's flood. Blueprint must approve.");
         c.flag("data", "Rate shown as 'one every 2 min 9 sec' from SECONDS_PER_DEATH (minsec), which no script reads today (audit F09/F16). humanStrip's 'one every two minutes' is not shown.");
@@ -310,152 +369,170 @@
     }
 
     if (k === "content") {
+      // One narrow reading column on the text axis, the right of the frame
+      // left black where the field was. Each value leads its own sentence.
       var it = contentItems(c);
-      c.div(120, 232, 1200,
-        '<div style="display:grid;grid-template-columns:1fr 1fr;column-gap:80px">' +
-          it.slice(0, 2).map(function (d) { return cell(c, d, { pad: 20, vfs: 48, tfs: 17, sfs: 11, gap: 14 }); }).join("") + "</div>",
+      var o = { fs: 20, lh: 1.5, sfs: 11, sgap: 7 };
+      c.div(AX, 176, 600,
+        it.slice(0, 2).map(function (d, i) { return runIn(c, d, Object.assign({ gap: i ? 34 : 0 }, o)); }).join("") +
+        '<div style="height:58px"></div>' +
+        it.slice(2).map(function (d, i) { return runIn(c, d, Object.assign({ gap: i ? 26 : 0 }, o)); }).join(""),
         "");
-      c.div(120, 508, 1200,
-        '<div style="display:grid;grid-template-columns:repeat(4,1fr);column-gap:40px">' +
-          it.slice(2).map(function (d) { return cell(c, d, { pad: 20, vfs: 40, tfs: 16, sfs: 11, gap: 12 }); }).join("") + "</div>",
-        "");
-      c.state({ form: "none", tone: "neutral", note: "the field has faded out; plain text on black" });
+      c.state({ form: "none", tone: "neutral", note: "the field has faded out; plain text on black, one narrow column on the scene's text axis" });
       contentFlags(c);
       orderFlag(c);
       return;
     }
 
-    // out: the long black pause
-    c.div(120, 330, 1200, closeLine(c), TX.body + ";font-size:46px;line-height:1.3;color:" + T.white + ";text-align:center");
-    c.div(120, 560, 1200, readyLink(c, 18), "text-align:center");
+    // out: the long black pause. The line on the text axis; 'When you're
+    // ready' set apart, alone, on the lower-right third.
+    c.div(AX, 330, 900, closeLine(c), TX.body + ";font-size:34px;line-height:1.34;color:" + T.white);
+    c.div(960, 594, 300, readyLink(c, 18), "");
     c.state({ form: "none (black)", tone: "neutral", note: "long black pause; S13 brings one blank sheet up from this black" });
   }
 
   /* ── phone: a separate design ──────────────────────────────────── */
   // The phone field is drawn at DPR 2 (the brief's cap). At DPR 1 the
   // phone stage (343 × 500) has fewer pixels than there are people.
+  // Here the field runs full-bleed as a sky over the top of the screen and
+  // falls away to black above the text, which gives the points more room
+  // (and a fainter haze) than a box inside the stage would.
   var P_DPR = 2;
   var P_SEED = 2448;
-  // The field sits in the stage, feathered at every edge so it reads as
-  // light, not as a sheet (its area means no money here). At DPR 2 the stage
-  // holds about 462,000 mask-weighted pixels, so 244,700 distinct points light
-  // about half of them: a squarer, tighter feather would read as a slab.
+  var P_LIGHT = { x: 250, y: 236 }; // upper-right third, screen coordinates
+  var PAX = 32, PW = 311; // the phone text axis
+  var P_FH = 640; // height of the field image
+  var P_CLOUD = cloud(17, 120);
   function pMask(x, y) {
-    var dx = (x - 171.5) / 171.5, dy = (y - 250) / 250;
-    var d = Math.pow(Math.pow(Math.abs(dx), 4) + Math.pow(Math.abs(dy), 4), 0.25); // soft rounded field
-    return smooth(1.0, 0.7, d);
+    var h = y + 0.22 * (375 - x); // horizon sits a little lower on the right
+    return smooth(630, 420, h) * (0.8 + 0.2 * P_CLOUD(x, y));
   }
+  function pGlow(x, y) { return smooth(0.22, 0.82, P_CLOUD(x, y)); }
 
   function drawPhone(c) {
-    var T = c.T, TX = c.TX, k = c.k, st = c.stage, tb = c.textBox;
+    var T = c.T, TX = c.TX, k = c.k;
     var N = SB.get("DEATHS_PER_YEAR");
-    var LP = { x: st.w / 2, y: st.h / 2 - 20 }; // stage coordinates
 
     if (k === "in") {
-      c.div(tb.x, tb.y, tb.w, c.copy("The Human Impact", "index.html:739"), TX.label + ";font-size:11px");
-      c.div(tb.x, tb.y + 26, tb.w, openLine(c), TX.body + ";font-size:23px;line-height:1.36;color:" + T.white);
-      c.state({ form: "none (black)", tone: "neutral", note: "S11's grey ladder has faded to black; the stage waits for the point" });
+      c.div(PAX, 566, PW, c.copy("The Human Impact", "index.html:739"), TX.label + ";font-size:11px");
+      c.div(PAX, 592, PW,
+        '<span style="color:' + T.soft + '">' + c.copy("Everything above can be counted in dollars.", "index.html:742") + "</span><br>" +
+        '<span style="color:' + T.white + '">' + c.copy("What follows cannot.", "index.html:742") + "</span>",
+        TX.body + ";font-size:21px;line-height:1.42");
+      c.state({ form: "none (black)", tone: "neutral", note: "S11's grey ladder has faded to black; the stage waits, empty, for the point" });
       return;
     }
     if (k === "one") {
-      c.svg(image(heldOnly(T, st.w, st.h, P_DPR, LP), st.x, st.y, st.w, st.h));
-      c.div(tb.x, tb.y, tb.w, c.copy("one person killed in armed conflict", "index.html:757"), TX.body + ";font-size:19px");
-      c.state({ form: "one point of light", x: st.x + LP.x, y: st.y + LP.y, w: 11, h: 11, tone: "white", note: "the Sheet at its smallest: one person, held" });
+      c.svg(bloom(T, "s12pb1", P_LIGHT.x, P_LIGHT.y, 170));
+      c.svg(image(heldOnly(T, c.W, P_FH, P_DPR, P_LIGHT), 0, 0, c.W, P_FH));
+      c.div(PAX, 604, PW, c.copy("one person killed in armed conflict", "index.html:757"), TX.body + ";font-size:17px;color:" + T.soft);
+      c.state({ form: "one point of light", x: P_LIGHT.x - 5.5, y: P_LIGHT.y - 5.5, w: 11, h: 11, tone: "white", note: "the Sheet at its smallest: one person, held on the upper-right third with the faintest bloom" });
       return;
     }
     if (k === "fade" || k === "field") {
       var fade = k === "fade";
       var op = fade ? Math.round(FADE(c.p) * 100) / 100 : 1;
-      var fld = restField(T, { w: st.w, h: st.h, dpr: P_DPR, n: N, held: LP, seed: P_SEED, mask: pMask });
-      c.svg(image(fld.url, st.x, st.y, st.w, st.h, op));
-      c.svg(image(heldOnly(T, st.w, st.h, P_DPR, LP), st.x, st.y, st.w, st.h));
+      var fld = restField(T, { w: c.W, h: P_FH, dpr: P_DPR, n: N, held: P_LIGHT, seed: P_SEED, mask: pMask, glow: pGlow });
+      c.svg(bloom(T, "s12pb2", P_LIGHT.x, P_LIGHT.y, 170));
+      c.svg(image(fld.url, 0, 0, c.W, P_FH, op));
+      c.svg(image(heldOnly(T, c.W, P_FH, P_DPR, P_LIGHT), 0, 0, c.W, P_FH));
       var f = figure(c);
       var fo = fade ? ";opacity:" + op : "";
-      c.div(tb.x, tb.y, tb.w, f.value, TX.giant + ";font-size:54px" + fo);
-      c.div(tb.x, tb.y + 58, tb.w, f.unit, TX.bodySm + ";font-size:16px" + fo);
-      c.div(tb.x, tb.y + 112, tb.w, f.rate + "<br>" + f.live + "<br>" + f.src, TX.label + ";font-size:10px;line-height:1.8" + fo);
-      c.state({ form: fade ? "point + field fading in (opacity " + op + ")" : "field at rest", x: st.x, y: st.y, w: st.w, h: st.h, tone: "white / grey points", note: "exactly " + SB.FMT.int(N) + " points: the held point + " + SB.FMT.int(fld.scatter) + " distinct device pixels at DPR 2 inside the stage (checked by reading the canvas back), " + pctOf(fld.fill) + " of the free pixels lit, feathered at the edges" });
-      if (!fade) c.flag("decision", "Open decision 7 (see desktop). Phone field drawn at DPR 2, the brief's cap: at DPR 1 the 343×500 stage has fewer pixels than there are people, so the points cannot all show. At DPR 2 they light " + pctOf(fld.fill) + " of the stage's free pixels, so on a phone the field reads as a dense haze, not separate lights.");
+      c.div(PAX - 2, 590, PW, f.value, TX.giant + ";font-size:46px" + fo);
+      c.div(PAX, 640, PW, f.unit, TX.bodySm + ";font-size:15px;line-height:1.4" + fo);
+      c.div(PAX, 692, PW, f.rate + "<br>" + f.live + "<br>" + f.src, TX.label + ";font-size:10px;line-height:1.75" + fo);
+      c.state({ form: fade ? "point + field fading in (opacity " + op + ")" : "field at rest", x: 0, y: 0, w: c.W, h: P_FH, tone: "white / grey points", note: "exactly " + SB.FMT.int(N) + " points: the held point + " + SB.FMT.int(fld.scatter) + " distinct device pixels at DPR 2 (checked by reading the canvas back), " + pctOf(fld.fill) + " of the free pixels lit; a full-bleed sky over the top of the screen, falling away to black above the text" });
+      if (!fade) c.flag("decision", "Open decision 7 (see desktop). Phone field drawn at DPR 2, the brief's cap: at DPR 1 the 343×500 stage has fewer pixels than there are people, so the points cannot all show. At DPR 2, run full-bleed above the text, they light " + pctOf(fld.fill) + " of the field's free pixels, so on a phone the field reads as a dense haze, not separate lights.");
       return;
     }
     if (k === "content") {
-      // No visual here: the kept figures run as one reading column.
+      // No visual here: the kept figures run as one quiet reading column.
       var it = contentItems(c);
-      var o = { colGap: 12, valW: 88, vfs: 22, tfs: 14, sfs: 10, pad: 13 };
-      c.div(16, 84, 343, it.slice(0, 2).map(function (d) { return row(c, d, o); }).join(""), "");
-      c.div(16, 314, 343, it.slice(2).map(function (d) { return row(c, d, o); }).join(""), "");
+      var o = { fs: 15, lh: 1.45, sfs: 10, sgap: 5 };
+      c.div(PAX, 128, PW,
+        it.slice(0, 2).map(function (d, i) { return runIn(c, d, Object.assign({ gap: i ? 22 : 0 }, o)); }).join("") +
+        '<div style="height:40px"></div>' +
+        it.slice(2).map(function (d, i) { return runIn(c, d, Object.assign({ gap: i ? 18 : 0 }, o)); }).join(""),
+        "");
       c.state({ form: "none", tone: "neutral", note: "field faded out; plain reading column that scrolls as normal text" });
       contentFlags(c);
       orderFlag(c);
       return;
     }
     // out
-    c.div(16, 300, 343, closeLine(c), TX.body + ";font-size:26px;line-height:1.32;color:" + T.white + ";text-align:center");
-    c.div(16, 520, 343, readyLink(c, 17), "text-align:center");
+    c.div(PAX, 262, PW, c.copy("Every number on this page was a person", "index.html:774") + " " +
+      c.copy("who wanted to live.", "index.html:774"), TX.body + ";font-size:25px;line-height:1.36;color:" + T.white);
+    c.div(PAX, 600, PW, readyLink(c, 17), "");
     c.state({ form: "none (black)", tone: "neutral", note: "long black pause; S13's blank sheet appears from black" });
   }
 
   /* ── no-motion plates ──────────────────────────────────────────── */
   // A soft pool of dark around the held point and its one line (1 person).
   // It thins the field (points are moved, not hidden), so the count holds.
-  function underLight(at, rx, ry, dy) {
+  function underLight(at, rx, ry, dx, dy, e0, e1) {
     return function (x, y) {
-      var ex = (x - at.x) / rx, ey = (y - at.y - dy) / ry;
-      return smooth(0.3, 1.0, ex * ex + ey * ey);
+      var ex = (x - at.x - dx) / rx, ey = (y - at.y - dy) / ry;
+      return smooth(e0, e1, ex * ex + ey * ey);
     };
   }
   function plateDesk(c) {
     var T = c.T, TX = c.TX;
     var N = SB.get("DEATHS_PER_YEAR");
-    // the field on the left, feathered toward the text column
-    var fw = 740, at = { x: 330, y: 430 };
-    var clear = underLight(at, 235, 76, 22);
-    var fld = restField(T, { w: fw, h: c.H, dpr: 1, n: N, held: at, drawHeld: true, seed: D_SEED, mask: function (x, y) { return smooth(fw, fw - 160, x) * clear(x, y); } });
-    c.svg(image(fld.url, 0, 0, fw, c.H));
-    c.div(at.x - 200, at.y + 28, 400, c.copy("one person killed in armed conflict", "index.html:757"), TX.bodySm + ";text-align:center;color:" + T.white);
+    // the field is a sky over the right of the frame; the text keeps to one
+    // column on the left, on black
+    var at = { x: 1040, y: 300 };
+    var clear = underLight(at, 230, 56, 0, 40, 0.1, 1.6);
+    var fld = restField(T, { w: c.W, h: c.H, dpr: 1, n: N, held: at, drawHeld: true, seed: D_SEED, glow: dGlow, mask: function (x, y) {
+      return smooth(620, 800, x) * smooth(920, 800, y) * clear(x, y);
+    } });
+    c.svg(bloom(T, "s12bp", at.x, at.y, 280));
+    c.svg(image(fld.url, 0, 0, c.W, c.H));
+    c.div(at.x - 170, at.y + 24, 340, c.copy("one person killed in armed conflict", "index.html:757"), TX.body + ";font-size:18px;line-height:1.3;text-align:center;color:" + T.white);
     var f = figure(c);
     var it = contentItems(c).filter(function (d, i) { return i !== 2; }); // 244,700 is the figure above
+    var o = { fs: 18, lh: 1.45, sfs: 11, sgap: 4 };
     var html =
       '<div style="' + TX.label + '">' + c.copy("The Human Impact", "index.html:739") + "</div>" +
-      '<div style="' + TX.bodySm + ";font-size:17px;color:" + T.white + ';margin-top:8px">' + openLine(c) + "</div>" +
-      '<div style="' + TX.giant + ';font-size:66px;margin:22px 0 0 -3px">' + f.value + "</div>" +
-      '<div style="' + TX.bodySm + ';font-size:17px;margin-top:8px">' + f.unit + "</div>" +
-      '<div style="' + TX.label + ';font-size:11px;margin-top:8px;line-height:1.7">' + f.rate + "&nbsp;&nbsp;·&nbsp;&nbsp;" + f.live + "<br>" + f.src + "</div>" +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;column-gap:36px;row-gap:16px;margin-top:22px">' +
-        it.map(function (d) { return cell(c, d, { pad: 10, vfs: 26, tfs: 14, sfs: 10, gap: 4 }); }).join("") + "</div>" +
-      '<div style="' + TX.body + ";font-size:21px;line-height:1.3;color:" + T.white + ';margin-top:26px">' + closeLine(c) + "</div>" +
-      '<div style="margin-top:6px">' + readyLink(c, 15) + "</div>";
-    c.div(790, 44, 570, html, "");
+      '<div style="' + TX.body + ";font-size:19px;line-height:1.42;margin-top:10px\"><span style=\"color:" + T.soft + '">' +
+        c.copy("Everything above can be counted in dollars.", "index.html:742") + '</span><br><span style="color:' + T.white + '">' +
+        c.copy("What follows cannot.", "index.html:742") + "</span></div>" +
+      '<div style="' + TX.giant + ';font-size:58px;margin:26px 0 0 -3px">' + f.value + "</div>" +
+      '<div style="' + TX.body + ';font-size:18px;margin-top:8px">' + f.unit + "</div>" +
+      '<div style="' + TX.label + ';font-size:11px;margin-top:8px;line-height:1.75">' + f.rate + "<br>" + f.live + "<br>" + f.src + "</div>" +
+      '<div style="margin-top:22px">' + it.map(function (d, i) { return runIn(c, d, Object.assign({ gap: i ? 12 : 0 }, o)); }).join("") + "</div>" +
+      '<div style="' + TX.body + ";font-size:22px;line-height:1.3;color:" + T.white + ';margin-top:24px">' + closeLine(c) + "</div>" +
+      '<div style="margin-top:4px">' + readyLink(c, 18) + "</div>";
+    c.div(120, 60, 520, html, "");
     contentFlags(c);
-    c.state({ form: "field at rest (static)", x: 0, y: 0, w: fw, h: c.H, tone: "white / grey points", note: "no fade, no hold: the end state with every figure. Exactly " + SB.FMT.int(N) + " points (the labelled held point + " + SB.FMT.int(fld.scatter) + " distinct pixels, " + pctOf(fld.fill) + " of the free pixels lit). The live count still runs" });
+    c.state({ form: "field at rest (static)", x: 620, y: 0, w: c.W - 620, h: c.H, tone: "white / grey points", note: "no fade, no hold: the end state with every figure. Exactly " + SB.FMT.int(N) + " points (the labelled held point + " + SB.FMT.int(fld.scatter) + " distinct pixels, " + pctOf(fld.fill) + " of the free pixels lit), a sky over the right of the frame; the text in one column on black. The live count still runs" });
   }
 
-  // Phone plate: the field is a band across the top, as tall as the figures
+  // Phone plate: the field is a sky across the top, as tall as the figures
   // allow. 244,700 distinct points need room: at DPR 2 a 375-wide band must be
   // close to 300 px tall to keep the field under two-thirds lit. To make that
-  // room, the kept figures sit in two short grids (2 + 3) instead of a list.
+  // room, the kept figures run as short run-in lines instead of cells.
   function platePhone(c) {
     var T = c.T, TX = c.TX;
     var N = SB.get("DEATHS_PER_YEAR");
-    var bh = 312, at = { x: c.W / 2, y: 114 };
-    var clear = underLight(at, 172, 26, 16);
-    var fld = restField(T, { w: c.W, h: bh, dpr: P_DPR, n: N, held: at, drawHeld: true, seed: P_SEED, mask: function (x, y) { return smooth(bh, bh - 62, y) * clear(x, y); } });
+    var bh = 318, at = { x: 236, y: 190 };
+    var clear = underLight(at, 118, 40, 0, 36, 0.12, 1.5);
+    var fld = restField(T, { w: c.W, h: bh, dpr: P_DPR, n: N, held: at, drawHeld: true, seed: P_SEED, glow: pGlow, mask: function (x, y) {
+      return smooth(bh, bh - 56, y) * clear(x, y);
+    } });
+    c.svg(bloom(T, "s12pp", at.x, at.y, 120));
     c.svg(image(fld.url, 0, 0, c.W, bh));
-    c.div(16, at.y + 19, 343, c.copy("one person killed in armed conflict", "index.html:757"), TX.bodySm + ";font-size:14px;line-height:1.3;text-align:center;color:" + T.white);
+    c.div(at.x - 80, at.y + 16, 160, c.copy("one person killed in armed conflict", "index.html:757"), TX.bodySm + ";font-size:14px;line-height:1.3;text-align:center;color:" + T.white);
     var f = figure(c);
     var it = contentItems(c).filter(function (d, i) { return i !== 2; }); // 244,700 is the figure above
-    var co = { pad: 7, vfs: 17, tfs: 14, lh: 1.36, sfs: 10, gap: 3, sgap: 3 };
+    var o = { fs: 14, lh: 1.36, sfs: 10, sgap: 2 };
     var html =
       '<div style="' + TX.giant + ';font-size:38px">' + f.value + "</div>" +
       '<div style="' + TX.bodySm + ';font-size:14px;line-height:1.35;margin-top:4px">' + f.unit + "</div>" +
-      '<div style="' + TX.label + ';font-size:10px;line-height:1.6;margin:4px 0 10px">' + f.rate + "<br>" + f.live + "<br>" + f.src + "</div>" +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;column-gap:16px">' +
-        it.slice(0, 2).map(function (d) { return cell(c, d, co); }).join("") + "</div>" +
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;column-gap:12px;margin-top:10px">' +
-        it.slice(2).map(function (d) { return cell(c, d, co); }).join("") + "</div>" +
-      '<div style="' + TX.bodySm + ";font-size:15px;line-height:1.35;color:" + T.white + ';margin-top:10px">' + closeLine(c) + "</div>" +
+      '<div style="' + TX.label + ';font-size:10px;line-height:1.6;margin:4px 0 12px">' + f.rate + "<br>" + f.live + "<br>" + f.src + "</div>" +
+      it.map(function (d, i) { return runIn(c, d, Object.assign({ gap: i ? 8 : 0 }, o)); }).join("") +
+      '<div style="' + TX.bodySm + ";font-size:15px;line-height:1.35;color:" + T.white + ';margin-top:12px">' + closeLine(c) + "</div>" +
       "<div>" + readyLink(c, 14) + "</div>";
-    c.div(16, bh - 40, 343, html, "");
+    c.div(PAX - 8, bh - 44, PW + 8, html, "");
     contentFlags(c);
     c.flag("decision", "Phone no-motion plate: to fit every figure on one screen the field gets a " + bh + " px band, where the points light " + pctOf(fld.fill) + " of the free pixels (near-solid static). Alternative for the no-motion page: give the field its own full-stage plate, as in the 'field' frame, and let the figures follow below it. Choose one.");
     c.state({ form: "field at rest (static)", x: 0, y: 0, w: c.W, h: bh, tone: "white / grey points", note: "all figures still; exactly " + SB.FMT.int(N) + " points (the labelled held point + " + SB.FMT.int(fld.scatter) + " distinct pixels at DPR 2, " + pctOf(fld.fill) + " of the free pixels lit: dense at phone size). The live count still runs" });

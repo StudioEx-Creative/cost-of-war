@@ -1,114 +1,139 @@
 /* S08 · THE AIR · ORBIT · 1.0 screen
-   The camera rises over the map's far edge (S07's horizon) and orbits
-   above it. Emissions shares rise from the horizon as stacked bands
-   (emittersCompare; the militaries' band is the one red mark). At the end
-   everything falls away and the map turns edge-on: one thin line, which
-   S09 uses as its time line.
-   Main frames: the brief's stacked bands. Alt B: separate bars, each with
-   its base labelled (the bases are mixed, see the decision flag). */
+   The camera rises over the map's far edge (S07's horizon) and orbits above
+   it. Seen from that height the horizon bends into the curve of the earth,
+   and emissions shares rise off it as strata, layers of sky, each as thick
+   as its share (emittersCompare; the militaries' layer is the one red mark),
+   each named along its own curve. At the end everything falls away and the
+   map turns edge-on: one thin line, which S09 uses as its time line.
+   Main frames: the brief's stacked bands. Alt B: separate bars standing on
+   the curve, each with its base labelled (the bases are mixed, see the
+   decision flag). */
 (function () {
   "use strict";
 
   var RAD = Math.PI / 180;
   var KX = Math.cos(32 * RAD);
-  // S07's six places and its wide-shot camera, so the entry matches S07's exit exactly.
+  // S07's six places, anchors and wide-shot camera, so the entry matches S07's exit exactly.
   var GEO = { Ukraine: [31.2, 48.4], Syria: [38.5, 35.0], Iraq: [43.7, 33.2], Gaza: [34.4, 31.45], Yemen: [47.6, 15.9], Sudan: [30.2, 15.6] };
-  var ANCHOR = { Ukraine: "br", Syria: "bl", Iraq: "bl", Gaza: "bl", Yemen: "bl", Sudan: "bl" };
+  var ANCHOR = { Ukraine: "c", Syria: "bl", Iraq: "tl", Gaza: "tr", Yemen: "c", Sudan: "c" };
   // S07's wide-shot scale: $21.8T per frame, read from data.js (never typed).
   function fitWide() { return SB.get("machineData[3].amtB"); }
   // S09's time line (scenes/s09.js LINE). S08's exit must land exactly on it.
   var LINE = { desk: { y: 530, x0: 120, x1: 1320 }, phone: { y: 344, x0: 16, x1: 359 } };
 
   function clamp(v) { return Math.max(0, Math.min(1, v)); }
+  function pts(a) { return a.map(function (q) { return q.x.toFixed(1) + "," + q.y.toFixed(1); }).join(" "); }
   function sheetBounds(ph) {
     var ppd0 = ph ? 500 / 56 : 900 / 56;
     var halfLat = (ph ? 250 : 450) / ppd0, halfLon = (ph ? 171.5 : 720) / (ppd0 * KX);
-    return { lon0: 39 - halfLon, lon1: 39 + halfLon, lat0: 32 - halfLat, lat1: 32 + halfLat };
+    return { ppd0: ppd0, lon0: 39 - halfLon, lon1: 39 + halfLon, lat0: 32 - halfLat, lat1: 32 + halfLat };
   }
-  // Tilted plane with an optional yaw (the orbit turns the map under the camera).
-  function proj(cam, lon, lat) {
-    var ax = (lon - cam.lon) * KX * cam.ppd, ay = -(lat - cam.lat) * cam.ppd;
-    var yw = cam.yaw || 0;
-    var dx = ax * Math.cos(yw) - ay * Math.sin(yw), dy = ax * Math.sin(yw) + ay * Math.cos(yw);
-    var d = Math.max(cam.D * 0.08, cam.D - dy * Math.sin(cam.tilt));
-    var f = cam.D / d;
-    return { x: cam.sx + dx * f, y: cam.sy + dy * Math.cos(cam.tilt) * f, f: f };
+  // The camera over the plane (the same model as scenes/s07.js): focus, scale, tilt, the plane's turn, distance.
+  function Cam(cam) {
+    var ct = Math.cos(cam.tilt), stl = Math.max(1e-4, Math.sin(cam.tilt)), cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+    var dyMax = (cam.D * 0.86) / stl;
+    function plane(lon, lat) { var ax = (lon - cam.lon) * KX * cam.ppd, ay = -(lat - cam.lat) * cam.ppd; return { dx: ax * cy - ay * sy, dy: ax * sy + ay * cy }; }
+    function scr(q) { var f = cam.D / (cam.D - q.dy * stl); return { x: cam.sx + q.dx * f, y: cam.sy + q.dy * ct * f, f: f }; }
+    function cut(a, b) { var t = (dyMax - a.dy) / (b.dy - a.dy); return { dx: a.dx + (b.dx - a.dx) * t, dy: dyMax }; }
+    return {
+      horizon: cam.sy - (cam.D * ct) / stl,
+      pt: function (lon, lat) { var q = plane(lon, lat); if (q.dy > dyMax) q.dy = dyMax; return scr(q); },
+      line: function (a, b) {
+        var A = plane(a[0], a[1]), B = plane(b[0], b[1]);
+        if (A.dy > dyMax && B.dy > dyMax) return null;
+        if (A.dy > dyMax) A = cut(B, A); else if (B.dy > dyMax) B = cut(A, B);
+        return [scr(A), scr(B)];
+      },
+      poly: function (P) {
+        var Q = P.map(function (p) { return plane(p[0], p[1]); }), out = [];
+        for (var i = 0; i < Q.length; i++) {
+          var a = Q[i], b = Q[(i + 1) % Q.length], ina = a.dy <= dyMax, inb = b.dy <= dyMax;
+          if (ina) out.push(a);
+          if (ina !== inb) out.push(cut(a, b));
+        }
+        return out.map(scr);
+      },
+    };
   }
+  // S07's wide shot (scenes/s07.js wideCam).
   function wideCam(c) {
-    var st = c.stage;
-    return c.phone
-      ? { lon: 38.9, lat: 15.7, ppd: 19, tilt: 50 * RAD, sx: st.x + 171, sy: st.y + 444, D: 900 }
-      : { lon: 39, lat: 15, ppd: 84, tilt: 64 * RAD, sx: 740, sy: 820, D: 1700 };
+    var ph = c.phone, st = c.stage;
+    return ph
+      ? { lon: 38.2, lat: 32.4, ppd: 7.4, tilt: 54 * RAD, yaw: -90 * RAD, sx: st.x + 170, sy: st.y + 300, D: 640 }
+      : { lon: 39.2, lat: 31.8, ppd: 21, tilt: 62 * RAD, yaw: -90 * RAD, sx: 700, sy: 590, D: 1400 };
   }
-  function clipOn(c, id, box) {
-    c.svg('<defs><clipPath id="' + id + '"><rect x="' + box.x + '" y="' + box.y + '" width="' + box.w + '" height="' + box.h + '"/></clipPath></defs><g clip-path="url(#' + id + ')">');
+  // A place's block in degrees, at S07's scale, logged at true area.
+  function blockGeo(c, name) {
+    var ph = c.phone, sb = sheetBounds(ph), g = GEO[name], an = ANCHOR[name], arr = SB.get("conflictCosts"), i;
+    for (i = 0; i < arr.length; i++) if (arr[i].name === name) break;
+    var path = "conflictCosts[" + i + "].amtB";
+    var W = ph ? 343 : 1440, H = ph ? 500 : 900, a = SB.area(SB.get(path), fitWide(), { w: W, h: H });
+    var wDeg = a.w / (sb.ppd0 * KX), hDeg = a.h / sb.ppd0;
+    var lonL = an === "c" ? g[0] - wDeg / 2 : an[1] === "l" ? g[0] : g[0] - wDeg;
+    var latB = an === "c" ? g[1] - hDeg / 2 : an[0] === "b" ? g[1] : g[1] - hDeg;
+    c.rung(path, fitWide(), { x: (lonL - sb.lon0) * sb.ppd0 * KX, y: (sb.lat1 - latB - hDeg) * sb.ppd0, w: W, h: H }, "tl");
+    return [[lonL, latB + hDeg], [lonL + wDeg, latB + hDeg], [lonL + wDeg, latB], [lonL, latB]];
   }
-  function clipOff(c) { c.svg("</g>"); }
 
-  // The map plane under the camera: paper, cross grid, far edge. Clipped to `box`.
-  function plane(c, cam, box, o) {
-    var S = SB.SVG, T = c.T, sb = sheetBounds(c.phone), n = 18, pts = [], k;
-    o = o || {};
-    clipOn(c, o.id || "s08plane", box);
-    for (k = 0; k <= n; k++) pts.push(proj(cam, sb.lon0 + (sb.lon1 - sb.lon0) * k / n, sb.lat1));
-    for (k = 0; k <= n; k++) pts.push(proj(cam, sb.lon1, sb.lat1 + (sb.lat0 - sb.lat1) * k / n));
-    for (k = 0; k <= n; k++) pts.push(proj(cam, sb.lon1 + (sb.lon0 - sb.lon1) * k / n, sb.lat0));
-    for (k = 0; k <= n; k++) pts.push(proj(cam, sb.lon0, sb.lat0 + (sb.lat1 - sb.lat0) * k / n));
-    c.svg('<polygon points="' + pts.map(function (q) { return q.x.toFixed(1) + "," + q.y.toFixed(1); }).join(" ") + '" fill="' + T.sheet + '" opacity="' + (o.opacity != null ? o.opacity : 1) + '"/>');
-    var g = "", lon, lat, a, b, ga = o.gridA || 0.1;
-    for (lon = Math.ceil(sb.lon0 / 5) * 5; lon <= sb.lon1; lon += 5) { a = proj(cam, lon, sb.lat0); b = proj(cam, lon, sb.lat1); g += S.line(a.x, a.y, b.x, b.y, { stroke: "rgba(255,255,255," + ga + ")" }); }
-    for (lat = Math.ceil(sb.lat0 / 5) * 5; lat <= sb.lat1; lat += 5) { a = proj(cam, sb.lon0, lat); b = proj(cam, sb.lon1, lat); g += S.line(a.x, a.y, b.x, b.y, { stroke: "rgba(255,255,255," + ga + ")" }); }
+  // The map plane under the camera (as S07 leaves it): lit paper, cross grid, ticks.
+  function mapPlane(c, P, o) {
+    var S = SB.SVG, T = c.T, sb = sheetBounds(c.phone), g = "", lon, lat, L;
+    var sheet = P.poly([[sb.lon0, sb.lat1], [sb.lon1, sb.lat1], [sb.lon1, sb.lat0], [sb.lon0, sb.lat0]]);
+    c.svg('<polygon points="' + pts(sheet) + '" fill="url(#paper)" opacity="' + (o.opacity != null ? o.opacity : 1) + '"/>');
+    for (lon = Math.ceil(sb.lon0 / 5) * 5; lon <= sb.lon1; lon += 5) { L = P.line([lon, sb.lat0], [lon, sb.lat1]); if (L) g += S.line(L[0].x, L[0].y, L[1].x, L[1].y, { stroke: "rgba(255,255,255," + o.gridA + ")" }); }
+    for (lat = Math.ceil(sb.lat0 / 5) * 5; lat <= sb.lat1; lat += 5) { L = P.line([sb.lon0, lat], [sb.lon1, lat]); if (L) g += S.line(L[0].x, L[0].y, L[1].x, L[1].y, { stroke: "rgba(255,255,255," + o.gridA + ")" }); }
     for (lon = Math.ceil(sb.lon0 / 5) * 5; lon <= sb.lon1; lon += 5)
       for (lat = Math.ceil(sb.lat0 / 5) * 5; lat <= sb.lat1; lat += 5) {
-        a = proj(cam, lon, lat);
-        var t = Math.max(1.5, 3.5 * Math.min(1.3, a.f));
-        g += S.path("M" + (a.x - t) + " " + a.y + " H" + (a.x + t) + " M" + a.x + " " + (a.y - t) + " V" + (a.y + t), { stroke: "rgba(255,255,255," + (ga * 2.2).toFixed(2) + ")" });
+        var q = P.pt(lon, lat), t = Math.max(1.5, 3.5 * Math.min(1.5, q.f));
+        g += S.path("M" + (q.x - t) + " " + q.y + " H" + (q.x + t) + " M" + q.x + " " + (q.y - t) + " V" + (q.y + t), { stroke: "rgba(255,255,255,0.26)" });
       }
     c.svg(g);
-    clipOff(c);
+    c.svg('<polygon points="' + pts(sheet) + '" fill="none" stroke="' + T.sheetLine + '"/>');
+    return sheet;
   }
 
-  // The ground under the orbiting camera, out to the horizon: a two-point perspective cross grid.
-  // The grid's lines run to the two vanishing points the yaw sets on the horizon.
-  function ground(c, cam, box, o) {
-    var S = SB.SVG, T = c.T, th = cam.tilt, yw = cam.yaw, step = 10;
-    o = o || {};
-    var hy = cam.sy - cam.D * Math.cos(th) / Math.sin(th);
-    var vpN = cam.sx + cam.D * Math.tan(yw) / Math.sin(th);
-    var vpW = cam.sx - cam.D * Math.cos(yw) / (Math.sin(yw) * Math.sin(th));
-    var ga = o.gridA || 0.07, g = "", k, P, s, top = hy + 10; // lines stop short of the horizon: no bright knot where they meet
-    clipOn(c, o.id || "s08g", box);
-    c.svg(S.rect(box.x, box.y, box.w, box.h, { fill: T.sheet }));
-    var bot = box.y + box.h, lats = [], lons = [];
-    for (k = -24; k <= 24; k++) {
-      P = proj(cam, cam.lon + step * k, cam.lat - 4);
-      if (P.f > 6 || P.y <= hy + 1) continue;
-      lons.push(cam.lon + step * k);
-      var s0 = (top - hy) / (P.y - hy), s1 = (bot - hy) / (P.y - hy);
-      g += S.line(vpN + (P.x - vpN) * s0, top, vpN + (P.x - vpN) * s1, bot, { stroke: "rgba(255,255,255," + ga + ")" });
-    }
-    var lastY = 1e9;
-    for (k = -2; k <= 200; k++) {
-      P = proj(cam, cam.lon, cam.lat + step * k);
-      if (P.f > 6 || P.y <= top || lastY - P.y < 9) continue;
-      lastY = P.y;
-      lats.push(cam.lat + step * k);
-      var xR = box.x + box.w + 400;
-      s = (xR - vpW) / (P.x - vpW);
-      g += S.line(vpW, hy, xR, hy + (P.y - hy) * s, { stroke: "rgba(255,255,255," + ga + ")" });
-    }
-    // ticks where the two families cross, where the grid is still open enough to read
-    lats.forEach(function (lat) {
-      lons.forEach(function (lon) {
-        var q = proj(cam, lon, lat);
-        if (q.f > 6 || q.y < hy + 24 || q.x < box.x || q.x > box.x + box.w) return;
-        var t = Math.max(1.5, 3.5 * Math.min(1.3, q.f));
-        g += S.path("M" + (q.x - t) + " " + q.y + " H" + (q.x + t) + " M" + q.x + " " + (q.y - t) + " V" + (q.y + t), { stroke: "rgba(255,255,255," + (ga * 2.4).toFixed(2) + ")" });
-      });
-    });
-    c.svg(g);
-    clipOff(c);
-    return hy;
+  /* ── The curve of the earth, and the strata on it ─────────────────────
+     A circle of radius R whose top (the apex) sits at (ax, ay); the whole
+     figure rolled by `roll` degrees about the apex (the orbiting camera). */
+  function Arc(ax, ay, R, roll) {
+    var cy = ay + R;
+    function p(r, a) { return [ax + r * Math.sin(a), cy - r * Math.cos(a)]; }
+    function f(q) { return q[0].toFixed(1) + " " + q[1].toFixed(1); }
+    return {
+      ax: ax, ay: ay, R: R, roll: roll,
+      open: '<g transform="rotate(' + roll + " " + ax + " " + ay + ')">',
+      // a band between radii r0 and r1, over angles a0..a1 (radians from straight up, clockwise)
+      band: function (r0, r1, a0, a1) {
+        return "M" + f(p(r1, a0)) + " A" + r1.toFixed(1) + " " + r1.toFixed(1) + " 0 0 1 " + f(p(r1, a1)) + " L" + f(p(r0, a1)) +
+          " A" + r0.toFixed(1) + " " + r0.toFixed(1) + " 0 0 0 " + f(p(r0, a0)) + " Z";
+      },
+      curve: function (r, a0, a1) { return "M" + f(p(r, a0)) + " A" + r.toFixed(1) + " " + r.toFixed(1) + " 0 0 1 " + f(p(r, a1)); },
+      // below the curve, down to y = bottom (for clipping the ground)
+      below: function (a0, a1, bottom) { return "M" + f(p(R, a0)) + " A" + R + " " + R + " 0 0 1 " + f(p(R, a1)) + " L" + p(R, a1)[0].toFixed(1) + " " + bottom + " L" + p(R, a0)[0].toFixed(1) + " " + bottom + " Z"; },
+      // screen point of (r, a) after the roll
+      at: function (r, a) {
+        var q = p(r, a), t = roll * RAD, dx = q[0] - ax, dy = q[1] - ay;
+        return { x: ax + dx * Math.cos(t) - dy * Math.sin(t), y: ay + dx * Math.sin(t) + dy * Math.cos(t) };
+      },
+    };
+  }
+  // The ground below the curve: S07's grid seen from the orbit, turned, fading into the curve.
+  function groundBelow(c, A, a0, a1, bottom, cam, id) {
+    var S = SB.SVG, P = Cam(cam), g = "", lon, lat, L;
+    c.svg('<defs><clipPath id="' + id + '"><path d="' + A.below(a0, a1, bottom) + '"/></clipPath>' +
+      '<linearGradient id="' + id + 'g" gradientUnits="userSpaceOnUse" x1="0" y1="' + A.ay + '" x2="0" y2="' + (A.ay + (c.phone ? 110 : 220)) + '"><stop offset="0" stop-color="' + c.T.white + '" stop-opacity="0.15"/><stop offset="1" stop-color="' + c.T.white + '" stop-opacity="1"/></linearGradient>' +
+      '<mask id="' + id + 'm" maskUnits="userSpaceOnUse" x="-4000" y="-4000" width="9000" height="9000"><rect x="-4000" y="-4000" width="9000" height="9000" fill="url(#' + id + 'g)"/></mask></defs>');
+    c.svg(A.open + '<g clip-path="url(#' + id + ')"><path d="' + A.below(a0, a1, bottom) + '" fill="' + c.T.sheet + '"/><g mask="url(#' + id + 'm)">');
+    for (lon = -180; lon <= 180; lon += 5) { L = P.line([lon, -80], [lon, 89]); if (L) g += S.line(L[0].x, L[0].y, L[1].x, L[1].y, { stroke: "rgba(255,255,255,0.08)" }); }
+    for (lat = -80; lat <= 85; lat += 5) { L = P.line([-180, lat], [180, lat]); if (L) g += S.line(L[0].x, L[0].y, L[1].x, L[1].y, { stroke: "rgba(255,255,255,0.08)" }); }
+    for (lon = -40; lon <= 120; lon += 5)
+      for (lat = -20; lat <= 80; lat += 5) {
+        var q = P.pt(lon, lat);
+        if (q.f > 2.2 || q.y < A.ay - 10) continue;
+        var t = Math.max(1.2, 3.2 * Math.min(1.4, q.f));
+        g += S.path("M" + (q.x - t) + " " + q.y + " H" + (q.x + t) + " M" + q.x + " " + (q.y - t) + " V" + (q.y + t), { stroke: "rgba(255,255,255,0.22)" });
+      }
+    c.svg(g + "</g></g></g>");
   }
 
   // The six emitters, in the live page's order. hot = the militaries.
@@ -129,18 +154,26 @@
     c.flag("copy", "index.html:586 calls the whole chart 'share of global CO₂', but the militaries' 5.5% is a share of all greenhouse-gas emissions (envFacts[0].lbl). A wording fix needs approval.");
     c.flag("data", "envFacts '4th' and '~0%' and their CEOBS links have no place in S08's data (audit F28). Keep them elsewhere or drop them: needs a decision.");
   }
+  function lowerThird(c, x, y, w, rows) {
+    c.uiSvg(SB.SVG.line(x, y, x + 44, y, { stroke: c.T.white, "stroke-width": 1.5 }));
+    var at = y + 12;
+    rows.forEach(function (r) { c.uiDiv(x, at, w, r.html, r.style); at += r.h; });
+  }
 
-  // Stacked bands rising from the horizon line y0, x0..x1, thickness ∝ share (k px per %). rise 0–1 per band.
-  function bands(c, list, x0, x1, y0, k, rise) {
-    var S = SB.SVG, y = y0, out = [];
-    for (var j = list.length - 1; j >= 0; j--) {
-      var e = list[j], h = e.pct * k * rise[j];
-      if (h <= 0.5) { out[j] = null; continue; }
-      y -= h;
-      c.svg(S.sheet(x0, y, x1 - x0, h, { tone: e.hot ? "red" : "grey", mode: "edge", sw: e.hot ? 1.5 : 1 }));
-      out[j] = { y: y, h: h };
-    }
-    return out;
+  // Geometry of the orbit frame: where the curve sits, how big, how far it rolls, thickness per %.
+  function orbitGeo(c) {
+    var st = c.stage, g = c.phone
+      ? { ax: st.x + 150, ay: st.y + 412, R: 1100, roll: -4, k: 4.0, bottom: st.y + st.h + 40, x0: st.x - 10, x1: st.x + st.w + 10 }
+      : { ax: 600, ay: 640, R: 2000, roll: -4, k: 4.6, bottom: 1200, x0: -20, x1: 1460 };
+    // the angles that just cover the view (a little past each side, so the roll never shows an end)
+    g.a0 = Math.asin(Math.max(-0.99, (g.x0 - g.ax) / g.R)) - 0.03;
+    g.a1 = Math.asin(Math.min(0.99, (g.x1 - g.ax) / g.R)) + 0.03;
+    return g;
+  }
+  // the camera on the ground plane once it has orbited: higher, turned further round
+  function orbitCam(c, A) {
+    var st = c.stage, t = c.phone ? 72 * RAD : 74 * RAD, D = c.phone ? 520 : 1000;
+    return { lon: 39, lat: 30, ppd: c.phone ? 9 : 18, tilt: t, yaw: -122 * RAD, sx: c.phone ? st.x + 171 : 720, sy: A.ay + (D * Math.cos(t)) / Math.sin(t), D: D };
   }
 
   SB.scene({
@@ -152,20 +185,20 @@
     restrained: false,
     anchor: null,
     trigger: "End of S07, as the tilt reaches the horizon.",
-    camera: "Orbit: the camera rises over the map's far edge and swings around above it (the grid below turns). The bands rise from the horizon. At the end the map turns edge-on to the camera: one thin line, settling exactly where S09's time line runs (desktop y 530, x 120–1320; phone y 344, x 16–359).",
+    camera: "Orbit: the camera rises over the map's far edge and swings around above it (the grid below turns a further third of a turn; the frame rolls a few degrees). From that height the horizon bends into the curve of the earth and the strata rise off it. At the end the map turns edge-on to the camera: one thin line, settling exactly where S09's time line runs (desktop y 530, x 120–1320; phone y 344, x 16–359).",
     reason:
       "Rising off the ground into the air shows a cost the money totals leave out: what war puts into the atmosphere. When everything falls away to one thin line, the story drops money and shares for one measure, time, which S09 runs back along that same line.",
     frames: [
-      { k: "in", p: 0, cap: "Entry: S07's horizon. As the camera starts to rise, the six blocks drop back and China's band begins to rise off the far edge." },
-      { k: "mid", p: 0.5, cap: "The camera has orbited above the horizon; the grid below has turned. Six bands stand stacked, thickness = share. The militaries' band is the one red mark." },
-      { k: "out", p: 1, cap: "Everything falls away (faint ghosts show the drop). The map turns edge-on: one thin line, in the exact place where S09's time line begins." },
+      { k: "in", p: 0, cap: "Entry: S07's horizon. As the camera starts to rise, the six blocks drop back to dashed ghosts and China's layer begins to rise off the far edge." },
+      { k: "mid", p: 0.5, cap: "The camera has orbited up: the horizon bends into the curve of the earth and the grid below has turned. Six strata stand on it, thickness = share, each named along its own curve. The militaries' layer is the one red mark; its figure sits large in the sky on a leader." },
+      { k: "out", p: 1, cap: "Everything falls away (faint dashed ghosts of the strata flatten as they drop). The curve straightens and turns edge-on: one thin line, in the exact place where S09's time line begins." },
     ],
     alts: [
       {
         k: "B",
         label: "Separate bars, bases labelled",
         frames: ["mid"],
-        note: "Audit (reviewer finding): emittersCompare mixes national CO₂ shares (Global Carbon Project) with the militaries' share of all greenhouse gas (SGR / CEOBS), and military emissions already sit inside national totals. Stacking implies one shared whole. Here each bar stands alone on the horizon; the national bars share one base label, the militaries' bar stands apart with its own.",
+        note: "Audit (reviewer finding): emittersCompare mixes national CO₂ shares (Global Carbon Project) with the militaries' share of all greenhouse gas (SGR / CEOBS), and military emissions already sit inside national totals. Stacking implies one shared whole. Here each bar stands alone on the curve of the horizon; the national bars share one base label, the militaries' bar stands apart with its own.",
       },
     ],
 
@@ -179,101 +212,128 @@
       c.flag("decision", "Stacked bands (brief) imply one shared whole, but the bases are mixed: national shares are CO₂, the militaries' 5.5% is all greenhouse gas, and military emissions already sit inside national totals (audit). Alt B shows separate bars with labelled bases. Choose before phase 3.");
 
       if (p === 0) {
-        // ── entry: S07's wide shot; blocks dropping back; China's band starting to rise
-        var cam = wideCam(c), sb = sheetBounds(ph);
-        var box = ph ? st : { x: 0, y: 0, w: c.W, h: c.H };
-        plane(c, cam, box, { id: "s08in" });
-        var e0 = proj(cam, sb.lon0, sb.lat1), e1 = proj(cam, sb.lon1, sb.lat1);
-        if (ph) clipOn(c, "s08inB", st);
+        // ── entry: S07's wide shot; the blocks drop back to ghosts; China's layer starts to rise off the far edge
+        var cam = wideCam(c), P = Cam(cam), sb = sheetBounds(ph);
+        if (ph) c.svg('<defs><clipPath id="s08in"><rect x="' + st.x + '" y="' + st.y + '" width="' + st.w + '" height="' + st.h + '"/></clipPath></defs><g clip-path="url(#s08in)">');
+        mapPlane(c, P, { gridA: 0.1 });
         Object.keys(GEO).forEach(function (name) {
-          var arr = SB.get("conflictCosts"), i;
-          for (i = 0; i < arr.length; i++) if (arr[i].name === name) break;
-          var q = proj(cam, GEO[name][0], GEO[name][1]), bw = ph ? st.w : c.W, bh = ph ? st.h : c.H, an = ANCHOR[name];
-          var r = c.rung("conflictCosts[" + i + "].amtB", fitWide(), { x: an[1] === "l" ? q.x : q.x - bw, y: q.y - bh, w: bw, h: bh }, an);
-          c.svg(S.sheet(r.x, r.y + 6, r.w, r.h, { tone: "white", mode: "outline", sw: 1, opacity: 0.22, dash: "3 4" }));
+          var q = P.poly(blockGeo(c, name)).map(function (v) { return { x: v.x, y: v.y + (ph ? 4 : 8) }; });
+          c.svg('<polygon points="' + pts(q) + '" fill="none" stroke="rgba(255,255,255,0.3)" stroke-dasharray="3 4"/>');
         });
-        var hy = e0.y;
-        var x0 = ph ? st.x : 120, x1 = ph ? st.x + st.w : 1040, kk = ph ? 6.2 : 6;
-        var rb = bands(c, list, x0, x1, hy, kk, [0.3, 0, 0, 0, 0, 0]);
+        var FL = P.line([sb.lon1, sb.lat0], [sb.lon1, sb.lat1]);
+        var e0 = FL[0].x < FL[1].x ? FL[0] : FL[1], e1 = FL[0].x < FL[1].x ? FL[1] : FL[0];
+        var h0 = list[0].pct * (ph ? 4.2 : 5.2) * 0.3;
+        c.svg('<polygon points="' + pts([{ x: e0.x, y: e0.y - h0 }, { x: e1.x, y: e1.y - h0 }, e1, e0]) + '" fill="url(#paper)" stroke="' + T.grey + '" stroke-width="1"/>');
+        c.svg(S.line(e0.x, e0.y - h0, e1.x, e1.y - h0, { stroke: "rgba(255,255,255,0.14)" }));
         c.svg(S.line(e0.x, e0.y, e1.x, e1.y, { stroke: "rgba(255,255,255,0.7)", "stroke-width": 1.25 }));
-        if (ph) clipOff(c);
+        if (ph) c.svg("</g>");
+        var mid0 = { x: e1.x, y: e1.y - h0 / 2 };
         if (!ph) {
-          c.div(120, 72, 760, x.title, TX.labelW + ";font-size:13px");
-          c.div(x1 + 24, rb[0].y + rb[0].h / 2 - 10, 300, list[0].value + ' <span style="' + TX.label + ';font-size:11px">' + list[0].name + "</span>", TX.value + ";font-size:17px");
+          c.uiDiv(120, 70, 760, x.title, TX.labelW + ";font-size:13px");
+          c.uiSvg(S.leader([[mid0.x, mid0.y], [mid0.x + 40, mid0.y - 60], [mid0.x + 56, mid0.y - 60]], { color: "rgba(255,255,255,0.5)" }));
+          c.uiDiv(mid0.x + 62, mid0.y - 74, 300, list[0].value + ' <span style="' + TX.label + ';font-size:11px">' + list[0].name + "</span>", TX.value + ";font-size:20px");
         } else {
-          // the rising band is named inside it, as in the stacked frame
-          var cyIn = rb[0].y + rb[0].h / 2;
-          c.div(x0 + 8, cyIn - 7, 230, list[0].name, TX.label + ";font-size:10px;letter-spacing:0.08em");
-          c.div(x1 - 72, cyIn - 8, 64, list[0].value, TX.value + ";font-size:14px;text-align:right");
-          c.div(c.textBox.x, c.textBox.y, c.textBox.w, x.title, TX.value + ";font-weight:400;font-size:20px;line-height:1.3;color:" + T.white);
+          c.uiDiv(e0.x + 6, e0.y - h0 / 2 - 7, 160, list[0].name + ' <span style="' + TX.value + ';font-size:13px;letter-spacing:0">' + list[0].value + "</span>", TX.label + ";font-size:10px;letter-spacing:0.08em");
+          lowerThird(c, c.textBox.x, c.textBox.y + 6, c.textBox.w, [{ html: x.title, style: TX.value + ";font-weight:400;font-size:20px;line-height:1.3;color:" + T.white, h: 60 }]);
         }
         c.chrome();
-        c.state({ form: "map plane + horizon (from S07); first band rising", x: Math.round(Math.max(0, e0.x)), y: Math.round(hy), w: ph ? st.w : c.W, h: 1, tone: "neutral; blocks fading", note: "horizon = the map's far edge, y " + Math.round(hy) + ". China's band 0.3 of the way up." });
+        c.state({ form: "map plane + horizon (from S07); first band rising", x: Math.round(Math.max(view(c).x, e0.x)), y: Math.round(e0.y - h0), w: Math.round(Math.min(view(c).x + view(c).w, e1.x) - Math.max(view(c).x, e0.x)), h: Math.round(h0 + 2), tone: "neutral; blocks fading", note: "horizon = the map's far edge (S07's wide shot, plane turned 90°). China's layer 0.3 of the way up." });
         return;
       }
 
       if (p < 1) {
-        // ── orbiting above the horizon; all six bands stacked
-        var hy2 = ph ? st.y + 470 : LINE.desk.y; // desktop: the horizon already sits where S09's line will be
-        var camO = ph
-          ? { lon: 39, lat: 24, ppd: 15, tilt: 76 * RAD, yaw: 26 * RAD, sx: st.x + 171, sy: hy2 + 600 / Math.tan(76 * RAD), D: 600 }
-          : { lon: 39, lat: 28, ppd: 34, tilt: 75 * RAD, yaw: 26 * RAD, sx: 720, sy: hy2 + 1200 / Math.tan(75 * RAD), D: 1200 };
-        var pbox = ph ? { x: st.x, y: hy2, w: st.w, h: st.y + st.h - hy2 } : { x: 0, y: hy2, w: c.W, h: c.H - hy2 };
-        ground(c, camO, pbox, { id: "s08mid", gridA: 0.08 });
-        var X0 = ph ? st.x : 120, X1 = ph ? st.x + st.w : 1040, K = ph ? 6.2 : 6;
-        var rr = bands(c, list, X0, X1, hy2, K, [1, 1, 1, 1, 1, 1]);
-        c.svg(S.line(ph ? st.x : 0, hy2, ph ? st.x + st.w : c.W, hy2, { stroke: "rgba(255,255,255,0.7)", "stroke-width": 1.25 }));
+        // ── orbiting above the curve of the earth; all six strata stacked on it
+        var G = orbitGeo(c), A = Arc(G.ax, G.ay, G.R, G.roll);
+        groundBelow(c, A, G.a0 - 0.05, G.a1 + 0.05, G.bottom, orbitCam(c, A), ph ? "s08gp" : "s08g");
+        var r = G.R, bands = [];
+        c.svg(A.open);
+        var layer = 0;
+        for (var j = list.length - 1; j >= 0; j--) {
+          var e = list[j], h = e.pct * G.k;
+          bands[j] = { r0: r, r1: r + h };
+          c.svg('<path d="' + A.band(r, r + h, G.a0, G.a1) + '" fill="url(#paper)"/>');
+          c.svg('<path d="' + A.band(r, r + h, G.a0, G.a1) + '" fill="' + T.white + '" fill-opacity="' + (0.012 + layer * 0.009).toFixed(3) + '" stroke="' + (e.hot ? T.red : T.grey) + '" stroke-width="' + (e.hot ? 2 : 1) + '"/>');
+          c.svg('<path d="' + A.curve(r + h - 1.5, G.a0, G.a1) + '" fill="none" stroke="rgba(255,255,255,0.12)"/>'); // light on each layer's upper edge
+          r += h;
+          layer++;
+        }
+        // each layer named along its own curve, starting at the same screen x
+        var lx = ph ? st.x + 10 : 150;
+        list.forEach(function (e, j) {
+          var b = bands[j], rm = (b.r0 + b.r1) / 2, id = "s08c" + (ph ? "p" : "") + j;
+          var aL = Math.asin((lx - G.ax) / rm), off = rm * (aL - G.a0);
+          c.svg('<defs><path id="' + id + '" d="' + A.curve(rm, G.a0, G.a1) + '"/></defs>');
+          // type sized to the layer's thickness (thin layers such as Japan's are only ~12–14px), never under 10px,
+          // and centred on the layer's mid-line by the taller of the two runs, so neither touches an edge
+          var th = b.r1 - b.r0, fs = Math.min(ph ? 10 : 11, Math.max(10, th * 0.72)), vs = Math.min(ph ? 13 : 15, Math.max(fs, th - 3));
+          c.svg('<text font-family="' + c.F.mono + '" font-size="' + fs.toFixed(1) + '" font-weight="500" letter-spacing="0.12em" fill="' + (e.hot ? T.white : T.soft) + '" dy="' + (vs * 0.35).toFixed(1) + '"><textPath href="#' + id + '" startOffset="' + off.toFixed(1) + '">' + e.name +
+            '<tspan font-family="' + c.F.sans + '" font-weight="600" font-size="' + vs.toFixed(1) + '" letter-spacing="0" fill="' + T.white + '" dx="10">' + e.value + "</tspan></textPath></text>");
+        });
+        c.svg(A.curve(G.R, G.a0 - 0.05, G.a1 + 0.05) ? '<path d="' + A.curve(G.R, G.a0 - 0.05, G.a1 + 0.05) + '" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.25"/>' : "");
+        c.svg("</g>");
+        var hot = list.filter(function (e) { return e.hot; })[0], hb = bands[hot.i];
+        var top = A.at(r, 0);
         if (!ph) {
-          c.div(120, 72, 900, x.title, TX.labelW + ";font-size:13px");
-          list.forEach(function (e, j) {
-            var r = rr[j], cy = r.y + r.h / 2;
-            c.svg(S.line(X1, cy, X1 + 18, cy, { stroke: "rgba(255,255,255,0.4)" }));
-            c.div(X1 + 26, cy - 10, 340, e.value + ' <span style="' + TX.label + ";font-size:11px;color:" + (e.hot ? T.white : T.grey) + '">' + e.name + "</span>", TX.value + ";font-size:17px");
-          });
-          c.div(120, hy2 + 40, 760, x.cap, TX.bodySm + ";font-size:15px");
-          c.div(120, hy2 + 92, 600, x.src, TX.src);
+          c.uiDiv(120, 70, 900, x.title, TX.labelW + ";font-size:13px");
+          // the militaries' figure, large in the sky, on a leader from its layer
+          var hp = A.at((hb.r0 + hb.r1) / 2, Math.asin((1150 - G.ax) / ((hb.r0 + hb.r1) / 2))), gx = 830, gy = 92;
+          c.uiSvg(S.leader([[hp.x, hp.y], [gx - 20, gy + 196], [gx - 4, gy + 196]], { color: "rgba(255,255,255,0.55)" }));
+          c.uiSvg(S.line(gx, gy, gx + 520, gy, { stroke: "rgba(255,255,255,0.32)" }));
+          c.uiDiv(gx, gy + 10, 520, hot.name + ' <span style="color:' + T.grey + '">· ' + c.fig("envFacts[0].src", "raw") + "</span>", TX.labelW + ";font-size:12px");
+          c.uiDiv(gx - 8, gy + 32, null, hot.value, TX.giant + ";font-size:204px");
+          lowerThird(c, 120, 770, 1140, [
+            { html: x.cap, style: TX.body + ";color:" + T.soft, h: 32 },
+            { html: x.src, style: TX.src, h: 18 },
+          ]);
         } else {
-          list.forEach(function (e, j) {
-            var r = rr[j], cy = r.y + r.h / 2;
-            c.div(X0 + 8, cy - 7, 230, e.name, TX.label + ";font-size:10px;letter-spacing:0.08em;color:" + (e.hot ? T.white : T.grey));
-            c.div(X1 - 72, cy - 8, 64, e.value, TX.value + ";font-size:14px;text-align:right");
-          });
+          var rmp = (hb.r0 + hb.r1) / 2, hpp = A.at(rmp, Math.asin((st.x + 300 - G.ax) / rmp)), gxp = st.x + 120, gyp = st.y + 12;
+          c.uiDiv(gxp, gyp, st.x + st.w - gxp - 4, hot.name, TX.labelW + ";font-size:10px;letter-spacing:0.08em");
+          c.uiDiv(gxp - 4, gyp + 16, null, hot.value, TX.giant + ";font-size:92px");
+          c.uiSvg(S.leader([[hpp.x, hpp.y], [gxp - 10, gyp + 72], [gxp - 4, gyp + 72]], { color: "rgba(255,255,255,0.55)" }));
           var tb = c.textBox;
-          c.div(tb.x, tb.y, tb.w, x.title, TX.value + ";font-weight:400;font-size:20px;line-height:1.3;color:" + T.white);
-          c.div(tb.x, tb.y + 64, tb.w, x.cap, TX.bodySm + ";font-size:14px;line-height:1.4");
-          c.div(tb.x, tb.y + 128, tb.w, x.src, TX.src + ";font-size:10px");
+          lowerThird(c, tb.x, tb.y + 6, tb.w, [
+            { html: x.title, style: TX.value + ";font-weight:400;font-size:20px;line-height:1.3;color:" + T.white, h: 62 },
+            { html: x.cap, style: TX.bodySm + ";font-size:14px;line-height:1.4", h: 84 },
+            { html: x.src, style: TX.src + ";font-size:10px", h: 16 },
+          ]);
         }
         c.chrome();
-        c.state({ form: "stacked bands above the horizon", x: X0, y: Math.round(rr[0].y), w: X1 - X0, h: Math.round(hy2 - rr[0].y), tone: "neutral bands; militaries' band red edge", note: "horizon at y " + hy2 + "; band thickness " + K + " px per %. Map below turned 26° by the orbit." });
+        var L0 = A.at(G.R + 0, G.a0), R0 = A.at(G.R, G.a1);
+        var sx0 = Math.max(view(c).x, Math.min(L0.x, A.at(r, G.a0).x)), sx1 = Math.min(view(c).x + view(c).w, Math.max(R0.x, A.at(r, G.a1).x));
+        // the overlay's lock tag prints the form up to its first comma (22 characters at most)
+        c.state({ form: "strata, stacked bands on the curve of the earth", x: Math.round(sx0), y: Math.round(top.y), w: Math.round(sx1 - sx0), h: Math.round(Math.max(L0.y, R0.y) - top.y), tone: "neutral bands; militaries' band red edge", note: "curve apex at y " + G.ay + ", radius " + G.R + ", rolled " + G.roll + "°; thickness " + G.k + " px per %. Ground grid below turned to 122° by the orbit." });
         return;
       }
 
       // ── out: everything falls away; one thin line, exactly where S09's time line runs
-      var L = ph ? LINE.phone : LINE.desk;
-      // faint dashed ghosts of the six bands, in their stacked order, dropped below the line,
-      // flattened and drawing apart as they fall (no red: the militaries' band has gone grey too)
-      var gy = L.y + (ph ? 22 : 30), gw = (L.x1 - L.x0) * (ph ? 1 : 0.77);
-      list.forEach(function (e, j) {
-        var inset = (ph ? 3 : 6) * j, h = Math.max(2, e.pct * (ph ? 6.2 : 6) * 0.25);
-        c.svg(S.rect(L.x0 + inset, gy, gw - inset * 2, h, { fill: "none", stroke: "rgba(255,255,255," + (0.26 - j * 0.03).toFixed(3) + ")", "stroke-dasharray": "3 5" }));
-        gy += h + (ph ? 10 : 14) + j * (ph ? 3 : 4);
+      var Ln = ph ? LINE.phone : LINE.desk, mid = (Ln.x0 + Ln.x1) / 2;
+      // the strata, dropped below the line as faint dashed ghosts, flattening as they fall (no red: the militaries' layer has gone grey too)
+      var gy = Ln.y + (ph ? 24 : 34), span = (Ln.x1 - Ln.x0) / 2;
+      list.slice().reverse().forEach(function (e, j) {
+        var h = Math.max(2, e.pct * (ph ? 4.2 : 5.2) * 0.22), sag = (ph ? 10 : 22) * (1 - j / 6), w0 = span * (1 - j * 0.07);
+        var d = "M" + (mid - w0) + " " + (gy + sag) + " Q" + mid + " " + (gy - sag) + " " + (mid + w0) + " " + (gy + sag);
+        c.svg(S.path(d + " L" + (mid + w0) + " " + (gy + sag + h) + " Q" + mid + " " + (gy - sag + h) + " " + (mid - w0) + " " + (gy + sag + h) + " Z",
+          { stroke: "rgba(255,255,255," + (0.24 - j * 0.03).toFixed(3) + ")", "stroke-dasharray": "3 5" }));
+        gy += h + (ph ? 10 : 15) + j * (ph ? 3 : 5);
       });
-      c.svg(S.line(L.x0, L.y, L.x1, L.y, { stroke: T.white, "stroke-width": 1.5, opacity: 0.78 }));
+      c.svg(S.line(Ln.x0, Ln.y, Ln.x1, Ln.y, { stroke: T.white, "stroke-width": 1.5, opacity: 0.78 }));
       c.state({
         form: "one thin line (the map edge-on)",
-        x: L.x0, y: L.y, w: L.x1 - L.x0, h: 1.5, tone: "white, 0.78",
-        note: "lands exactly on S09's time line (" + (ph ? "phone" : "desktop") + ": y " + L.y + ", x " + L.x0 + "–" + L.x1 + "; scenes/s09.js LINE). Faint dashed ghosts below show the bands falling away.",
+        x: Ln.x0, y: Ln.y, w: Ln.x1 - Ln.x0, h: 1.5, tone: "white, 0.78",
+        note: "lands exactly on S09's time line (" + (ph ? "phone" : "desktop") + ": y " + Ln.y + ", x " + Ln.x0 + "–" + Ln.x1 + "; scenes/s09.js LINE). Faint dashed ghosts below show the strata flattening as they fall away.",
       });
       c.chrome();
     },
 
-    // No-motion plate: the stacked bands at rest, every share, the caption and the source.
+    // No-motion plate: the stacked strata at rest, every share, the caption and the source.
     plate: function (c) {
       this.draw(c);
     },
   });
 
-  // ── ALT B: separate bars standing on the horizon, each base labelled ──
+  function view(c) { return c.phone ? c.stage : { x: 0, y: 0, w: c.W, h: c.H }; }
+
+  // ── ALT B: separate bars standing on the curve, each base labelled ──
   function drawAltB(c, x, list) {
     var T = c.T, TX = c.TX, S = SB.SVG, ph = c.phone, st = c.stage;
     c.flag("decision", "Alt B: separate bars, not stacked. National bars carry 'share of global CO₂ · Global Carbon Project'; the militaries' bar stands apart with 'of all global greenhouse-gas emissions · SGR / CEOBS'. Same figures; no new comparison.");
@@ -282,58 +342,87 @@
     var ghg = c.copy("of all global greenhouse-gas emissions", "js/data.js:589 (envFacts[0].lbl)");
     var mil = list.filter(function (e) { return e.hot; })[0];
     var nat = list.filter(function (e) { return !e.hot; });
+    var G = orbitGeo(c), A = Arc(G.ax, G.ay, G.R, G.roll);
+    groundBelow(c, A, G.a0 - 0.05, G.a1 + 0.05, G.bottom, orbitCam(c, A), ph ? "s08Bgp" : "s08Bg");
+    // bars stand on the curve, each along its own radius: height ∝ share
+    var K = ph ? 7.2 : 10, bwA = (ph ? 32 : 96) / G.R, gapA = (ph ? 9 : 30) / G.R;
+    var a = Math.asin(((ph ? st.x + 40 : 330) - G.ax) / G.R), bars = [];
+    nat.forEach(function (e) { bars.push({ e: e, a0: a, a1: a + bwA }); a += bwA + gapA; });
+    var natEnd = a - gapA;
+    a += (ph ? 18 : 150) / G.R; // the militaries' bar stands apart
+    bars.push({ e: mil, a0: a, a1: a + bwA });
+    c.svg(A.open);
+    bars.forEach(function (b) {
+      c.svg('<path d="' + A.band(G.R, G.R + b.e.pct * K, b.a0, b.a1) + '" fill="url(#paper)" stroke="' + (b.e.hot ? T.red : T.grey) + '" stroke-width="' + (b.e.hot ? 1.5 : 1) + '"/>');
+    });
+    c.svg('<path d="' + A.curve(G.R, G.a0 - 0.05, G.a1 + 0.05) + '" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.25"/>');
+    // two base lines, one per base, hung just under the curve
+    var bo = ph ? 30 : 46;
+    c.svg('<path d="' + A.curve(G.R - bo, bars[0].a0, natEnd) + '" fill="none" stroke="rgba(255,255,255,0.5)"/>');
+    // the militaries' base line runs just past its bar (desktop): right of the apex the curve falls away,
+    // so a long line would run down through its own flat label
+    var mb = bars[bars.length - 1], mEnd = mb.a1 + (ph ? 40 : 30) / G.R;
+    c.svg('<path d="' + A.curve(G.R - bo, mb.a0, mEnd) + '" fill="none" stroke="rgba(255,255,255,0.5)"/>');
+    // desktop: each name runs along the curve under its own bar, centred on it, so it keeps clear of the
+    // curve and the base lines however steeply they fall (type on a curve, as in the main frames)
+    var nameR = G.R - 16, ext = [];
+    if (!ph) bars.forEach(function (b, i) {
+      var am = (b.a0 + b.a1) / 2, id = "s08Bn" + i, half = (b.e.name.length * 7.7) / 2;
+      c.svg('<defs><path id="' + id + '" d="' + A.curve(nameR, G.a0, G.a1) + '"/></defs>');
+      c.svg('<text font-family="' + c.F.mono + '" font-size="11" font-weight="500" letter-spacing="0.1em" text-anchor="middle" fill="' + (b.e.hot ? T.white : T.grey) + '" dy="4"><textPath href="#' + id + '" startOffset="' + (nameR * (am - G.a0)).toFixed(1) + '">' + b.e.name + "</textPath></text>");
+      var pad = (half + 10) / nameR; // a little air past each end, so the overlay's corners never touch the type
+      ext.push(A.at(nameR - 10, am - pad), A.at(nameR - 10, am + pad), A.at(nameR + 6, am - pad), A.at(nameR + 6, am + pad));
+    });
+    c.svg("</g>");
+    // values above each bar (flat type, at the rolled positions); phone: numbers at each foot
+    bars.forEach(function (b) {
+      var tp = A.at(G.R + b.e.pct * K + (ph ? 6 : 10), b.a0);
+      // phone: kept left of the overlay's SCAN readout at the right edge
+      var vx = ph ? Math.min(tp.x - 2, c.W - 78 - b.e.value.length * 8) : tp.x - 2;
+      c.uiDiv(vx, tp.y - (ph ? 18 : 26), ph ? 44 : 90, b.e.value, TX.value + ";font-size:" + (ph ? 14 : 20) + "px");
+      if (!ph) ext.push({ x: vx - 8, y: tp.y - 34 }, { x: vx + b.e.value.length * 12 + 8, y: tp.y });
+      [[G.R, b.a0], [G.R, b.a1], [G.R + b.e.pct * K, b.a0], [G.R + b.e.pct * K, b.a1]].forEach(function (q) { ext.push(A.at(q[0], q[1])); });
+    });
+    var baseN = A.at(G.R - bo - (ph ? 8 : 10), bars[0].a0), baseM = A.at(G.R - bo - (ph ? 8 : 10), mb.a0);
     if (!ph) {
-      var hy = LINE.desk.y, K = 10; // px per %; horizon where S09's line will run
-      ground(c, { lon: 39, lat: 28, ppd: 34, tilt: 75 * RAD, yaw: 26 * RAD, sx: 720, sy: hy + 1200 / Math.tan(75 * RAD), D: 1200 }, { x: 0, y: hy, w: c.W, h: c.H - hy }, { id: "s08B", gridA: 0.07 });
-      c.svg(S.line(0, hy, c.W, hy, { stroke: "rgba(255,255,255,0.35)" }));
-      c.div(120, 72, 900, x.title, TX.labelW + ";font-size:13px");
-      var bw = 104, gap = 40, x0 = 120;
-      nat.forEach(function (e, j) {
-        var bx = x0 + j * (bw + gap), h = e.pct * K;
-        c.svg(S.sheet(bx, hy - h, bw, h, { tone: "grey", mode: "edge", sw: 1 }));
-        c.div(bx, hy - h - 30, bw + 30, e.value, TX.value + ";font-size:20px");
-        c.div(bx, hy + 12, bw + 30, e.name, TX.label + ";font-size:11px;letter-spacing:0.08em");
-      });
-      var gx1 = x0 + nat.length * (bw + gap) - gap;
-      c.svg(S.line(x0, hy + 52, gx1, hy + 52, { stroke: "rgba(255,255,255,0.5)" }));
-      c.div(x0, hy + 62, gx1 - x0, co2.toUpperCase() + " · " + gcp.toUpperCase(), TX.labelW + ";font-size:11px");
-      // the militaries' bar, apart, with its own base
-      var mx = gx1 + 150, mh = mil.pct * K;
-      c.svg(S.sheet(mx, hy - mh, bw, mh, { tone: "red", mode: "edge", sw: 1.5 }));
-      c.div(mx, hy - mh - 30, bw + 30, mil.value, TX.value + ";font-size:20px");
-      c.div(mx, hy + 12, 260, mil.name, TX.labelW + ";font-size:11px;letter-spacing:0.08em");
-      c.svg(S.line(mx, hy + 52, mx + 300, hy + 52, { stroke: "rgba(255,255,255,0.5)" }));
-      c.div(mx, hy + 62, 330, ghg.toUpperCase() + " · " + c.fig("envFacts[0].src", "raw"), TX.labelW + ";font-size:11px");
-      c.div(120, hy + 150, 760, x.cap, TX.bodySm + ";font-size:15px");
-      c.div(120, hy + 200, 600, x.src, TX.src);
-      // the locked box takes in the bars and the values above them, so its tag clears the tallest value
-      var topY = Math.round(hy - nat[0].pct * K - 36);
-      c.state({ form: "separate bars on the horizon", x: x0, y: topY, w: mx + bw - x0, h: hy - topY, tone: "neutral bars; militaries' bar red edge", note: "bar height " + K + " px per %. Two bases, two base lines; the militaries' bar stands apart." });
+      c.uiDiv(120, 70, 900, x.title, TX.labelW + ";font-size:13px");
+      c.uiDiv(baseN.x, baseN.y + 12, 560, co2.toUpperCase() + " · " + gcp.toUpperCase(), TX.labelW + ";font-size:11px");
+      // hung under the lowest point of its own base line
+      var mLow = Math.max(baseM.y, A.at(G.R - bo, mEnd).y);
+      c.uiDiv(baseM.x, mLow + 12, 260, ghg.toUpperCase() + " · " + c.fig("envFacts[0].src", "raw"), TX.labelW + ";font-size:11px");
+      // the caption and source hang in the open sky under the title
+      c.uiDiv(120, 98, 1140, x.cap, TX.body + ";color:" + T.soft);
+      c.uiDiv(120, 132, 600, x.src, TX.src);
     } else {
-      var tb = c.textBox, Kp = 8.6; // px per %, horizontal bars
-      var y0 = st.y + 34, y = y0; // room above for the frame's lock tag
-      c.div(st.x, y, st.w, co2.toUpperCase(), TX.labelW + ";font-size:10px");
-      c.div(st.x, y + 16, st.w, gcp.toUpperCase(), TX.label + ";font-size:10px");
-      y += 46;
-      nat.forEach(function (e) {
-        c.div(st.x, y, 200, e.name, TX.label + ";font-size:10px;letter-spacing:0.08em");
-        c.svg(S.sheet(st.x, y + 16, e.pct * Kp, 18, { tone: "grey", mode: "edge", sw: 1 }));
-        c.div(st.x + e.pct * Kp + 8, y + 16, 80, e.value, TX.value + ";font-size:15px");
-        y += 50;
+      // phone: the bars carry numbers; the names sit in a key under each base
+      bars.forEach(function (b, i) {
+        var ft = A.at(G.R - 12, b.a0);
+        c.uiDiv(ft.x, ft.y, 30, c.label((i + 1 < 10 ? "0" : "") + (i + 1), "bar number"), (b.e.hot ? TX.labelW : TX.label) + ";font-size:10px;letter-spacing:0.04em");
       });
-      y += 18;
-      c.svg(S.line(st.x, y - 10, st.x + st.w, y - 10, { stroke: "rgba(255,255,255,0.35)" }));
-      c.div(st.x, y, st.w, ghg.toUpperCase(), TX.labelW + ";font-size:10px");
-      c.div(st.x, y + 30, st.w, c.fig("envFacts[0].src", "raw"), TX.label + ";font-size:10px");
-      y += 58;
-      c.div(st.x, y, 240, mil.name, TX.labelW + ";font-size:10px;letter-spacing:0.08em");
-      c.svg(S.sheet(st.x, y + 16, mil.pct * Kp, 18, { tone: "red", mode: "edge", sw: 1.5 }));
-      c.div(st.x + mil.pct * Kp + 8, y + 16, 80, mil.value, TX.value + ";font-size:15px");
-      c.div(tb.x, tb.y, tb.w, x.title, TX.value + ";font-weight:400;font-size:20px;line-height:1.3;color:" + T.white);
-      c.div(tb.x, tb.y + 64, tb.w, x.cap, TX.bodySm + ";font-size:14px;line-height:1.4");
-      c.div(tb.x, tb.y + 128, tb.w, x.src, TX.src + ";font-size:10px");
-      c.state({ form: "separate bars, bases labelled", x: st.x, y: y0, w: st.w, h: y + 34 - y0, tone: "neutral bars; militaries' bar red edge", note: "phone: horizontal bars, " + Kp + " px per %. Two groups, each under its own base label." });
+      var tb = c.textBox;
+      c.uiDiv(st.x + 4, st.y + 10, st.w - 8, x.title, TX.labelW + ";font-size:10px;line-height:1.5");
+      var keyN = nat.map(function (e, i) { return c.label("0" + (i + 1), "bar number") + " " + e.name; }).join(" · ");
+      lowerThird(c, tb.x, tb.y + 6, tb.w, [
+        { html: co2.toUpperCase() + " · " + gcp.toUpperCase(), style: TX.labelW + ";font-size:10px", h: 30 },
+        { html: keyN, style: TX.label + ";font-size:10px;letter-spacing:0.06em", h: 30 },
+        { html: c.label("06", "bar number") + " " + mil.name + " · " + ghg.toUpperCase() + " · " + c.fig("envFacts[0].src", "raw"), style: TX.labelW + ";font-size:10px", h: 44 },
+        { html: x.cap, style: TX.bodySm + ";font-size:14px;line-height:1.4", h: 62 },
+        { html: x.src, style: TX.src + ";font-size:10px", h: 16 },
+      ]);
     }
     c.chrome();
+    var tops = bars.map(function (b) { return A.at(G.R + b.e.pct * K, b.a0).y; });
+    var l = A.at(G.R, bars[0].a0), rr = A.at(G.R, bars[bars.length - 1].a1);
+    var topY = Math.round(Math.min.apply(null, tops) - (ph ? 22 : 30));
+    var sr = { x: Math.round(l.x), y: topY, w: Math.round(rr.x - l.x), h: Math.round(Math.max(l.y, rr.y) - topY) };
+    if (!ph) {
+      // desktop: the box takes in every bar (the roll tips them past their feet), its value and its name,
+      // so the overlay's corners land in clear sky and ground, never on a label
+      var xs = ext.map(function (q) { return q.x; }), ys = ext.map(function (q) { return q.y; });
+      var bx0 = Math.min.apply(null, xs), by0 = Math.min.apply(null, ys);
+      sr = { x: Math.round(bx0), y: Math.round(by0), w: Math.round(Math.max.apply(null, xs) - bx0), h: Math.round(Math.max.apply(null, ys) - by0) };
+    }
+    // the overlay's lock tag prints the form up to its first comma (22 characters at most)
+    c.state({ form: "separate bars, on the curve", x: sr.x, y: sr.y, w: sr.w, h: sr.h, tone: "neutral bars; militaries' bar red edge", note: "bar height " + K + " px per %, standing along the curve's radii. Two bases, two base lines; the militaries' bar stands apart." });
   }
 })();
