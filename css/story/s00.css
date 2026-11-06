@@ -1,0 +1,15 @@
+/* S00 · storyboard px (scaled by the engine) */
+.s00 > * { position: absolute; margin: 0; white-space: nowrap; }
+.s00-c { line-height: 0.9; }
+.s00-v { line-height: 1.45; }
+.s00-v span:nth-child(2) { color: var(--white); font-weight: 600; }
+.s00-n { color: var(--red); transform-origin: 0 50%; }
+.s00-m span + span { font: 400 0.62em var(--f-mono); letter-spacing: 0.06em; }
+.s00-p .t-label, .s00-p .t-src, .s00-m span + span { color: var(--soft); } /* AA on the lit paper */
+.s00-l { border-top: 1px solid var(--rule); }
+.s00-h, .s00-r { aspect-ratio: 1; box-sizing: border-box; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 50%; background: var(--ground); }
+.s00-r { border-color: rgba(255, 255, 255, 0.32); background: none; }
+.s00-r::before, .s00-r::after { content: ""; position: absolute; border: 0 solid rgba(255, 255, 255, 0.32); }
+.s00-r::before { left: -6px; right: -6px; top: 50%; border-top-width: 1px; }
+.s00-r::after { top: -6px; bottom: -6px; left: 50%; border-left-width: 1px; }
+.s00-t { margin: 0 0 20px; font: 400 clamp(44px, 9vw, 120px) / 0.9 var(--f-display); text-transform: uppercase; }

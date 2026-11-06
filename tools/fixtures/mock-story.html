@@ -1,0 +1,361 @@
+<!doctype html>
+<!--
+  Test fixture for tools/story-check.mjs. NOT the prototype and not part of the site.
+
+  A tiny fake story engine with the same window.Story.debug contract as the real
+  engine (see the phase 2 spec). It exists so the harness can be tested on its own,
+  and so we can prove each check fails when it should.
+
+  Two fake scenes, two screens in total:
+    S00 "Mock push"  — chrome on, a sheet on canvas that grows, brackets that snap to a lock at p = 0.6
+    S09 "Mock fade"  — restrained: no chrome, text fades in
+
+  Break one thing on purpose with ?break=<name> (comma-separate for several):
+    reverse   state remembers the scroll direction (a latch), so scrolling back differs
+    deeplink  ignores the scroll position on load until the first goto() call
+    still     ?static=1 leaves the stage showing and #story tall (not named "static": any "static" in the query means still mode)
+    plate     ?static=1 keeps the S09 plate visually hidden
+    fig       the S00 plate leaves out its figure
+    trace     shows a number in the stage that has no data-src tag
+    console   throws an error on load
+    overflow  adds an element wider than the screen
+    rung      logs a rung whose area is 3.4% off
+    perf      does about 20 ms of pointless work in every render
+    dpr       canvas backing store follows the full device pixel ratio (not capped at 2)
+    colour    paints an off-brand green patch in S00, and red in the restrained S09 after p 0
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Story harness mock</title>
+<script>
+  // Decide motion or still mode before first paint, the same test as js/dossier.js.
+  (function () {
+    var still = location.search.indexOf("static") > -1 ||
+      (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+    if (still) document.documentElement.classList.add("no-motion");
+  })();
+</script>
+<style>
+  :root {
+    --ground: #0A0A0A; --white: #FFFFFF; --soft: #C4C9CF; --grey: #8A9099; --red: #E8362B;
+    --mono: 'IBM Plex Mono', Menlo, monospace;
+    --sans: 'IBM Plex Sans', Arial, sans-serif;
+    --display: 'Archivo Black', 'Arial Black', Arial, sans-serif;
+  }
+  html, body { margin: 0; background: var(--ground); color: var(--soft); font-family: var(--sans); }
+  .skip-link { position: absolute; left: -9999px; top: 8px; }
+  .skip-link:focus { left: 16px; color: var(--white); outline: 2px solid var(--white); }
+
+  #story { position: relative; }
+  .story-stage { position: sticky; top: 0; height: 100svh; overflow: hidden; background: var(--ground); }
+  .story-canvas, .story-svg, .story-world, .story-chrome { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .scene-layer { position: absolute; inset: 0; visibility: hidden; }
+  .story-chrome { pointer-events: none; font: 500 11px/1.4 var(--mono); letter-spacing: 0.12em; color: var(--grey); }
+  .c-tl { position: absolute; left: 24px; top: 20px; display: grid; }
+  .c-tl span:first-child { color: var(--white); }
+  .c-tr { position: absolute; right: 24px; top: 20px; text-align: right; }
+  .c-tick { position: absolute; left: 0; bottom: 0; width: 100%; height: 3px; background: var(--red); transform-origin: 0 0; }
+
+  .mock-fig { position: absolute; left: 0; top: 0; font: 400 72px/1 var(--display); color: var(--white); transform-origin: 0 0; }
+  .mock-live { position: absolute; left: 0; top: 0; font: 500 14px/1 var(--mono); color: var(--grey); }
+  .mock-untagged { position: absolute; left: 24px; bottom: 40px; font: 500 12px/1 var(--mono); color: var(--grey); }
+  .mock-quiet { position: absolute; left: 0; top: 0; font: 400 20px/1.5 var(--sans); color: var(--soft); }
+
+  .story-anchors { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+  .story-anchors > * { position: absolute; left: 0; width: 0; height: 0; }
+
+  /* Motion mode: plates are visually hidden but stay readable by screen readers. */
+  .story-text { position: absolute; left: 0; top: 0; }
+  .plate { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* Still mode: no stage, normal height, plates in flow. */
+  .no-motion .story-stage { display: none; }
+  .no-motion #story { height: auto !important; }
+  .no-motion .story-text { position: static; }
+  .no-motion .plate:not(.keep-hidden) { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal;
+    padding: 48px 16px; max-width: 720px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,0.12); }
+  .plate h2 { font: 400 32px/1 var(--display); color: var(--white); text-transform: uppercase; margin: 0 0 16px; }
+  .plate .fig { font: 600 28px/1 var(--sans); color: var(--white); }
+
+  .proto-end { padding: 64px 16px; max-width: 720px; margin: 0 auto; }
+  a { color: var(--white); display: inline-flex; align-items: center; min-height: 44px; } /* tap targets ≥ 44 px */
+  a:focus-visible { outline: 2px solid var(--white); outline-offset: 3px; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#haveyoursay">Skip to Have your say</a>
+
+<main id="story" class="story">
+  <div class="story-stage" aria-hidden="true">
+    <canvas class="story-canvas"></canvas>
+    <div class="story-world">
+      <div class="scene-layer" data-scene="S00">
+        <div class="mock-fig" data-src="fig" data-ref="MOCK.DEFENCE">$954B</div>
+        <div class="mock-live">$<span data-src="live" data-ref="military">0</span></div>
+        <!-- Untagged on purpose. Hidden (opacity 0) unless ?break=trace, which proves the
+             harness ignores hidden text and catches visible untagged numbers. -->
+        <div class="mock-untagged" style="opacity:0">RANK 7 OF 9</div>
+      </div>
+      <div class="scene-layer" data-scene="S09">
+        <div class="mock-quiet" data-src="fig" data-ref="MOCK.ONE_IN">1 in 6</div>
+      </div>
+    </div>
+    <svg class="story-svg">
+      <g data-scene="S00"><path class="br" fill="none" stroke="#FFFFFF" stroke-width="1.5" d=""/>
+        <text class="br-tag" data-src="label" x="0" y="0" fill="#FFFFFF" font-family="IBM Plex Mono" font-size="10">TARGET 01</text></g>
+      <g data-scene="S09"></g>
+    </svg>
+    <div class="story-chrome">
+      <div class="c-tl"><span data-src="chrome">THE COST OF WAR</span><span data-src="chrome">FILE 00 · MOCK PUSH</span></div>
+      <div class="c-tr"><span class="c-scroll" data-src="chrome">SCROLL 0.00 / 2</span></div>
+      <div class="c-tick"></div>
+    </div>
+  </div>
+
+  <div class="story-anchors">
+    <div id="s00" style="top:0"></div>
+    <div id="s09" style="top:100svh"></div>
+    <div id="impact" style="top:100svh"></div>
+  </div>
+
+  <div class="story-text">
+    <section class="plate" data-scene="S00" id="plate-s00">
+      <h2>Mock push</h2>
+      <p class="plate-fig-line">The mock figure is <span class="fig" data-src="fig">$954B</span>.</p>
+      <div role="img" aria-label="A grey sheet grows while brackets hunt, then lock onto the figure."></div>
+      <p><a href="#s00">Back to the start</a></p>
+    </section>
+    <section class="plate" data-scene="S09" id="plate-s09">
+      <h2>Mock fade</h2>
+      <p>A quiet line fades in: <span class="fig" data-src="fig">1 in 6</span>.</p>
+      <div role="img" aria-label="One line of text fades in on black."></div>
+    </section>
+  </div>
+</main>
+
+<section id="haveyoursay" class="proto-end">
+  <p>End of the mock. This page is a test fixture for the story harness, not the prototype.</p>
+</section>
+
+<script>
+(function () {
+  "use strict";
+  // Which deliberate faults are switched on.
+  var BREAK = {};
+  var m = location.search.match(/break=([\w,]+)/);
+  if (m) m[1].split(",").forEach(function (k) { BREAK[k] = true; });
+
+  var still = document.documentElement.classList.contains("no-motion");
+  var TOTAL = 2;
+  var story = document.getElementById("story");
+  var stage = document.querySelector(".story-stage");
+  var canvas = document.querySelector(".story-canvas");
+  var g = canvas.getContext("2d");
+  var chrome = document.querySelector(".story-chrome");
+  var chromeScroll = chrome.querySelector(".c-scroll");
+  var tick = chrome.querySelector(".c-tick");
+  var openedAt = Date.now();
+
+  var Story = (window.Story = {});
+  var debug = (Story.debug = {
+    total: TOTAL,
+    scenes: [
+      { id: "S00", name: "Mock push", start: 0, screens: 1, restrained: false, frames: [{ k: "in", p: 0 }, { k: "mid", p: 0.5 }, { k: "out", p: 1 }] },
+      { id: "S09", name: "Mock fade", start: 1, screens: 1, restrained: true, frames: [{ k: "in", p: 0 }, { k: "mid", p: 0.5 }, { k: "out", p: 1 }] },
+    ],
+    s: 0, active: "S00",
+    figs: [{ path: "MOCK.DEFENCE", fmt: "B", shown: "$954B" }, { path: "MOCK.ONE_IN", fmt: "oneIn", shown: "1 in 6" }],
+    copies: [],
+    flags: [{ kind: "newCopy", text: "Mock line flagged for approval (fixture only)." }],
+    rungs: [{ path: "MOCK.rung", value: 1, fit: 2, areaErrorPct: BREAK.rung ? 3.4 : 0.4 }],
+    mode: still ? "static" : "motion",
+  });
+
+  // ── deliberate faults that act at load ──────────────────────────
+  if (BREAK.console) setTimeout(function () { throw new Error("mock: deliberate console error"); }, 0);
+  if (BREAK.overflow) {
+    var wide = document.createElement("div");
+    wide.style.cssText = "width:130vw;height:4px;background:#8A9099";
+    document.body.appendChild(wide);
+  }
+  if (BREAK.trace) document.querySelector(".mock-untagged").style.opacity = "1";
+  if (BREAK.fig) {
+    var line = document.querySelector("#plate-s00 .plate-fig-line");
+    line.textContent = "The mock figure is missing here on purpose.";
+  }
+  if (BREAK.plate) document.getElementById("plate-s09").classList.add("keep-hidden");
+
+  if (still) {
+    if (BREAK.still) {
+      // The fault: still mode forgets to hide the stage and to drop the tall height.
+      stage.style.display = "block";
+      story.style.setProperty("height", "calc(3 * 100svh)", "important");
+    }
+    return; // still mode: plates are the content, nothing animates
+  }
+
+  story.style.height = "calc(" + (TOTAL + 1) + " * 100svh)";
+
+  // ── viewport ─────────────────────────────────────────────────────
+  var vp = {};
+  function measure() {
+    var W = stage.clientWidth, H = stage.getBoundingClientRect().height;
+    var dpr = BREAK.dpr ? devicePixelRatio : Math.min(devicePixelRatio || 1, 2);
+    vp = { W: W, H: H, phone: W < 768, dpr: dpr };
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+  }
+  function storyTop() { return story.getBoundingClientRect().top + window.scrollY; }
+  function readS() {
+    var s = (window.scrollY - storyTop()) / vp.H;
+    return Math.max(0, Math.min(TOTAL, s));
+  }
+
+  // ── scene states: pure functions of progress (except the deliberate latch) ──
+  var latched = false; // only used by ?break=reverse
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function stateS00(p) {
+    var lock = p >= 0.6;
+    if (BREAK.reverse) { lock = p >= 0.6 || (latched && p >= 0.3); latched = lock; } // the fault: remembers the past
+    var w = vp.W * lerp(0.4, 0.6, p), h = vp.H * lerp(0.4, 0.55, p);
+    var sheet = { x: (vp.W - w) / 2, y: (vp.H - h) / 2, w: w, h: h, mode: "paper", tone: lock ? "red" : "neutral", edge: 1.5, opacity: 1 };
+    var hunt = { x: sheet.x - 20, y: sheet.y - 20, w: sheet.w + 40, h: sheet.h + 40 };
+    var tight = { x: sheet.x + 24, y: sheet.y + 24, w: Math.min(360, sheet.w - 48), h: 96 };
+    var b = lock ? tight : {
+      x: lerp(hunt.x, tight.x, p / 0.6), y: lerp(hunt.y, tight.y, p / 0.6),
+      w: lerp(hunt.w, tight.w, p / 0.6), h: lerp(hunt.h, tight.h, p / 0.6) };
+    return { sheet: sheet, lock: lock, brackets: b, fig: { x: sheet.x + 36, y: sheet.y + 36, k: lerp(0.8, 1, p) } };
+  }
+  function stateS09(p) {
+    return { sheet: null, layerOpacity: 1, quiet: { x: vp.W * 0.2, y: vp.H * 0.45, o: Math.min(1, p / 0.4) } };
+  }
+  var SCENES = { S00: { state: stateS00, layer: q("S00"), svg: qs("S00") }, S09: { state: stateS09, layer: q("S09"), svg: qs("S09") } };
+  function q(id) { return document.querySelector('.scene-layer[data-scene="' + id + '"]'); }
+  function qs(id) { return document.querySelector('.story-svg g[data-scene="' + id + '"]'); }
+
+  // ── render: transform/opacity/textContent only ──────────────────
+  var current = null, lastState = null;
+  function render(s) {
+    // The fault: a fixed amount of work per frame (about 20 ms on a fast laptop). Work, not a
+    // clock wait, so the harness's 4x CPU slowdown makes it slower, as it would a real render.
+    if (BREAK.perf) { var waste = 0; for (var n = 0; n < 1.5e7; n++) waste += Math.sqrt(n); debug.waste = waste; }
+    var sc = debug.scenes[0];
+    for (var i = 0; i < debug.scenes.length; i++) {
+      var d = debug.scenes[i];
+      if (s >= d.start && (s < d.start + d.screens || i === debug.scenes.length - 1)) sc = d;
+    }
+    var p = Math.max(0, Math.min(1, (s - sc.start) / sc.screens));
+    var st = SCENES[sc.id].state(p);
+    if (current !== sc.id) {
+      Object.keys(SCENES).forEach(function (id) { SCENES[id].layer.style.visibility = id === sc.id ? "visible" : "hidden"; SCENES[id].svg.style.visibility = id === sc.id ? "visible" : "hidden"; });
+      current = sc.id;
+    }
+    if (sc.id === "S00") {
+      var fig = SCENES.S00.layer.querySelector(".mock-fig");
+      fig.style.transform = "translate(" + st.fig.x.toFixed(1) + "px," + st.fig.y.toFixed(1) + "px) scale(" + st.fig.k.toFixed(3) + ")";
+      var live = SCENES.S00.layer.querySelector(".mock-live");
+      live.style.transform = "translate(" + (st.fig.x).toFixed(1) + "px," + (st.fig.y + 100).toFixed(1) + "px)";
+      var b = st.brackets, L = 18, path = "";
+      [[b.x, b.y, 1, 1], [b.x + b.w, b.y, -1, 1], [b.x, b.y + b.h, 1, -1], [b.x + b.w, b.y + b.h, -1, -1]].forEach(function (c) {
+        path += "M" + (c[0] + c[2] * L).toFixed(1) + " " + c[1].toFixed(1) + " H" + c[0].toFixed(1) + " V" + (c[1] + c[3] * L).toFixed(1) + " ";
+      });
+      SCENES.S00.svg.querySelector(".br").setAttribute("d", path);
+      var tag = SCENES.S00.svg.querySelector(".br-tag");
+      tag.setAttribute("x", b.x.toFixed(1)); tag.setAttribute("y", (b.y - 8).toFixed(1));
+      tag.textContent = st.lock ? "LOCK" : "TARGET 01";
+    } else {
+      var quiet = SCENES.S09.layer.querySelector(".mock-quiet");
+      quiet.style.transform = "translate(" + st.quiet.x.toFixed(1) + "px," + st.quiet.y.toFixed(1) + "px)";
+      quiet.style.opacity = st.quiet.o.toFixed(3);
+    }
+    // Chrome fades with s across the hand-over into the restrained scene (a function of s, not time).
+    chrome.style.opacity = Math.max(0, Math.min(1, (1 - s) / 0.1)).toFixed(3);
+    chromeScroll.textContent = "SCROLL " + s.toFixed(2) + " / " + TOTAL;
+    tick.style.transform = "scaleX(" + (s / TOTAL).toFixed(4) + ")";
+
+    // Canvas: the sheet (if any) and one red mark when locked.
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, canvas.width, canvas.height);
+    g.setTransform(vp.dpr, 0, 0, vp.dpr, 0, 0);
+    if (st.sheet) {
+      g.fillStyle = "#121315";
+      g.fillRect(st.sheet.x, st.sheet.y, st.sheet.w, st.sheet.h);
+      g.strokeStyle = "#C4C9CF"; g.lineWidth = st.sheet.edge;
+      g.strokeRect(st.sheet.x, st.sheet.y, st.sheet.w, st.sheet.h);
+      if (st.lock) { g.fillStyle = "#E8362B"; g.fillRect(st.sheet.x + 36, st.sheet.y + 120, 140, 4); }
+    } else {
+      g.fillStyle = "rgba(255,255,255,0.06)";
+      g.fillRect(vp.W * 0.2, vp.H * 0.45 + 40, vp.W * 0.3 * Math.min(1, (s - 1) / 0.4), 1);
+    }
+    if (BREAK.colour) { // the fault: off-brand green on the active scene, red inside a restrained scene
+      g.fillStyle = st.sheet ? "rgb(34,204,102)" : "rgb(232,54,43)";
+      if (st.sheet || p > 0) g.fillRect(16, vp.H - 120, 120, 60);
+    }
+    debug.s = s; debug.active = sc.id; lastState = { scene: sc.id, p: p, state: st };
+  }
+
+  // ── scroll → render (coalesced in one rAF) ──────────────────────
+  var armed = !BREAK.deeplink; // ?break=deeplink: ignore the real position until goto() is first used
+  var queued = false;
+  function request() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function () { queued = false; render(armed ? readS() : 0); });
+  }
+  addEventListener("scroll", function () { if (armed) request(); }, { passive: true });
+  // a real resize keeps the reader on the same story frame (as the engine does)
+  addEventListener("resize", function () {
+    var s = readS(), W = vp.W, H = vp.H;
+    measure();
+    if ((vp.W !== W || vp.H !== H) && s > 0 && s < TOTAL) window.scrollTo(0, storyTop() + s * vp.H);
+    request();
+  });
+  addEventListener("load", request);
+
+  // Live counter: ticks with time, only while S00 is active. Excluded from the snapshot hash.
+  var liveEl = document.querySelector('[data-src="live"]');
+  (function loop() {
+    if (current === "S00") liveEl.textContent = Math.floor(((Date.now() - openedAt) / 1000) * 91546).toLocaleString();
+    requestAnimationFrame(loop);
+  })();
+
+  // ── debug contract ──────────────────────────────────────────────
+  function twoFrames() { return new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); }); }
+  debug.goto = function (s) {
+    armed = true;
+    window.scrollTo(0, Math.round(storyTop() + s * vp.H));
+    render(readS());
+    return twoFrames();
+  };
+  function hash(str) { // FNV-1a, 32 bit
+    var h = 0x811c9dc5;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    return (h >>> 0).toString(16);
+  }
+  function domString(root) {
+    var out = [];
+    root.querySelectorAll("*").forEach(function (el) {
+      var own = "";
+      el.childNodes.forEach(function (n) { if (n.nodeType === 3) own += n.nodeValue; });
+      if (el.closest('[data-src="live"]')) own = "<live>"; // live counters tick with time: keep them out
+      var attrs = el instanceof SVGElement ? Array.prototype.map.call(el.attributes, function (a) { return a.name + "=" + a.value; }).join(";") : "";
+      out.push(el.tagName + "|" + own + "|" + el.style.transform + "|" + el.style.opacity + "|" + el.style.visibility + "|" + attrs);
+    });
+    return out.join("\n");
+  }
+  debug.snapshot = function () {
+    var dom = domString(SCENES[current].layer) + domString(SCENES[current].svg) + domString(chrome) + chrome.style.opacity;
+    var data = g.getImageData(0, 0, canvas.width, canvas.height).data, acc = [];
+    for (var i = 0; i < data.length; i += 16) acc.push(data[i], data[i + 1], data[i + 2], data[i + 3]);
+    return { s: debug.s, scene: lastState.scene, p: lastState.p, state: JSON.parse(JSON.stringify(lastState.state)), dom: hash(dom), canvas: hash(acc.join(",")) };
+  };
+
+  measure();
+  render(armed ? readS() : 0);
+})();
+</script>
+</body>
+</html>

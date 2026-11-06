@@ -1,0 +1,29 @@
+/* S12 · one text axis (storyboard x 216, phone 32); --y/--py: top as a share of the screen. Links: taps follow the group (render), 44 px box */
+.s12{position:absolute;inset:0;--x:.15;--px:.0853;--f:20px;--s:11px;--o:20px}
+.story-phone .s12{--f:15px;--s:10px;--o:17px;--v:3.07em}
+.s12>*{position:absolute;left:calc(var(--W)*var(--x));top:calc(var(--H)*var(--y));width:calc(var(--k)*600px);font-size:calc(var(--k)*var(--f))}
+.s12-open{--y:.622;--py:.697}
+.s12-one{--y:.671;--py:.744}
+.s12-field{--y:.68;--py:.727}
+.s12-content{--y:.196;--py:.158}
+.s12-close{--y:.367;--py:.323;width:calc(var(--k)*900px)}
+.s12-ready{--y:.66;--py:.739;--x:.667}
+.s12-one,.s12-ready{--f:var(--o)}
+.story-phone .s12>*{--x:var(--px);--y:var(--py);width:calc(var(--k)*311px)}
+.s12 p{margin:0;font-size:inherit}
+.s12 .t-label,.s12 .t-src{font-size:calc(var(--k)*var(--s))}
+.s12 .s12-ol{margin-top:.5em;font-size:1.4em;line-height:1.42}
+.s12 .s12-cl{font-size:1.7em;line-height:1.34;white-space:pre-line}
+.s12 .s12-l p{line-height:1.8}
+.s12-ol span,.s12-v span:first-child{display:block}
+.s12-ol span+span,.s12-l b,.s12-b,.s12-cl{color:#fff}
+.s12-b{font-weight:600}
+.s12-v span:first-child{margin:0 0 .2em -.05em;font:400 min(var(--v,3.8em),18vw)/.9 var(--f-display);letter-spacing:-.02em;color:#fff}
+.story-phone .s12 .s12-cl{white-space:normal}
+.s12-l{margin-top:1.1em}
+.s12 .s12-it+.s12-it{margin-top:1.3em}
+.s12 .s12-it:nth-child(3){margin-top:2.9em}
+.s12-it .t-src{margin-top:.4em}
+.s12 a{color:inherit;text-decoration:none;pointer-events:inherit}
+.s12 a[target]{display:inline-block;padding:max(0px,calc(22px - .7em)) 0;margin:min(0px,calc(.7em - 22px)) 0}
+.s12-ready a{display:inline-flex;align-items:center;min-height:46px;border-bottom:1px solid;font-weight:500;color:#fff;text-decoration:none}

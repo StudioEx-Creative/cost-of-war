@@ -1,0 +1,14 @@
+/* Test fixture for tools/story-check.mjs: story CSS that breaks lint rules.
+   Run: node tools/story-check.mjs --only lint,size --code tools/fixtures/lint-bad */
+:root {
+  --ground: #0A0A0A;                     /* brand: fine */
+  --white: #fff;                         /* brand shorthand: fine */
+  --purple: #7B2CBF;                     /* off-brand */
+  --display: 'Archivo Black', 'Arial Black', Arial, sans-serif;   /* fine */
+}
+.story { scroll-snap-type: y mandatory; }                         /* scroll-snap */
+.title { font-family: 'Archivo', sans-serif; }                    /* plain Archivo is not the brand face */
+.pop { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }  /* overshoot = bounce */
+.calm { transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1); }      /* CSS motion is time-based: story state comes from scroll alone */
+@keyframes pulse { to { opacity: 0.5; } }                         /* the same */
+#story .plate { color: rgba(255, 255, 255, 0.7); }                /* fine */
