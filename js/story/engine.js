@@ -14,7 +14,7 @@
   function get(path) {
     var parts = String(path).replace(/\[(\d+)\]/g, ".$1").split("."), v, no = new Error("Story.get: " + parts[0] + " is not in js/data.js");
     if (!/^[A-Za-z_$][\w$]*$/.test(parts[0]) || parts[0] in window) throw no;
-    try { v = (0, eval)(parts[0]); } // data.js consts are not on window
+    try { v = (0, eval)(parts[0]); }
     catch (e) { throw no; }
     for (var i = 1; i < parts.length; i++) {
       if (v == null || !(parts[i] in Object(v))) throw new Error("Story.get: no field " + path);
@@ -22,7 +22,6 @@
     }
     return v;
   }
-  // as storyboard/sb.js
   var FMT = {
     T: function (v) { return "$" + +(v / 1000).toFixed(2) + "T"; },
     B: function (v) { return "$" + v + "B"; },
@@ -82,6 +81,12 @@
     if (once("d" + how)) log.figs.push({ path: "derived", fmt: how, value: null, shown: String(text) });
     return remember(text, "derived", how);
   };
+  Story.flag = flag;
+  Story.missing = function (shown, why) {
+    flag("missing", "“" + shown + "” needs a data.js field — " + why);
+    if (once("m" + shown)) log.figs.push({ path: "missing", fmt: why, value: null, shown: String(shown) });
+    return remember(shown, "missing", why);
+  };
 
   function stable(v) { return typeof v === "number" ? String(Math.round(v * 1e4) / 1e4) : String(v); }
   function setStyle(el, prop, val) {
@@ -125,19 +130,29 @@
     if (parent) parent.appendChild(e);
     return e;
   }
-  function place(e, a) {
-    var s = e.style;
+  function place(e, a, m, c) {
+    var s = e.style, z = 1, r = 1, dx = 0, dy = 0;
     s.display = a ? "" : "none";
     if (!a) return;
-    s.left = a[0] + "px";
-    s.top = a[1] + "px";
-    s.fontSize = a[2] ? a[2] + "px" : "";
-    s.width = a[3] ? a[3] + "px" : "";
+    if (m) { c = c || m; z = m.k / c.k; r = (m.k * m.r) / c.k; dx = (m.x - c.x) / c.k; dy = (m.y - c.y) / c.k; }
+    s.left = dx + a[0] * z + "px";
+    s.top = dy + a[1] * z + "px";
+    s.fontSize = a[2] ? a[2] * r + "px" : "";
+    s.width = a[3] ? a[3] * r + "px" : "";
     s.whiteSpace = a[3] ? "normal" : "";
   }
-  Story.sb = function (v) {
-    var k = v.k, x = (v.W - (v.phone ? 375 : 1440) * k) / 2, y = v.phone ? v.stage.y - 56 * k : (v.H - 900 * k) / 2;
-    return { k: k, x: x, y: y, t: "translate(" + x + "px," + y + "px) scale(" + k + ")" };
+  function rows(T, p) { return T.map(function (r) { return (r.e = el("div", r[0], r[1] || null, null, p)); }); }
+  function map(v, k, x, y) { return { k: k, x: x, y: y, r: v.kt / k, t: "translate(" + x + "px," + y + "px) scale(" + k + ")" }; }
+  Story.fit = function (v, a, b) {
+    b = b || v.stage;
+    var k = Math.min(v.kt, b.w / a[2], b.h / a[3]);
+    return map(v, k, b.x + (b.w - a[2] * k) / 2 - a[0] * k, b.y + (b.h - a[3] * k) / 2 - a[1] * k);
+  };
+  Story.sb = function (v, f) {
+    var k = v.kt, s = v.stage;
+    if (!v.phone) return map(v, v.k, (v.W - 1440 * v.k) / 2, (v.H - 900 * v.k) / 2);
+    if (f == null) return Story.fit(v, [16, 56, 343, 500]);
+    return map(v, k, (v.W - 375 * k) / 2, f === "t" ? v.H - 812 * k : s.y - 56 * k - f * (500 * k - s.h));
   };
 
   var scenes = [], byId = {}, TOTAL = 0, started = false, building = null;
@@ -152,6 +167,8 @@
     d.plateP = d.plateP == null ? 1 : d.plateP;
     if (!d.alt) console.warn("Story.scene: " + d.id + " has no alt text");
     scenes.push((byId[d.id] = d));
+    d.pv = prov;
+    prov = new Map();
     return d;
   };
   Story.stateOf = function (id, p, v) { return byId[id].state(clamp(p, 0, 1), v || vp); };
@@ -252,6 +269,42 @@
     r.tilted = tilted;
     r.areaErrorPct = Math.round((Math.abs(area) / sh.rung.area - 1) * 1e6) / 1e4;
   }
+  function sheets(g, list, c) {
+    g.save();
+    if (c) { g.beginPath(); g.rect(c[0], c[1], c[2], c[3]); g.clip(); }
+    list.forEach(function (s) { drawSheet(g, s); });
+    g.restore();
+  }
+  function insetView(g, d, list) {
+    var a = g.globalAlpha, w = d.w / d.z, h = d.h / d.z, x = d.ax - w * (d.f || [])[0], y = d.ay - h * (d.f || [])[1];
+    g.save();
+    g.fillStyle = C.ground;
+    g.fillRect(d.x, d.y, d.w, d.h);
+    g.beginPath();
+    g.rect(d.x, d.y, d.w, d.h);
+    g.clip();
+    g.translate(d.cx, d.cy);
+    g.scale(d.z, d.z);
+    g.translate(-d.ax, -d.ay);
+    list.forEach(function (s) { drawSheet(g, Object.assign({}, s, { edge: 1.5 / d.z, tab: 0, shadow: false })); });
+    g.restore();
+    g.save();
+    g.strokeStyle = C.white;
+    g.lineWidth = 1;
+    g.strokeRect(d.x + 0.5, d.y + 0.5, d.w - 1, d.h - 1);
+    if (d.f) {
+      g.globalAlpha = a * 0.7;
+      g.setLineDash([3, 3]);
+      g.strokeRect(x, y, w, h);
+      g.setLineDash([]);
+      g.globalAlpha = a * 0.4;
+      g.beginPath();
+      g.moveTo(x + w, y);
+      g.lineTo(d.x, d.y + d.h);
+      g.stroke();
+    }
+    g.restore();
+  }
   function drawScene(g, id, st) {
     var d = byId[id], was = current;
     if (!d || !st) return;
@@ -261,7 +314,6 @@
     current = was;
   }
 
-  // not drawn this frame → display none (visibility would show through)
   function brackets(d, rect, o) {
     o = o || {};
     if (d.restrained) return flag("brackets", d.id + " is restrained: brackets refused");
@@ -277,7 +329,8 @@
     b.used = true;
     setAttr(b.g, "display", "inline");
     var r1 = function (v) { return Math.round(v * 10) / 10; }, d2 = function (a, c) { return Math.hypot(c.x - a.x, c.y - a.y) || 1; };
-    var q = rect.q || [{ x: rect.x, y: rect.y }, { x: rect.x + rect.w, y: rect.y }, { x: rect.x + rect.w, y: rect.y + rect.h }, { x: rect.x, y: rect.y + rect.h }];
+    var q = rect.q || [{ x: rect.x, y: rect.y }, { x: rect.x + rect.w, y: rect.y }, { x: rect.x + rect.w, y: rect.y + rect.h }, { x: rect.x, y: rect.y + rect.h }], k = o.clip;
+    if (k) q = q.map(function (c) { return { x: clamp(c.x, k.x, k.x + k.w), y: clamp(c.y, k.y, k.y + k.h) }; });
     var L = o.len || Math.max(8, Math.min(vp.phone ? 12 : 24, d2(q[0], q[1]) / 4, d2(q[0], q[3]) / 3)), dp = "";
     q.forEach(function (c, i) {
       var a = q[(i + 3) % 4], e = q[(i + 1) % 4], u = L / d2(c, a), v = L / d2(c, e);
@@ -288,7 +341,7 @@
     setAttr(b.path, "opacity", o.opacity || (o.lock ? 1 : 0.7));
     setAttr(b.tag, "display", o.label ? "inline" : "none");
     if (!o.label) return;
-    var label = Story.label(String(o.label).toUpperCase()), fs = r1(o.fs || (vp.phone ? 9 : 10));
+    var label = Story.label(String(o.label).toUpperCase()), fs = r1(o.fs || (vp.phone ? 9 * Math.max(1, vp.kt) : 10));
     var tw = Math.round(label.length * 0.74 * fs + 12), th = fs + 7;
     var at = o.tagAt || (o.lock ? "bl" : "tl"), c = q[{ tl: 0, tr: 1, br: 2, bl: 3 }[at]];
     var tx = clamp((at.charAt(1) === "r" ? c.x - tw : c.x) + (o.dx || 0), 8, vp.W - tw - 8);
@@ -306,7 +359,6 @@
     var q = location.search;
     if (q.indexOf("static") > -1) return "static";
     if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return "reduced-motion";
-    // not hardwareConcurrency: iOS reports 2
     if (/[?&]lowpower=1/.test(q) || navigator.deviceMemory < 2 || (navigator.connection && navigator.connection.saveData)) return "lowpower";
     return "";
   }
@@ -350,46 +402,72 @@
     } else if (alt) el("p", "sr-only", alt, null, d.plate);
     d.api = {
       id: d.id, def: d, layer: d.layer, ui: d.ui, svg: d.g, plate: d.plate,
-      el: el, link: link, svgEl: svgEl, text: setText, set: setStyle, attr: setAttr, place: place,
+      el: el, link: link, svgEl: svgEl, text: setText, set: setStyle, attr: setAttr, place: place, rows: rows,
+      lay: function (T, m, c) { T.forEach(function (r) { place(r.e, r[vp.phone ? 4 : 3], m, c); }); },
+      map: function (e, m) { setStyle(e, "transform", m.t); e.style.setProperty("--s", m.k); },
+      fade: function (e, o) { setStyle(e, "opacity", o); setStyle(e, "pointerEvents", o > 0.5 ? "auto" : "none"); },
+      leader: function (p) {
+        var g = svgEl("g", { stroke: "rgba(255,255,255,.55)", fill: "none" }, p || d.g);
+        g.p = svgEl("path", {}, g);
+        g.r = svgEl("rect", { width: 5, height: 5, fill: C.white, stroke: "none" }, g);
+        return g;
+      },
+      lead: function (g, s) { var m = /M\s*(-?[\d.]+)[\s,]+(-?[\d.]+)/.exec(s); setAttr(g.p, "d", s); setAttr(g.r, "x", m[1] - 2.5); setAttr(g.r, "y", m[2] - 2.5); },
       brackets: function (r, o) { brackets(d, r, o); },
-      rung: Story.rung, drawSheet: drawSheet, drawScene: drawScene, live: Story.live,
+      rung: Story.rung, drawSheet: drawSheet, drawScene: drawScene, live: Story.live, sheets: sheets, inset: insetView,
     };
     Object.defineProperty(d.api, "vp", { get: function () { return vp; } });
     building = d;
+    prov = d.pv;
     if (d.build) d.build(d.api);
     building = null;
-    [d.layer, d.ui].forEach(function (l) {
-      l.querySelectorAll("a,button,input,select,textarea,[tabindex]").forEach(function (n) { n.setAttribute("tabindex", "-1"); });
-      setStyle(l, "visibility", "hidden");
-    });
+    setStyle(d.layer, "visibility", "hidden");
+    setStyle(d.ui, "visibility", "hidden");
     [d.id.toLowerCase()].concat(d.anchors).forEach(function (id) {
       var a = el("div", "story-anchor", null, null, anchorsEl);
       a.id = id;
-      a.style.top = "calc(" + d.start + " * var(--svh))";
+      a.s = d.start + ((d.anchorP || {})[id] || 0) * d.screens;
+      a.style.top = "calc(" + a.s + " * var(--svh))";
       a.setAttribute("data-scene", d.id);
     });
   }
 
   var vp = null, storyTop = 0;
   function layoutAll() {
-    var box = mode === "motion" ? stage : probe, W = box.clientWidth, H = box.clientHeight, ph = W < 768;
+    var box = mode === "motion" ? stage : probe, W = (mode === "motion" ? root : probe).clientWidth, H = box.clientHeight, ph = W < 768 || (W <= 1024 && H > W), c = W, kt;
+    if (mode === "motion") {
+      if (ph && (W >= 430 || H * 375 < 620 * W)) { c = Math.min(W, Math.ceil((H * 375) / 638)); c += (W - c) % 2; if (W - c < 12) c = W; }
+      stage.style.width = c + "px";
+      stage.style.marginLeft = (W - c) / 2 + "px";
+      document.documentElement.style.setProperty("--mx", (W - c) / 2 + "px");
+    }
+    W = c;
+    kt = ph ? W / 375 : Math.min(W / 1440, H / 900);
+    if (ph && mode === "static") H = Math.max(H, 812 * kt);
     vp = {
-      W: W, H: H, phone: ph, dpr: Math.min(window.devicePixelRatio || 1, 2),
-      k: Math.min(W / (ph ? 375 : 1440), H / (ph ? 812 : 900)),
-      stage: ph ? { x: 16, y: (H * 56) / 812, w: W - 32, h: (H * 500) / 812 } : { x: 0, y: 0, w: W, h: H },
-      text: ph ? { x: 16, y: (H * 572) / 812, w: W - 32, h: (H * 220) / 812 } : null,
+      W: W, H: H, phone: ph, dpr: Math.min(window.devicePixelRatio || 1, 2), kt: kt,
+      k: ph ? Math.min(kt, (H - 312 * kt) / 500) : kt,
+      stage: ph ? { x: 16 * kt, y: 56 * kt, w: W - 32 * kt, h: H - 312 * kt } : { x: 0, y: 0, w: W, h: H },
+      text: ph ? { x: 16 * kt, y: H - 240 * kt, w: W - 32 * kt, h: 220 * kt } : null,
+      short: ph && H - 312 * kt < 480 * kt,
     };
     document.documentElement.classList.toggle("story-phone", ph);
+    document.documentElement.classList.toggle("story-short", vp.short);
     if (mode === "motion") {
       canvas.width = Math.round(W * vp.dpr);
       canvas.height = Math.round(H * vp.dpr);
       stage.style.setProperty("--k", vp.k);
+      stage.style.setProperty("--kt", kt);
+      stage.style.setProperty("--kc", ph ? Math.max(1, kt) : 1);
       stage.style.setProperty("--W", W + "px");
       stage.style.setProperty("--H", H + "px");
       Story._chrome.layout(vp, scenes, TOTAL);
     }
     storyTop = root.getBoundingClientRect().top + window.scrollY;
-    scenes.forEach(function (d) { if (d.layout) d.layout(d.api); });
+    scenes.forEach(function (d) {
+      if (d.layout) d.layout(d.api);
+      [d.layer, d.ui].forEach(function (l) { l.querySelectorAll("a,button,input,select,textarea,[tabindex]").forEach(function (n) { n.tabIndex = -1; }); });
+    });
     if (mode === "static") drawPlates();
   }
 
@@ -399,8 +477,9 @@
   function chromeOn(d) { return !!d.chrome; }
   function atmOn(d) { return !d.restrained; }
   function ramp(s, i, on) {
-    var d = scenes[i], to = on(d) ? 1 : 0, from = i && on(scenes[i - 1]) ? 1 : 0, t = (s - d.start) / Math.min(FADE, d.screens);
-    return i && from !== to && t < 1 ? from + (to - from) * Math.max(0, t) : to;
+    var d = scenes[i], n = scenes[i + 1], to = on(d) ? 1 : 0, from = i && on(scenes[i - 1]) ? 1 : 0, t = (s - d.start) / Math.min(FADE, d.screens);
+    if (to && n && n.restrained) return Math.min(1, (d.start + d.screens - s) / FADE);
+    return i && from !== to && !d.restrained && t < 1 ? from + (to - from) * Math.max(0, t) : to;
   }
   function show(d, on) {
     setStyle(d.layer, "visibility", on ? "visible" : "hidden");
@@ -409,6 +488,7 @@
   }
   function paint(d, st, op) {
     var k;
+    prov = d.pv;
     setStyle(d.layer, "opacity", op);
     setStyle(d.ui, "opacity", op);
     setAttr(d.g, "opacity", op);
@@ -473,17 +553,21 @@
     window.scrollTo({ top: storyTop + s * vp.H, left: 0, behavior: "instant" });
     if (mode === "motion") renderAt(readS());
   }
-  var linkedY = null;
-  function followHash(go) {
-    var a = document.getElementById(decodeURIComponent(location.hash.slice(1))), d = a && byId[a.getAttribute("data-scene")];
-    if (mode !== "motion" || !d) return;
-    if (go !== false) scrollToS(d.start);
-    linkedY = window.scrollY;
-    d.plate.focus({ preventScroll: true });
+  var linkedY = null, land = [], KEY = "story-at";
+  function hashEl() {
+    try { return document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch (e) { return null; }
   }
-  function remode(id) {
+  function followHash(go) {
+    var a = hashEl(), d = a && byId[a.getAttribute("data-scene")];
+    if (mode !== "motion" || !a) return;
+    if (go !== false) d ? scrollToS(land[0] === d.id ? +land[1] : a.s) : a.scrollIntoView();
+    linkedY = window.scrollY;
+    if (d) d.plate.focus({ preventScroll: true });
+  }
+  function remode(id, at) {
+    if (at != null) try { sessionStorage.setItem(KEY, id + " " + at); } catch (e) {}
     history.replaceState(null, "", "#" + id.toLowerCase());
-    history.scrollRestoration = "manual"; // land on the hash, not the old scroll
+    history.scrollRestoration = "manual";
     location.reload();
   }
 
@@ -516,33 +600,31 @@
   };
   function refreshST() { if (window.ScrollTrigger) ScrollTrigger.refresh(); }
   function initMotion() {
+    try { land = (sessionStorage.getItem(KEY) || "").split(" "); sessionStorage.removeItem(KEY); } catch (e) {}
     if (window.gsap && window.ScrollTrigger) {
       gsap.registerPlugin(ScrollTrigger);
       ScrollTrigger.config({ ignoreMobileResize: true });
       ScrollTrigger.create({
         trigger: root,
         start: "top top",
-        // = bottom bottom at 100svh, toolbar or not
         end: function () { return "+=" + TOTAL * vp.H; },
         onUpdate: request,
         onRefresh: request,
       });
     } else window.addEventListener("scroll", request, { passive: true });
-    if (window.IntersectionObserver) new IntersectionObserver(function (es) { // an edge touching is off screen
+    if (window.IntersectionObserver) new IntersectionObserver(function (es) {
       onScreen = es[es.length - 1].isIntersecting;
       if (onScreen) request();
     }, { rootMargin: "-1px 0px" }).observe(root);
-    // the place before a resize: by then the browser has clamped scrollY
-    var lastW = vp.W, lastH = vp.H, rz = 0, Y = window.scrollY, at, dy;
+    var lastW = root.clientWidth, lastH = vp.H, rz = 0, Y = window.scrollY, at, dy;
     window.addEventListener("scroll", function () { if (!rz) Y = window.scrollY; }, { passive: true });
     window.addEventListener("resize", function () {
       if (!rz) { at = (Y - storyTop) / vp.H; dy = Y - storyTop - (TOTAL + 1) * vp.H; }
       rz = rz || requestAnimationFrame(function () {
-        var W = stage.clientWidth, H = stage.clientHeight;
+        var W = root.clientWidth, H = stage.clientHeight;
         rz = 0;
-        // 100svh only: a toolbar or keyboard never re-lays out
         if (W !== lastW || H !== lastH) {
-          if (H < SHORT) return remode(dy >= 0 ? "haveyoursay" : active.id);
+          if (H < SHORT) return remode(dy >= 0 ? "haveyoursay" : active.id, at);
           lastW = W; lastH = H;
           layoutAll();
           refreshST();
@@ -558,14 +640,12 @@
       if (location.hash && (linkedY == null || window.scrollY === linkedY)) followHash();
       renderAt(readS());
     });
-    // the browser scrolls to the anchor, and Back restores the place
     window.addEventListener("hashchange", function () { followHash(false); });
     stage.addEventListener("click", function () { if (active) active.plate.focus({ preventScroll: true }); });
     textEl.addEventListener("focusin", function (e) {
       var pl = e.target.closest(".plate"), d = pl && byId[pl.getAttribute("data-scene")];
       if (!d || e.target === pl) return;
       var pp = clamp(+e.target.closest("[data-p]").getAttribute("data-p"), 0, 1);
-      // p 1 is the next scene's start
       var s = d.start + pp * d.screens - (pp >= 1 && d !== scenes[scenes.length - 1] ? 1.5 / vp.H : 0);
       setText(dock, e.target.getAttribute("aria-label") || e.target.textContent.trim(), "chrome");
       dock.classList.add("on");
@@ -590,11 +670,12 @@
     wakeLive();
     var lastW = vp.W;
     window.addEventListener("resize", function () {
-      if (reason === "short" && probe.clientHeight >= SHORT) return remode((scenes.filter(function (d) { return d.plate.getBoundingClientRect().bottom > 0; })[0] || { id: "haveyoursay" }).id);
+      if (reason === "short" && probe.clientHeight >= SHORT) return remode((scenes.filter(function (d) { return d.plate.getBoundingClientRect().bottom > 2; })[0] || { id: "haveyoursay" }).id);
       if (probe.clientWidth !== lastW) { lastW = probe.clientWidth; layoutAll(); }
     });
-    var t = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    var t = hashEl(), pl = t && t.closest(".plate");
     if (t) t.scrollIntoView();
+    if (pl) pl.focus({ preventScroll: true });
   }
 
   function fnv(h, s) { for (var i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h; }
@@ -613,7 +694,6 @@
     walk(stage);
     return (h >>> 0).toString(16);
   }
-  // a copy: reading the stage canvas moves it GPU→CPU
   var copy;
   function hashCanvas() {
     copy = copy || document.createElement("canvas").getContext("2d", { willReadFrequently: true });
@@ -677,7 +757,6 @@
     var m = rot(t);
     return function (x, y, z) {
       var X = x - t.ox, Y = y - t.oy, Z = z || 0;
-      // w = 1 − z/d as CSS; the floor stops a flip
       var w = Math.max(0.05, 1 - (m[6] * X + m[7] * Y + m[8] * Z) / t.persp);
       return { x: t.ox + (m[0] * X + m[1] * Y + m[2] * Z) / w, y: t.oy + (m[3] * X + m[4] * Y + m[5] * Z) / w };
     };
@@ -708,7 +787,6 @@
         mul([m[0], m[1], m[2], 0, m[3], m[4], m[5], 0, m[6], m[7], m[8], 0, 0, 0, 0, 1], T(rect.x - t.ox, rect.y - t.oy))));
     }
     for (i = 0; i < 4; i++) { M[i * 4] *= s; M[i * 4 + 1] *= s; }
-    // fixed decimals: stable hashes
     for (c = 0; c < 4; c++) for (i = 0; i < 4; i++) { var v = M[i * 4 + c]; out.push(Math.abs(v) < 1e-12 ? "0" : v.toFixed(Math.abs(v) < 0.01 ? 12 : 6)); }
     return "matrix3d(" + out + ")";
   }
@@ -728,10 +806,23 @@
     };
   }
   function fitBetween(a, b, p) { return a * Math.pow(b / a, Math.max(0, Math.min(1, p))); }
+  function ladder(paths, fit, box, tones, o, an) {
+    var a = 0, rs = paths.map(function (p, i) {
+      var q = rung(p, fit, box, an);
+      q.tone = tones[i];
+      Object.assign(q, o);
+      if (q.rung.value <= fit * 1.0001) a = i;
+      return q;
+    });
+    rs.a = a;
+    return rs;
+  }
+  function at(m, x, y, s, t) { return matrix3d({ x: m.x + m.k * x, y: m.y + m.k * y, w: 1, h: 1 }, t, { s: m.k * (s || 1) }); }
 
-  Story.cam = { project: project, quad: quad, bbox: bbox, matrix3d: matrix3d, resolve: resolve };
+  Story.cam = { project: project, quad: quad, bbox: bbox, matrix3d: matrix3d, resolve: resolve, at: at };
   Story.area = area;
   Story.rung = rung;
+  Story.ladder = ladder;
   Story.fitBetween = fitBetween;
 })();
 
@@ -781,7 +872,7 @@
     P.scan = div("ch-scan", ch);
     div("ch-scan-line", P.scan);
     div("ch-scan-seg", P.scan);
-    div("ch-scan-lbl", P.scan, "SCAN");
+    P.lbl = div("ch-scan-lbl", P.scan, "SCAN");
     P.mark = div("ch-railmark", ch);
     P.fill = div("ch-fill", ch);
     P.sid = div("ch-sid", ch);
@@ -818,7 +909,7 @@
     P.scan.style.width = W + "px";
     P.scanY0 = ph ? 60 : 70;
     P.scanSpan = H - (ph ? 120 : 150);
-    P.tl._sc = P.fill._sc = P.scan._sc = P.sid._sc = null; // cssText reset them
+    P.tl._sc = P.fill._sc = P.scan._sc = P.sid._sc = null;
   }
 
   function frame(o) {
@@ -839,11 +930,12 @@
     _.setStyle(P.chrome, "opacity", r3(o.chrome));
     if (o.chrome <= 0) return;
     var d = o.labels, ph = vp.phone, pos = o.s.toFixed(1) + " / " + o.total.toFixed(1), p = o.labelsP;
-    _.setStyle(P.tl, "opacity", d.chrome.labels === false ? 0 : 1);
+    _.setStyle(P.tl, "opacity", d.chrome.labels === false || (ph && d.chrome.labels === "desktop") ? 0 : 1);
     _.setText(P.file, "FILE " + d.file + " · " + String(d.name).toUpperCase(), "chrome");
     _.setText(P.scroll, ph ? "" : "SCROLL " + pos, "chrome");
     _.setText(P.move, ph ? pos + " · " + d.move : "MOVE · " + d.move, "chrome");
     _.setStyle(P.scan, "transform", "translateY(" + r1(P.scanY0 + p * P.scanSpan) + "px)");
+    _.setStyle(P.lbl, "opacity", st.noScan ? 0 : 1);
     _.setStyle(P.mark, "transform", "translateY(" + r1(P.railTop + p * (P.railBot - P.railTop)) + "px)");
     _.setStyle(P.fill, "transform", "scaleX(" + r3(Story.clamp(o.s / o.total, 0, 1)) + ")");
     if (!ph && P.lastMark !== d.id) {

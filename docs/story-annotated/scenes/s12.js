@@ -4,7 +4,6 @@
   var S = Story, sm = S.smooth, C = S.copy, G = S.fig, E = {}, F;
   function at(v) { return { x: v.W * 2 / 3, y: v.H * (v.phone ? 0.29 : 1 / 3) }; }
 
-  // DEATHS_PER_YEAR points (the held one too), each its own cell; ½ px where px are fewer than people
   function field(v) {
     var ph = v.phone, W = v.W, H = v.H * (ph ? 0.79 : 1), q = ph || W * H < 5e5 ? 2 : 1, u = 1 / (ph ? 120 : 260) / v.k, o = at(v), a = 2447, n = 1, t = 0,
       cv = document.createElement("canvas"), w = (cv.width = Math.ceil(W * q)), g = cv.getContext("2d"), im = g.createImageData(w, (cv.height = Math.ceil(H * q))), d = im.data, N = S.get("DEATHS_PER_YEAR"), x, y, X, Y, c, i;
@@ -23,7 +22,6 @@
 
   S.scene({
     id: "S12", order: 12, name: "The Human Impact", move: "STILLNESS", screens: 2, restrained: true, chrome: false, file: "12",
-    // in 0.06: from S09's black · one 0.2 (storyboard .16): every fade ≥ 0.1 screen
     frames: [{ k: "in", p: 0.06 }, { k: "one", p: 0.2 }, { k: "fade", p: 0.36 }, { k: "field", p: 0.52 }, { k: "content", p: 0.74 }, { k: "out", p: 1 }],
     plateP: 0.52,
     alt: "A still field of faint points of light, one for each person killed in armed conflict in a year. One brighter point among them: one person.",
@@ -57,16 +55,15 @@
       });
       el("p", "s12-cl t-body", C("Every number on this page was a person\nwho wanted to live.", L + 774), null, grp("close"));
       a("#haveyoursay", C("When you're ready", L + 781), grp("ready"));
-      // plate: the same words in reading order
       for (k in E) pl.appendChild(E[k].cloneNode(true)).setAttribute("data-p", { field: 0.52, content: 0.74 }[k] || 1);
       api.live("deaths", pl.querySelector("b"));
-      pl.querySelector(".s12-it:nth-child(3)").remove(); // given just above
+      pl.querySelector(".s12-it:nth-child(3)").remove();
     },
 
     state: function (p, v) {
       var out = 1 - sm(0.56, 0.62, p);
       return {
-        sheet: null, // the Sheet at its smallest: the one point (draw)
+        sheet: null,
         open: sm(0, 0.05, p) * (1 - sm(0.1, 0.15, p)),
         point: sm(0.06, 0.12, p) * out,
         one: sm(0.15, 0.2, p) * (1 - sm(0.26, 0.31, p)),
@@ -78,21 +75,17 @@
     },
 
     render: function (st, api) {
-      for (var k in E) {
-        api.set(E[k], "opacity", st[k]);
-        api.set(E[k], "pointerEvents", st[k] > 0.5 ? "auto" : "none"); // links: taps once shown
-      }
+      for (var k in E) api.fade(E[k], st[k]);
     },
 
     draw: function (g, st, api) {
       var v = api.vp, o = at(v), px = g.getTransform().a, r = (v.phone ? 170 : 300) * v.k, b = g.createRadialGradient(o.x, o.y, 0, o.x, o.y, r);
       if (st.field > 0) {
-        if (!F || F.k != v.W + "x" + v.H) field(v); // made once, while the point holds still
+        if (!F || F.k != v.W + "x" + v.H) field(v);
         g.globalAlpha = st.field;
         g.imageSmoothingEnabled = px < F.q;
         g.drawImage(F.c, 0, 0, F.c.width / F.q, F.c.height / F.q);
       }
-      // bloom (open decision 5), then the point as the live site draws it
       b.addColorStop(0, "rgba(255,255,255,.085)");
       b.addColorStop(0.2, "rgba(255,255,255,.03)");
       b.addColorStop(0.7, "rgba(255,255,255,0)");

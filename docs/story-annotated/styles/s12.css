@@ -1,17 +1,18 @@
-/* S12 · one text axis (storyboard x 216, phone 32); --y/--py: top as a share of the screen. Links: taps follow the group (render), 44 px box */
+/* S12 · one text axis (storyboard x 216, phone 32); --y: top as a share of the screen; phone --py: from the bottom (text zone) or, with --pa:0, the top, at text scale. Links: taps follow the group (render), 44 px box */
 .s12{position:absolute;inset:0;--x:.15;--px:.0853;--f:20px;--s:11px;--o:20px}
 .story-phone .s12{--f:15px;--s:10px;--o:17px;--v:3.07em}
-.s12>*{position:absolute;left:calc(var(--W)*var(--x));top:calc(var(--H)*var(--y));width:calc(var(--k)*600px);font-size:calc(var(--k)*var(--f))}
-.s12-open{--y:.622;--py:.697}
-.s12-one{--y:.671;--py:.744}
-.s12-field{--y:.68;--py:.727}
-.s12-content{--y:.196;--py:.158}
-.s12-close{--y:.367;--py:.323;width:calc(var(--k)*900px)}
-.s12-ready{--y:.66;--py:.739;--x:.667}
+.s12>*{position:absolute;left:calc(var(--W)*var(--x));top:calc(var(--H)*var(--y));width:calc(var(--kt)*600px);font-size:calc(var(--kt)*var(--f))}
+.s12-open{--y:.622;--py:-246.036px}
+.s12-one{--y:.671;--py:-207.872px}
+.s12-field{--y:.68;--py:-221.676px}
+.s12-content{--y:.196;--pa:0;--py:128.296px}
+.s12-close{--y:.367;--pa:0;--py:262.276px;width:calc(var(--kt)*900px)}
+.s12-ready{--y:.66;--py:-211.932px;--x:.667}
 .s12-one,.s12-ready{--f:var(--o)}
-.story-phone .s12>*{--x:var(--px);--y:var(--py);width:calc(var(--k)*311px)}
+.story-phone .s12>*{--x:var(--px);top:calc(var(--H)*var(--pa,1) + var(--kt)*var(--py));width:calc(var(--kt)*311px)}
+.story-short .s12-content{--py:40px}
 .s12 p{margin:0;font-size:inherit}
-.s12 .t-label,.s12 .t-src{font-size:calc(var(--k)*var(--s))}
+.s12 .t-label,.s12 .t-src{font-size:calc(var(--kt)*var(--s))}
 .s12 .s12-ol{margin-top:.5em;font-size:1.4em;line-height:1.42}
 .s12 .s12-cl{font-size:1.7em;line-height:1.34;white-space:pre-line}
 .s12 .s12-l p{line-height:1.8}

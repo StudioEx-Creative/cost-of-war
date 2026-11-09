@@ -1,0 +1,8 @@
+/* S13 · storyboard px in .sb-box boxes; the tab's words ride the tilted paper */
+.s13-b, .s13-p span + span { color: var(--blue); }
+.s13-r { border-top: 1px solid #fff; }
+.s13-h { line-height: 1.45; }
+.s13-h span + span { font-weight: 600; color: #fff; }
+.s13-h span + span + span { font-weight: 400; color: inherit; }
+.s13-t { white-space: nowrap; }
+.plate .s13-p { font: 400 clamp(32px, 6vw, 64px)/.92 var(--f-display); text-transform: uppercase; color: #fff; }

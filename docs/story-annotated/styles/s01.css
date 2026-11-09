@@ -2,8 +2,8 @@
 .s01 > * { position: absolute; margin: 0; white-space: nowrap; }
 .s01-b { white-space: nowrap; }
 .s01-w { position: absolute; inset: 0; overflow: hidden; }
-.s01-g { font-family: var(--f-mono); font-weight: 400; color: var(--grey); } /* second reading */
+.s01-g { font-family: var(--f-mono); font-weight: 400; color: var(--grey); }
 .s01-r { border-top: 1px solid rgba(255, 255, 255, 0.3); }
-.s01-a { display: inline-block; padding: calc(22px / var(--k) - .7em) 0; margin: calc(.7em - 22px / var(--k)) 0; color: var(--grey); text-decoration: none; } /* 44 px tap box */
+.s01-a { display: inline-block; padding: calc(22px / var(--s) - .7em) 0; margin: calc(.7em - 22px / var(--s)) 0; color: var(--grey); text-decoration: none; }
 .s01-t { margin: 0 0 16px; font: 400 clamp(32px, 5vw, 56px) / 0.92 var(--f-display); text-transform: uppercase; }
 .plate .s01-pb { margin: 0 0 20px; font: 400 min(14vw, 180px) / 0.9 var(--f-display); color: var(--white); }

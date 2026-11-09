@@ -1,4 +1,0 @@
-/* GAP · prototype scaffolding (removed in phase 3). Phone: in the text box under the black visual. */
-.gap-note { position: absolute; left: 16px; right: 16px; top: 50%; margin-top: -8px; text-align: center; }
-.story-phone .gap-note { top: calc(var(--H) * 600 / 812); }
-.plate .gap-plate { color: var(--grey); }

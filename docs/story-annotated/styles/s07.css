@@ -1,0 +1,11 @@
+/* S07 · storyboard px (scaled by the engine) */
+.s07-n span + span, .story-phone .s07-v { color: var(--grey); }
+.s07-r { border-top: 1px solid rgba(255, 255, 255, .32); }
+.s07-a { display: inline-block; min-width: calc(44px / var(--s)); padding: calc(22px / var(--s) - .7em) 0; margin: calc(.7em - 22px / var(--s)) 0; color: var(--grey); text-decoration: none; }
+.s07-b { width: 18px; line-height: 16px; border: 1px solid rgba(255, 255, 255, .7); text-align: center; letter-spacing: 0; }
+.story-phone .s07-b { width: auto; border: 0; }
+.s07-v span + span { margin-left: .6em; font: 600 1.73em/1 var(--f-sans); letter-spacing: 0; color: var(--white); }
+.story-phone .s07-v span + span { font-size: 1.5em; }
+.s07-k, .s07-c { padding: 1px 6px; background: var(--white); color: var(--ground); letter-spacing: .1em; }
+.s07-c { padding: 0 3px; border: 1px solid rgba(255, 255, 255, .7); background: var(--ground); color: var(--white); letter-spacing: 0; }
+.plate .s07-pf { margin: -8px 0 12px; font: 400 32px/1 var(--f-display); color: var(--white); }

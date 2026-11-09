@@ -1,0 +1,16 @@
+/* S09 · Gaza. Storyboard px: desktop 1440×900, phone 375×812 */
+.s09-yr { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: min(calc(var(--k) * 340px), 180px); }
+.s09-gh { font-size: min(calc(var(--k) * 250px), 132.353px); color: var(--grey); }
+.s09-kick, .s09-txt { position: absolute; left: calc(var(--W) / 12); top: calc(var(--H) * 96 / 900); margin: 0; }
+.s09-txt { top: calc(var(--H) * 530 / 900 + var(--k) * 76px); width: calc(var(--k) * 500px); }
+.s09-p { margin: 0; }
+.s09-p b { font-weight: 600; color: var(--white); }
+.s09-src { display: inline-flex; align-items: center; min-height: 44px; margin-top: 10px; text-decoration: none; }
+.story-phone .s09-yr { font-size: min(calc(var(--kt) * 132px), 180px); }
+.story-phone .s09-gh { font-size: min(calc(var(--kt) * 84px), 114.545px); }
+.story-phone .s09-kick, .story-phone .s09-txt { left: calc(var(--kt) * 16px); right: calc(var(--kt) * 16px); width: auto; top: calc(var(--kt) * 64px); font-size: calc(var(--kt) * 10px); }
+.story-phone .s09-txt { top: calc(var(--H) - var(--kt) * 240px); }
+.story-phone .s09-p { position: relative; font-size: calc(var(--kt) * 16px); }
+.story-phone .s09-p > span { display: block; }
+.story-phone .s09-p > .s09-lead { position: absolute; left: 0; right: 0; top: 0; text-wrap: balance; }
+.story-phone .s09-src { margin-top: calc(var(--kt) * 18px); font-size: calc(var(--kt) * 11px); }

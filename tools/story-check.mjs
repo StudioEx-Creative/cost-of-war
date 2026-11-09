@@ -15,14 +15,19 @@
 //   node tools/story-check.mjs --url tools/fixtures/mock-story.html?break=reverse
 //
 // Checks (names for --only): shots (also runs trace and colour), reverse, deeplink,
-// static, fit, flash, perf, size, lint. "trace" is accepted as another name for shots.
-// fit: real screen sizes (a phone with its browser bars, small and narrow phones, a phone
-// turned sideways, 200% zoom, a large desktop): every storyboard frame keeps its text on
+// static, fit, flash, perf, length, size, lint. "trace" is accepted as another name for shots.
+// shots also fails a scene that leaves out a frame its storyboard has (storyboard/frames).
+// trace accepts Story.missing() figures as tagged and lists them as "needs a data.js field".
+// fit: real screen sizes (a phone with its browser bars, small and narrow phones, iPads held
+// upright, a phone turned sideways, 200% zoom, a large desktop): every storyboard frame keeps its text on
 // screen (nothing cut that is not also cut at the reference size), taps stay 44 px, and a
-// stage under 560 px tall shows the still plates instead. flash: scrolls the whole story at a
+// stage under 560 px tall shows the still plates instead. Phones (320 × 568 and up) also get
+// the short-phone text rule: no visible stage text smaller than its size at 375 × 812 × W/375
+// (0.5 px allowed for rounding). length: S00–S12 last at most 18 screens on desktop, and the
+// phone story is never longer than the desktop one. flash: scrolls the whole story at a
 // steady speed and counts where a quarter or more of a 10° field (341 × 256 px) changes
 // in a pair of opposing changes (a flash) of 10% or more; more than 3 flashes in any one
-// second fails (WCAG 2.3.1). It scrolls at 1 screen a second (2 with --quick).
+// second fails (WCAG 2.3.1). It scrolls at 1 screen a second (2 with --quick), and at 2 a second at 1920 × 1080.
 // Every page load also checks console errors, sideways overflow and rung areas, and on
 // the phone view tap targets (every visible link or button at least 44 × 44 px).
 // reverse also scrolls a few positions for real (no goto) and compares with goto(), and
@@ -69,9 +74,12 @@ const VIEWS = {
   desktop: { w: 1440, h: 900, dpr: 1, mobile: false },
   phone: { w: 375, h: 812, dpr: 2, mobile: true },
 };
-const PAGE_CHECKS = ["shots", "reverse", "deeplink", "static", "fit", "flash", "perf"];
+const PAGE_CHECKS = ["shots", "reverse", "deeplink", "static", "fit", "flash", "perf", "length"];
 const CODE_CHECKS = ["size", "lint"];
-const SIZE_BUDGET = 36 * 1024; // prototype budget: engine ≈20 KB + five scenes ≈3 KB each (the brief's 60 KB covers the full story)
+const SIZE_BUDGET = 60 * 1024; // the brief's limit for all story code (js/story/**, css/story*.css, css/story/**)
+// Each scene's share of it, script + style gzipped (phase 3 spec, "Size and length"): noted, not failed.
+const SHARES = { engine: 16.5, s00: 4.1, s01: 3.8, s02: 4.0, s03: 2.6, s04: 2.8, s05: 3.4, s06: 2.6, s07: 3.6, s08: 2.4, s09: 3.5, s10: 2.8, s11: 2.2, s12: 3.7, s13: 1.5 };
+const STORY_SCREENS = 18; // brief §7: hero to handover (S00–S12) at most 18 screens on desktop
 const RUNG_LIMIT_PCT = 2; // rung area may be off by at most 2%
 const OFF_BRAND_LIMIT = 0.2; // % of a frame, same threshold as storyboard/tools/render.mjs
 
@@ -206,6 +214,9 @@ function startServer() {
 /* ══ Chrome over the DevTools protocol (plumbing from storyboard/tools/render.mjs) ══ */
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// STORY_CHECK_PATIENCE=4 waits four times longer before calling a step stuck, for a computer short of
+// memory. It only changes how long a step may take: no check gets easier to pass.
+const PATIENCE = Number(process.env.STORY_CHECK_PATIENCE) || 1;
 // Two browsers are used:
 //  - the check browser draws 2D canvas in software. On the GPU, Chrome moves a canvas to
 //    software after a few getImageData() calls, and the pixels shift slightly when it does,
@@ -244,12 +255,14 @@ async function startChrome({ softwareCanvas }) {
   };
   // Every command has a time limit so a stuck page fails a check instead of hanging the run.
   const send = (method, params = {}, ms = 60000) => new Promise((res, rej) => {
+    ms *= PATIENCE;
     const id = ++seq;
     const t = setTimeout(() => { pending.delete(id); rej(new Error(`${method} took longer than ${ms / 1000} s`)); }, ms);
     pending.set(id, { res: (v) => { clearTimeout(t); res(v); }, rej: (e) => { clearTimeout(t); rej(e); } });
     ws.send(JSON.stringify({ id, method, params }));
   });
   const waitEvent = (name, ms = 45000) => new Promise((res, rej) => {
+    ms *= PATIENCE;
     const t = setTimeout(() => { listeners.delete(l); rej(new Error(`no ${name} within ${ms / 1000} s`)); }, ms);
     const l = (m) => { if (m.method === name) { clearTimeout(t); listeners.delete(l); res(m.params); } };
     listeners.add(l);
@@ -712,16 +725,29 @@ async function checkShots(view) {
       count++;
     }
   }
-  record("shots", view, "pass", `${count} frames saved to ${rel(OUT)}`);
+  // Every frame the storyboard drew (storyboard/frames/<ID>-<k>-<view>.png, not the plate or the
+  // alternatives) must be one of the scene's frames, so each one is shot and compared.
+  const sbFiles = fs.existsSync(STORYBOARD_FRAMES) ? fs.readdirSync(STORYBOARD_FRAMES) : [];
+  const lacking = [];
+  for (const sc of scenes) {
+    const want = sbFiles.map((f) => new RegExp(`^${sc.id}-([a-z]+)-${view}\\.png$`).exec(f)).filter(Boolean).map((m) => m[1]).filter((k) => k !== "plate");
+    for (const k of want) if (!(sc.frames || []).some((f) => f.k === k)) lacking.push(`${sc.id} has no "${k}" frame (storyboard/frames/${sc.id}-${k}-${view}.png)`);
+  }
+  record("shots", view, lacking.length ? "fail" : "pass", lacking.length ? `${lacking.length} storyboard frame(s) missing from the scenes` : `${count} frames saved to ${rel(OUT)} · every storyboard frame covered`, lacking);
   const worstOff = Math.max(0, ...report.shots.filter((x) => x.view === view).map((x) => x.shares.off));
   record("colour", view, colourFails.length ? "fail" : "pass", colourFails.length ? `${colourFails.length} frame(s) off the colour rules` : `on brand (worst off-brand ${worstOff}%)`, [...colourFails, ...colourNotes.map((n) => "note: " + n)]);
   const bad = [...untagged.values()];
+  // The review notes (js/story-debug/flags.js): readers never load them, the harness does, so the report lists them.
+  await inPage(() => window.__reviewNotes || (window.__reviewNotes = new Promise((r) => { const s = document.createElement("script"); s.src = "js/story-debug/flags.js"; s.onload = () => r(1); s.onerror = () => r(0); document.head.appendChild(s); })));
   // Read the flags again now: some are raised only while a frame renders (S09's derived years).
   const flags = await inPage(() => JSON.parse(JSON.stringify(window.Story.debug.flags || [])));
   const flagNotes = flags.map((f) => "flag: " + (f.kind ? f.kind + ": " : "") + (f.text || f.why || JSON.stringify(f)));
   report.flags = flags;
+  // Story.missing(): a figure the live site prints that js/data.js lacks. Tagged (data-src
+  // "missing"), so trace accepts it, and always listed: each one needs a data.js field.
+  const missing = flags.filter((f) => f.kind === "missing");
   record("trace", view, bad.length ? "fail" : "pass",
-    bad.length ? `${bad.length} visible number(s) without data-src` : `every visible number is tagged · ${flags.length} flag(s) for approval`,
+    (bad.length ? `${bad.length} visible number(s) without data-src` : `every visible number is tagged · ${flags.length} flag(s) for approval`) + (missing.length ? ` · ${missing.length} figure(s) need a data.js field` : ""),
     [...bad.map((b) => `untagged "${b.text}" in ${b.where} (${b.frames.join(", ")})`), ...flagNotes], { untagged: bad, flags });
 }
 
@@ -773,6 +799,9 @@ async function checkDeeplink(view) {
   const info = await inPage(pageInfo);
   const scenes = pickScenes(info.scenes);
   const problems = [];
+  // Nothing in the stage may take keyboard focus (hard rule): plates carry the real links.
+  const tabbable = await inPage(() => Array.from(document.querySelectorAll(".story-stage *")).filter((e) => e.tabIndex >= 0).map((e) => (e.textContent || e.tagName).trim().slice(0, 40)));
+  for (const t of tabbable) problems.push(`tabbable element inside the stage: "${t}"`);
   // Every scene needs its own anchor (#s00, #s01 …).
   for (const sc of scenes) if (!info.anchors.some((a) => a.id === sc.id.toLowerCase())) problems.push(`no #${sc.id.toLowerCase()} anchor for ${sc.id}`);
   const anchors = info.anchors.filter((a) => inSelected(scenes, a.s));
@@ -799,7 +828,7 @@ async function checkDeeplink(view) {
     const tab = await pressTab();
     const sc = info.scenes.find((x) => x.id === tab.scene);
     if (!sc) problems.push(`#${a.id}: the first Tab focused something outside the plates (${tab.what})`);
-    else if (sc.start < a.s - 1e-6) problems.push(`#${a.id}: the first Tab jumped back to ${sc.id} ("${tab.what}")`);
+    else if (sc.start < info.scenes.filter((x) => x.start <= a.s + 1e-6).pop().start - 1e-6) problems.push(`#${a.id}: the first Tab jumped back to ${sc.id} ("${tab.what}")`);
   }
   // Reload at a few positions away from scene edges.
   const picks = (opts.quick ? [0.38, 0.87] : [0.13, 0.38, 0.62, 0.87]).map((f) => round(info.total * f, 3)).filter((s) => inSelected(scenes, s));
@@ -829,6 +858,7 @@ async function checkDeeplink(view) {
   // scene that was on screen.
   const sizes = VIEWS[view].mobile
     ? [{ w: 414, h: 812, at: 0.31, why: "width 375 → 414" }, { w: 375, h: 700, at: 0.31, why: "100svh 812 → 700" }, { w: 390, h: 664, at: 1, why: "at the end, 812 → 664" },
+      { w: 768, h: 1024, at: 0.31, why: "phone → iPad held upright" }, { w: 1024, h: 768, at: 0.31, why: "phone → iPad on its side (desktop layout)" },
       { w: 812, h: 375, at: 0.62, still: true, why: "turned sideways" }]
     : [{ w: 1200, h: 800, at: 0.31, why: "window 1440×900 → 1200×800" }, { w: 1280, h: 720, at: 0.9, why: "late, 1440×900 → 1280×720" }, { w: 1440, h: 1000, at: 1, why: "at the end, taller" },
       { w: 1440, h: 1000, at: "below", why: "at #haveyoursay, taller" }, { w: 720, h: 450, at: 0.62, still: true, why: "200% zoom" }];
@@ -942,10 +972,21 @@ async function checkStatic(view, motionOK) {
 
 /* ══ Check: fit (real screen sizes) ═════════════════════════════════ */
 
-// Stage text that is less than 90% on screen (visible layers, opacity ≥ 0.5).
+// Stage text that is less than 90% on screen (visible layers, opacity ≥ 0.5). Text that a scene's
+// own window crops (an inset clip-path on an ancestor, e.g. S00's paper inside the phone's visual
+// band) is cropped by design, not by the screen edge: it is skipped.
 function pageCut() {
   const out = [], vw = innerWidth, vh = innerHeight, stage = document.querySelector(".story-stage");
   if (!stage) return out;
+  const clipped = (n, b) => {
+    for (let e = n.parentElement; e && e !== stage; e = e.parentElement) {
+      const m = /^inset\(([^)]*)\)/.exec(getComputedStyle(e).clipPath);
+      if (!m) continue;
+      const [t, r = t, bo = t, l = r] = m[1].trim().split(/\s+/).map(parseFloat), R = e.getBoundingClientRect();
+      if (b.top < R.top + t - 0.5 || b.bottom > R.bottom - bo + 0.5 || b.left < R.left + l - 0.5 || b.right > R.right - r + 0.5) return true;
+    }
+    return false;
+  };
   for (const layer of stage.querySelectorAll(".scene-layer")) {
     if (layer.style.visibility !== "visible") continue;
     const w = document.createTreeWalker(layer, NodeFilter.SHOW_TEXT);
@@ -958,22 +999,74 @@ function pageCut() {
       const r = document.createRange();
       r.selectNodeContents(n);
       const b = r.getBoundingClientRect();
-      if (b.width < 1 || b.height < 1) continue;
+      if (b.width < 1 || b.height < 1 || clipped(n, b)) continue;
       const vis = (Math.max(0, Math.min(vw, b.right) - Math.max(0, b.left)) * Math.max(0, Math.min(vh, b.bottom) - Math.max(0, b.top))) / (b.width * b.height);
       if (vis < 0.9) out.push(t.slice(0, 40));
     }
   }
   return out;
 }
+// Effective size (px on screen) of every stage text with a box: computed font size × the local
+// scale of everything that transforms it (CSS transforms, the 3D paper, SVG groups). The scale is
+// read from three zero-size probes put in the text's element (its static position, then 100 px
+// right and 100 px down in its own coordinates). Key: layer, text, occurrence. Live counters skipped.
+function pageTextSizes() {
+  const stage = document.querySelector(".story-stage"), out = {}, seen = {}, items = [];
+  if (!stage) return out;
+  const W = innerWidth, H = innerHeight;
+  const w = document.createTreeWalker(stage, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) {
+    const t = n.nodeValue.replace(/\s+/g, " ").trim(), el = n.parentElement;
+    if (!t || !el || el.closest("defs, title, desc, [data-src=live]")) continue;
+    let o = 1;
+    for (let e = el; e && e !== stage; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === "none") { o = 0; break; } o *= +cs.opacity; }
+    if (getComputedStyle(el).visibility === "hidden") o = 0;
+    const r = document.createRange();
+    r.selectNodeContents(n);
+    const b = r.getBoundingClientRect();
+    if (b.width < 1 || b.height < 1) continue;
+    let on = o >= 0.05 && b.right > 0 && b.bottom > 0 && b.left < W && b.top < H;
+    for (let e = el; on && e !== stage; e = e.parentElement) { // hidden by a scene's own window (inset clip-path)
+      const m = /^inset\(([^)]*)\)/.exec(getComputedStyle(e).clipPath);
+      if (!m) continue;
+      const [ct, cr = ct, cb = ct, cl = cr] = m[1].trim().split(/\s+/).map(parseFloat), R = e.getBoundingClientRect();
+      if (b.bottom <= R.top + ct || b.top >= R.bottom - cb || b.right <= R.left + cl || b.left >= R.right - cr) on = false;
+    }
+    const layer = el.closest("[data-scene]"), key0 = (layer ? layer.getAttribute("data-scene") : el.closest(".story-chrome") ? "chrome" : "stage") + "|" + t;
+    seen[key0] = (seen[key0] || 0) + 1;
+    items.push({ key: key0 + "|" + seen[key0], el, t, on, fs: parseFloat(getComputedStyle(el).fontSize) });
+  }
+  const P = [];
+  for (const it of items) {
+    if (it.el instanceof SVGElement) { const m = it.el.getScreenCTM(); it.s = m ? Math.sqrt(Math.abs(m.a * m.d - m.b * m.c)) : 1; continue; }
+    if (!it.el._pr) {
+      it.el._pr = ["", "translate(100px,0)", "translate(0,100px)"].map((tf) => {
+        const i = document.createElement("i");
+        i.style.cssText = "position:absolute;width:0;height:0;margin:0;padding:0;border:0;transform:" + (tf || "none");
+        it.el.appendChild(i);
+        P.push(i);
+        return i;
+      });
+    }
+    it.pr = it.el._pr;
+  }
+  for (const it of items) if (it.pr) {
+    const q = it.pr.map((i) => i.getBoundingClientRect()), ax = (q[1].left - q[0].left) / 100, ay = (q[1].top - q[0].top) / 100, bx = (q[2].left - q[0].left) / 100, by = (q[2].top - q[0].top) / 100;
+    it.s = Math.sqrt(Math.abs(ax * by - ay * bx));
+  }
+  for (const i of P) { delete i.parentNode._pr; i.remove(); }
+  for (const it of items) out[it.key] = { t: it.t.slice(0, 40), on: it.on, px: Math.round(it.fs * it.s * 100) / 100 };
+  return out;
+}
 const FIT = {
-  phone: [{ w: 375, h: 812, ref: true }, { w: 390, h: 664, why: "iPhone with Safari's bars" }, { w: 375, h: 667, why: "iPhone SE" }, { w: 360, h: 640, why: "Android" }, { w: 320, h: 568, why: "small phone" },
+  phone: [{ w: 375, h: 812, ref: true }, { w: 390, h: 664, why: "iPhone with Safari's bars" }, { w: 375, h: 667, why: "iPhone SE" }, { w: 360, h: 640, why: "Android" }, { w: 320, h: 568, why: "small phone" }, { w: 414, h: 896, why: "large phone" }, { w: 360, h: 740, why: "common Android" }, { w: 390, h: 600, why: "short, wide phone window" }, { w: 414, h: 622, why: "iPhone Plus with Safari's bars" }, { w: 540, h: 810, tablet: true, why: "iPad in half-screen" }, { w: 500, h: 700, tablet: true, why: "narrow desktop window" }, { w: 768, h: 1024, tablet: true, why: "iPad held upright" }, { w: 820, h: 1180, tablet: true, why: "larger iPad held upright" },
     { w: 375, h: 548, still: true, why: "iPhone SE with Safari's bars" }, { w: 667, h: 375, still: true, why: "phone turned sideways" }],
   desktop: [{ w: 1440, h: 900, ref: true }, { w: 1920, h: 1080, why: "large desktop" }, { w: 1024, h: 640, why: "small laptop window" },
     { w: 720, h: 450, still: true, why: "200% zoom" }, { w: 844, h: 390, still: true, why: "phone turned sideways (wide)" }],
 };
 async function checkFit(view) {
-  const problems = [], notes = [];
-  let ref = null, frames = 0;
+  const problems = [], notes = [], refSizes = {}, small = new Map(), unmatched = new Set();
+  let ref = null, frames = 0, textChecked = 0;
   try {
     for (const z of FIT[view]) {
       await setView(view, null, z);
@@ -987,12 +1080,26 @@ async function checkFit(view) {
         continue;
       }
       if (mode !== "motion") { problems.push(`${tag}: "${mode}" mode, expected the moving story`); continue; }
-      const info = await inPage(pageInfo);
+      const info = await inPage(pageInfo), kt = await inPage(() => window.Story.debug.vp().kt); // W/375 on a phone; an upright tablet draws a narrower column
       const cut = new Map(), taps = new Map();
       for (const sc of pickScenes(info.scenes)) for (const f of sc.frames || []) {
         await gotoSnap(frameS(sc, f, info.total, info.H));
         frames++;
         for (const t of await inPage(pageCut)) if (!cut.has(`${sc.id}-${f.k}|${t}`)) cut.set(`${sc.id}-${f.k}|${t}`, `${sc.id}-${f.k}: "${t}"`);
+        // phones: the short-phone text rule against the same frame at 375 × 812
+        if (VIEWS[view].mobile) {
+          const sz = await inPage(pageTextSizes), name = `${sc.id}-${f.k}`;
+          if (z.ref) refSizes[name] = sz;
+          else if (refSizes[name]) for (const [k, x] of Object.entries(sz)) {
+            const r = refSizes[name][k];
+            if (!x.on) continue;
+            textChecked++;
+            if (!r) { unmatched.add(`${name} "${x.t}"`); continue; }
+            if (z.tablet && r.px * kt > 60) continue; // the rule guards small text; S09's year is capped at 180 px for the flash rule
+            const need = r.px * kt - 0.5;
+            if (x.px < need) small.set(`${tag}|${name}|${k}`, `${tag} ${name}: "${x.t}" is ${x.px} px, needs ${round(need + 0.5, 2)} (${r.px} px at 375 × 812 × ${round(kt, 3)})`);
+          }
+        }
         const h = await inPage(pageHealth);
         if (VIEWS[view].mobile) for (const t of h.taps) taps.set(t.text, `${sc.id}-${f.k}: "${t.text}" is ${t.w}×${t.h} px`);
         if (h.sw > h.cw) problems.push(`${tag} ${sc.id}-${f.k}: the page scrolls sideways`);
@@ -1002,8 +1109,10 @@ async function checkFit(view) {
       for (const v of taps.values()) problems.push(`${tag} ${v} (under 44 px)`);
     }
   } finally { await navigate("about:blank"); await setView(view); }
+  problems.push(...small.values());
+  if (VIEWS[view].mobile) notes.push(`note: short-phone text rule: ${textChecked} visible texts compared with 375 × 812, ${small.size} too small` + (unmatched.size ? `, ${unmatched.size} with no match at 375 × 812 (not judged): ${[...unmatched].slice(0, 6).join(", ")}` : ""));
   record("fit", view, problems.length ? "fail" : "pass",
-    problems.length ? `${problems.length} problem(s) at real screen sizes` : `${FIT[view].length - 1} other sizes: text on screen, taps ≥ 44 px, still plates under 560 px tall (${frames} frames)`,
+    problems.length ? `${problems.length} problem(s) at real screen sizes` : `${FIT[view].length - 1} other sizes: text on screen, taps ≥ 44 px, still plates under 560 px tall` + (VIEWS[view].mobile ? ", no text under its 375 × 812 size × W/375" : "") + ` (${frames} frames)`,
     [...problems, ...notes]);
 }
 
@@ -1042,14 +1151,16 @@ function flashTracker(w, h, sc) {
   };
 }
 async function checkFlash(view) {
-  const sizes = view === "desktop" ? [{ w: 1440, h: 900 }, { w: 1920, h: 1080 }] : [{ w: 375, h: 812 }];
-  const SPEED = opts.quick ? 2 : 1, FPS = 60, SC = 0.5, problems = [], notes = [];
+  // 1 screen a second everywhere, plus an ordinary flick (2 a second) on the biggest screen, where type is largest.
+  const sizes = view === "desktop" ? [{ w: 1440, h: 900 }, { w: 1920, h: 1080 }, { w: 1920, h: 1080, speed: 2 }] : [{ w: 375, h: 812 }];
+  const BASE = opts.quick ? 2 : 1, FPS = 60, SC = 0.5, problems = [], notes = [];
   try {
     for (const z of sizes) {
       await setView(view, null, z);
       await load(pageURL());
       const info = await inPage(pageInfo);
       const v = { ...VIEWS[view], ...z };
+      const SPEED = z.speed || BASE;
       let prev = null, step = null, worst = 0, at = null, n = 0;
       for (let s = 0; s <= info.total + 1e-9; s += SPEED / FPS, n++) {
         await inPage(pageGoto, Math.min(s, info.total), 5000);
@@ -1063,13 +1174,30 @@ async function checkFlash(view) {
         }
         prev = cur;
       }
-      const tag = `${z.w}×${z.h}`;
+      const tag = `${z.w}×${z.h} at ${SPEED} screen(s) a second`;
       notes.push(`note: ${tag}: at most ${worst} flash(es) in any one second` + (at ? ` (around s ${at.s}, ${at.scene})` : ""));
       if (worst > 3) problems.push(`${tag}: ${worst} flashes within one second around s ${at.s} (${at.scene}); at most 3`);
     }
   } finally { await setView(view); }
   record("flash", view, problems.length ? "fail" : "pass",
-    problems.length ? `${problems.length} size(s) flash more than 3 times a second` : `a steady scroll at ${SPEED} screen(s) a second: never more than 3 flashes in one second`, [...problems, ...notes]);
+    problems.length ? `${problems.length} size(s) flash more than 3 times a second` : `steady scrolls at ${sizes.map((z) => `${z.w}×${z.h} (${z.speed || BASE}/s)`).join(", ")}: never more than 3 flashes in one second`, [...problems, ...notes]);
+}
+
+/* ══ Check: length (brief §7, §11) ═════════════════════════════════ */
+
+// Hero to handover (S00–S12) at most 18 screens on desktop; the phone story never longer.
+async function checkLength(view) {
+  await load(pageURL());
+  const info = await inPage(pageInfo);
+  const upTo = info.scenes.filter((sc) => /^S(0\d|1[0-2])$/.test(sc.id));
+  const story = round(upTo.reduce((a, sc) => a + sc.screens, 0), 3);
+  (report.length ||= {})[view] = { s00ToS12: story, total: info.total, scenes: info.scenes.map((sc) => `${sc.id} ${sc.screens}`) };
+  const problems = [];
+  if (story > STORY_SCREENS + 1e-9) problems.push(`S00–S12 last ${story} screens; at most ${STORY_SCREENS}`);
+  const desk = report.length.desktop;
+  if (view !== "desktop" && desk && info.total > desk.total + 1e-9) problems.push(`the ${view} story is ${info.total} screens, longer than desktop (${desk.total})`);
+  record("length", view, problems.length ? "fail" : "pass", problems.length ? problems.join("; ") : `S00–S12 ${story} of ${STORY_SCREENS} screens · whole story ${info.total}` + (desk && view !== "desktop" ? ` (desktop ${desk.total})` : ""),
+    [`note: ${upTo.map((sc) => `${sc.id} ${sc.screens}`).join(" · ")}`]);
 }
 
 /* ══ Check: perf ════════════════════════════════════════════════════ */
@@ -1181,22 +1309,34 @@ function storyFiles(base) {
 function checkSize() {
   const files = storyFiles(opts.code);
   if (!files.length) return record("size", null, "fail", `no story code found under ${rel(opts.code)} (js/story, css/story*)`);
-  const rows = files.map((f) => {
-    const buf = fs.readFileSync(f);
-    return { file: rel(f), bytes: buf.length, gzip: zlib.gzipSync(buf).length }; // zlib default level, as a server would send it
-  });
+  const gz = (f) => { const buf = fs.readFileSync(f); return { file: rel(f), bytes: buf.length, gzip: zlib.gzipSync(buf).length }; }; // zlib default level, as a server would send it
+  const rows = files.map(gz);
   const total = rows.reduce((a, r) => a + r.gzip, 0);
-  report.sizes = { files: rows, totalGzip: total, budget: SIZE_BUDGET };
   const kb = (b) => (b / 1024).toFixed(1) + " KB";
-  // Per scene (script + style): the full story's 60 KB leaves about 3.1 KB a scene once the
-  // engine is counted (two-screen scenes like S02 about 4 KB). Noted, not failed, in phase 2.
+  // Per scene (script + style) against its share; the engine, base styles and boot as one.
   const per = {};
-  for (const r of rows) { const m = /(?:scenes|story)\/(s\d+|gap)\.(?:js|css)$/.exec(r.file); if (m) per[m[1]] = (per[m[1]] || 0) + r.gzip; }
-  const share = (id) => (id === "s02" ? 4 * 1024 : 3.1 * 1024);
-  const perNotes = Object.keys(per).sort().map((id) => `note: ${id.toUpperCase()} ${kb(per[id])} (script + style)` + (per[id] > share(id) ? ` · over its ≈${kb(share(id))} share` : ""));
-  report.sizes.scenes = per;
-  record("size", null, total > SIZE_BUDGET ? "fail" : "pass", `${kb(total)} gzipped of the ${kb(SIZE_BUDGET)} prototype budget (${rows.length} files)`,
-    [...perNotes, ...rows.sort((a, b) => b.gzip - a.gzip).map((r) => `${kb(r.gzip).padStart(8)}  ${r.file}`)]);
+  for (const r of rows) { const m = /(?:scenes|story)\/(s\d+)\.(?:js|css)$/.exec(r.file); const id = m ? m[1] : "engine"; per[id] = (per[id] || 0) + r.gzip; }
+  // One file for all scenes (js/story/scenes.js, css/story/scenes.css): each section, from its "/* Snn" header to the
+  // next, gzipped on its own (an estimate: together they compress better than this sum), the file's own share to "engine".
+  for (const r of rows) {
+    if (!/\/scenes\.(?:js|css)$/.test(r.file)) continue;
+    const src = fs.readFileSync(path.join(ROOT, r.file), "utf8"), cuts = [...src.matchAll(/^\/\* (S\d\d)\b/gm)];
+    per.engine -= r.gzip;
+    let used = 0;
+    cuts.forEach((c, i) => { const id = c[1].toLowerCase(), z = zlib.gzipSync(src.slice(c.index, i + 1 < cuts.length ? cuts[i + 1].index : undefined)).length; per[id] = (per[id] || 0) + z; used += z; });
+    per.engine += Math.max(0, r.gzip - used);
+  }
+  const perNotes = Object.keys(per).sort().map((id) => {
+    const share = SHARES[id] != null ? SHARES[id] * 1024 : null;
+    return `note: ${id === "engine" ? "engine + base" : id.toUpperCase()} ${kb(per[id])}` + (share ? (per[id] > share ? ` · over its ${kb(share)} share` : ` of its ${kb(share)} share`) : " (no share set)");
+  });
+  // Data and drawings are assets, reported apart (phase 3 spec): js/map/**, js/story-assets/**.
+  const base = opts.code;
+  const assets = [...walk(path.join(base, "js", "map"), (n) => n.endsWith(".js")), ...walk(path.join(base, "js", "story-assets"), () => true)].map(gz);
+  const assetNotes = assets.map((a) => `note: asset (not story code) ${kb(a.gzip).padStart(8)}  ${a.file}`);
+  report.sizes = { files: rows, totalGzip: total, budget: SIZE_BUDGET, scenes: per, shares: SHARES, assets };
+  record("size", null, total > SIZE_BUDGET ? "fail" : "pass", `${kb(total)} gzipped of the ${kb(SIZE_BUDGET)} budget (${rows.length} files, ${kb(SIZE_BUDGET - total)} left)`,
+    [...perNotes, ...assetNotes, ...rows.sort((a, b) => b.gzip - a.gzip).map((r) => `${kb(r.gzip).padStart(8)}  ${r.file}`)]);
 }
 
 /* ══ Check: lint ════════════════════════════════════════════════════ */
@@ -1289,7 +1429,7 @@ function checkLint() {
     // never use the clock, timers or tweens (live counters go through Story.live, the one
     // load reveal lives in the engine).
     if (!js) scan(/\btransition(?:-[a-z-]+)?\s*:|\banimation(?:-[a-z-]+)?\s*:|@keyframes\b/g, "fail", "CSS transition or animation (time-based motion)");
-    if (js && /[\\/]scenes[\\/]/.test(f)) scan(/\b(?:setTimeout|setInterval|requestAnimationFrame|Date\.now|performance\.now)\s*\(|\bgsap\s*\.\s*(?:to|from|fromTo|timeline|set|delayedCall)\b|\.animate\s*\(/g, "fail", "clock, timer or tween in a scene (state must come from scroll)");
+    if (js && /[\\/]scenes(?:[\\/]|\.js$)/.test(f)) scan(/\b(?:setTimeout|setInterval|requestAnimationFrame|Date\.now|performance\.now)\s*\(|\bgsap\s*\.\s*(?:to|from|fromTo|timeline|set|delayedCall)\b|\.animate\s*\(/g, "fail", "clock, timer or tween in a scene (state must come from scroll)");
     scan(/scroll-snap[\w-]*|scrollSnap\w*/g, "fail", "scroll-snap");
     scan(/scrub\s*:\s*-?\.?\d[\d.]*/g, "fail", "scrub with a number (smoothing)");
     // aria-live anywhere, except removeAttribute("aria-live"), which is the right thing to do.
@@ -1455,7 +1595,7 @@ async function main() {
         else if (!ready.goto || !ready.snapshot) why = "Story.debug has no " + (!ready.goto ? "goto()" : "snapshot()");
         const motionOK = !why;
         if (why) record("ready", view, "fail", why + "; only the static check can run");
-        const run = { shots: checkShots, reverse: checkReverse, deeplink: checkDeeplink, static: (v) => checkStatic(v, motionOK), fit: checkFit, flash: checkFlash, perf: checkPerf };
+        const run = { shots: checkShots, reverse: checkReverse, deeplink: checkDeeplink, static: (v) => checkStatic(v, motionOK), fit: checkFit, flash: checkFlash, perf: checkPerf, length: checkLength };
         for (const c of pageChecks) {
           if (!motionOK && c !== "static") { record(c, view, "skip", "skipped: the page is not ready for motion checks"); continue; }
           try { await run[c](view); }

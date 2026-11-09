@@ -2,34 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>The Cost of War · Story prototype</title>
+    <title>The Cost of War · Story preview</title>
     <meta name="robots" content="noindex" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <!-- no favicon file: an empty one stops a 404 in the console -->
     <link rel="icon" href="data:," />
-    <!-- Phase 2 prototype of the scroll rebuild. Not linked from the live site. -->
+    <!-- Phase 3 preview of the scroll rebuild: the full story, S00 to S13. Not linked from the live site. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap"
     />
-    <link rel="stylesheet" href="css/story.css?v=p2" />
-    <!-- one stylesheet per scene: scene authors only touch their own pair -->
-    <link rel="stylesheet" href="css/story/s00.css?v=p2" />
-    <link rel="stylesheet" href="css/story/s01.css?v=p2" />
-    <link rel="stylesheet" href="css/story/s02.css?v=p2" />
-    <link rel="stylesheet" href="css/story/gap.css?v=p2" />
-    <link rel="stylesheet" href="css/story/s09.css?v=p2" />
-    <link rel="stylesheet" href="css/story/s12.css?v=p2" />
+    <link rel="stylesheet" href="css/story.css?v=p3" />
+    <!-- every scene's styles, one section per scene -->
+    <link rel="stylesheet" href="css/story/scenes.css?v=p3" />
     <style>
-      /* "Read as text": the still plates, for anyone who zooms or prefers no motion. Visible on
-         the hero (where the chrome shows no file label), scrolls away with the page. New: in
-         phase 3 this moves into css/story.css. */
-      .read-text { position: absolute; left: 40px; top: 12px; z-index: 50; display: inline-flex; align-items: center; min-height: 44px; color: var(--white); font: 500 11px/1 var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; text-decoration: none; }
-      .story-phone .read-text { left: 16px; top: 2px; font-size: 10px; }
-      .story-static .read-text { display: none; }
-      /* prototype end section (#haveyoursay): scaffolding, not story code */
+      /* preview end section (#haveyoursay): scaffolding, not story code (phase 4: the tools) */
       /* a full screen tall, like the tools that will follow: #haveyoursay lands at the top,
          and the story can scroll fully off screen (its renders and counters then pause) */
       .proto-end { max-width: 1120px; min-height: 100vh; min-height: 100svh; margin: 0 auto; padding: 96px 40px 120px; box-sizing: border-box; border-top: 1px solid var(--rule); }
@@ -51,20 +40,19 @@
 
     <!-- The story. The engine builds the stage, the deep-link anchors and the
          reading-order plates in here (see js/story/README.md). -->
-    <main id="story" class="story" aria-label="The Cost of War, story prototype"></main>
+    <main id="story" class="story" aria-label="The Cost of War, the story"></main>
 
-    <!-- Prototype end. The real handover (S13) and the tools come in later phases. -->
+    <!-- Preview end. The tools (phase 4) start here; the story's last scene (S13) hands over to them. -->
     <section id="haveyoursay" class="proto-end" tabindex="-1" aria-labelledby="proto-end-title">
-      <p class="t-label">Phase 2 prototype · end</p>
+      <p class="t-label">Story preview · end</p>
       <h2 id="proto-end-title">Have your say</h2>
       <p>
-        This is the Phase 2 story prototype of the scroll rebuild. It shows the
-        opening scenes (S00 to S02), Gaza (S09) and the human impact (S12) only.
+        This is the phase 3 preview of the scroll rebuild: the whole story, from
+        the hero (S00) to the handover (S13).
       </p>
       <p>
-        Scenes S03 to S08, S10, S11 and the handover S13 come in later phases,
-        and so do the tools: redistribution, your country, the letter, the
-        coalition, the Archive and the shareable card.
+        The tools come in phase 4: redistribution, your country, the letter, the
+        coalition, the Archive and the shareable card. They will start here.
       </p>
       <p>
         <a href="https://studioex-creative.github.io/cost-of-war/">Open the live site ↗</a>
@@ -72,21 +60,18 @@
       <p class="credit t-src">An artwork by Blueprint · Produced by StudioEX · Blueprint × StudioEX</p>
     </section>
 
-    <!-- Figures first: js/data.js is the only home for numbers -->
-    <script src="js/data.js?v=p2"></script>
+    <!-- Figures first: js/data.js is the only home for figures -->
+    <script src="js/data.js?v=p3"></script>
     <!-- Same pins as the live site. Native scroll; no smooth-scroll library. -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
     <!-- Engine: core, camera maths, chrome + atmosphere (one file) -->
-    <script src="js/story/engine.js?v=p2"></script>
-    <!-- Scenes register themselves; order on screen comes from each scene's `order` -->
-    <script src="js/story/scenes/s00.js?v=p2"></script>
-    <script src="js/story/scenes/s01.js?v=p2"></script>
-    <script src="js/story/scenes/s02.js?v=p2"></script>
-    <script src="js/story/scenes/gap.js?v=p2"></script>
-    <script src="js/story/scenes/s09.js?v=p2"></script>
-    <script src="js/story/scenes/s12.js?v=p2"></script>
-    <!-- Starts the engine once every scene has registered -->
-    <script src="js/story/boot.js?v=p2"></script>
+    <script src="js/story/engine.js?v=p3"></script>
+    <!-- Assets the scenes read when the story starts (data and drawings, not story code):
+         S05's drawings, and S07's land outline (Natural Earth, public domain, read only) -->
+    <script src="js/story-assets/s05-drawings.js?v=p3"></script>
+    <script src="js/map/land-110m.js?v=p3"></script>
+    <!-- The scenes, S00 to S13, one section each; its last lines start the story -->
+    <script src="js/story/scenes.js?v=p3"></script>
   </body>
 </html>

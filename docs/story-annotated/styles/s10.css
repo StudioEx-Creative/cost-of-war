@@ -1,0 +1,7 @@
+/* S10 · storyboard px · link: 44 px tap box (--s: box scale) */
+.s10 .s10-w{color:#fff}
+.s10-r{border-top:1px solid var(--grey)}
+.s10-b span:first-child{display:block}
+.s10 .s10-c span:first-child{margin-right:.3em;font:600 1.55em/1 var(--f-sans);letter-spacing:-.01em;text-transform:none;color:#fff}
+.story-phone .s10 .s10-c{letter-spacing:.08em}
+.s10-a{display:inline-block;padding:calc(22px / var(--s) - .7em) 0;margin:calc(.7em - 22px / var(--s)) 0;color:inherit;text-decoration:none}

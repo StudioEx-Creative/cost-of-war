@@ -1,0 +1,14 @@
+/* S06 · storyboard px; a callout is sized from --f, its value's px */
+.s06-l { padding-top: 0.7em; border-top: 1px solid rgba(255, 255, 255, 0.3); }
+.s06-k::before { content: ""; position: absolute; top: -12px; width: 44px; border-top: 1.5px solid var(--white); }
+.s06-a { line-height: 1.2; color: var(--white); }
+.s06-g { color: var(--grey); }
+.s06-r span:nth-child(6) { font-weight: 600; color: var(--white); }
+.s06-c { --f: 19px; font: 600 var(--f) / 1 var(--f-sans); }
+.story-phone .s06-c { --f: 15px; }
+.s06-c > * { position: absolute; left: calc(2 * var(--f)); top: 0; margin: 0; white-space: nowrap; transform-origin: 0 0; }
+.s06-c u, .s06-c i { left: 0; top: 2px; width: calc(0.95 * var(--f)); height: calc(0.95 * var(--f)); box-sizing: border-box; border: 1px solid rgba(255, 255, 255, 0.7); font: 500 10px var(--f-mono); line-height: calc(0.95 * var(--f) - 2px); text-align: center; text-decoration: none; }
+.s06-c i { left: calc(1.32 * var(--f)); top: 7px; width: 7px; height: 7px; border: 1.5px solid var(--red); }
+.s06-c .b { border-color: var(--blue); }
+.s06-c div { top: calc(1.21 * var(--f)); font-size: 11px; }
+.story-phone .s06-c div { width: 112px; font-size: 10px; letter-spacing: 0.06em; white-space: normal; }

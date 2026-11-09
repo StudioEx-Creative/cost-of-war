@@ -5,7 +5,7 @@
 .s00-v span:nth-child(2) { color: var(--white); font-weight: 600; }
 .s00-n { color: var(--red); transform-origin: 0 50%; }
 .s00-m span + span { font: 400 0.62em var(--f-mono); letter-spacing: 0.06em; }
-.s00-p .t-label, .s00-p .t-src, .s00-m span + span { color: var(--soft); } /* AA on the lit paper */
+.s00-p .t-label, .s00-p .t-src, .s00-m span + span { color: var(--soft); }
 .s00-l { border-top: 1px solid var(--rule); }
 .s00-h, .s00-r { aspect-ratio: 1; box-sizing: border-box; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 50%; background: var(--ground); }
 .s00-r { border-color: rgba(255, 255, 255, 0.32); background: none; }

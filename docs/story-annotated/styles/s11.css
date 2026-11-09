@@ -1,0 +1,12 @@
+/* S11 · storyboard px */
+.s11-R{text-align:right}
+.s11-c,.s11-s{color:var(--soft)}
+.s11-x>span:first-child{font:600 4em/1 var(--f-sans);letter-spacing:-.01em;color:var(--blue)}
+.s11-f>span:first-child{font-size:1em}
+.s11-g>span:first-child{color:var(--grey)}
+.s11-n span:nth-child(n+2):nth-child(-n+4),.s11-n span:nth-child(n+8):nth-child(-n+10){font-weight:600;color:#fff}
+.s11-v span:first-child{margin-right:.5em;font:600 1.45em/1 var(--f-sans);letter-spacing:-.01em;color:var(--soft)}
+.story-phone .s11-k{font:400 16px/1.5 var(--f-sans);letter-spacing:0;text-transform:none;text-wrap:balance;color:#fff}
+.story-phone .s11-p{letter-spacing:.08em}
+.story-phone .s11-v span:first-child{font:400 1em/1.4 var(--f-mono);letter-spacing:.06em}
+.story-phone .s11-v span+span{display:none}

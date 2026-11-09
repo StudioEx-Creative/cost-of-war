@@ -1,0 +1,8 @@
+/* S05 · storyboard px (scaled by the engine). The drawings' own styles travel with them (js/story-assets/s05-drawings.js). */
+.s05-l { line-height: 1.35; color: var(--white); }
+.s05-b { font-weight: 600; }
+.s05-y { text-align: right; }
+.s05-n { letter-spacing: 0.04em; }
+.s05-r { border-top: 1px solid rgba(255, 255, 255, 0.3); }
+.s05-a { padding: calc(22px / var(--s) - 0.7em) 0; margin: calc(0.7em - 22px / var(--s)) 0; color: var(--grey); text-decoration: none; }
+.plate .s05-pf { margin: 0 0 8px; font: 400 40px/1 var(--f-display); color: var(--white); }
