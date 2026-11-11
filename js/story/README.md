@@ -1,7 +1,7 @@
 # Story engine · scene author's guide
 
-The scroll story of *The Cost of War* (rebuild, phase 3: the full story S00–S13). Page:
-`prototype.html` ("Story preview"). Spec: the phase 3 spec (the phase 2 spec still holds).
+The scroll story of *The Cost of War* (rebuild, the full story S00–S13). Page:
+`index.html`, where the tools follow it from `#haveyoursay`. Spec: the phase 3 spec (the phase 2 spec still holds).
 Look: the storyboards in `storyboard/`. Start with **How to build a scene in phase 3** below.
 
 **One rule above all: scroll position alone sets the story.** The engine turns the scroll
@@ -32,9 +32,12 @@ took the comments out of the scene code and moved the review notes into `js/stor
 To work on a scene, edit its section; to split them again for parallel work, cut at the header
 lines (the harness's size check already measures each section on its own).
 
-Load order in `prototype.html`: `js/data.js`, GSAP 3.12.5, ScrollTrigger 3.12.5, `engine.js`,
-the assets the scenes read when the story starts (`js/story-assets/s05-drawings.js`,
-`js/map/land-110m.js`), then `scenes.js`, which starts the story at its end. Scene order on
+Load order in `index.html`, the story first: `js/data.js` (the story reads its figures),
+GSAP 3.12.5, ScrollTrigger 3.12.5, `engine.js`, the assets the scenes read when the story starts
+(`js/story-assets/s05-drawings.js`, `js/map/land-110m.js`), then `scenes.js`, which starts the story
+at its end. The tools' scripts follow with `defer` (supabase-js, `config.js`, `backend.js`,
+`main.js`, the six views, `room.js`, in that order): they are fetched at low priority and run once
+the page has been read, so the story never waits for them. Scene order on
 screen comes from each scene's `order`, not from its place in the file.
 
 ## Size budget (read this first)
@@ -50,8 +53,13 @@ S05 3.4, S06 2.6, S07 3.6, S08 2.4, S09 3.5, S10 2.8, S11 2.2, S12 3.7, S13 1.5 
 check gzips each section of `scenes.js` and `scenes.css` on its own to compare it with its
 share: an estimate, because the sections compress better together than this sum says.
 
-Where it stands at the end of phase 3 (gzipped): `engine.js` 14.6 KB, `css/story.css` 2.3 KB,
-`scenes.js` 39.6 KB, `scenes.css` 2.7 KB: **59.2 KB of 60**, 0.8 KB to spare. The accounting: `js/story-assets/s05-drawings.js`
+Where it stands in phase 4, after the fifth round of fixes (gzipped): `engine.js` 15.0 KB, `css/story.css` 2.3 KB,
+`scenes.js` 39.7 KB, `scenes.css` 2.7 KB: **59.71 KB of 60**, 301 bytes to spare (59.51 KB before the fixes).
+The first round added 47 bytes: the corrected 'busy' test, the call to `window.__keepPlace()` after a resize (the
+place-keeping itself is in `js/main.js`, the tools' code) and the story's focus ring at 4 px, as the tools'. The fifth
+round added 155 bytes to `engine.js`: ScrollTrigger's endless empty frame loop rests while the story is off screen
+or in still mode (see **The page and the tools**, "Loops at rest"). The tools' code
+(`js/tools/*.js`, `css/tools.css`, and the Archive's `js/room.js`) is counted apart from the 60 KB (see **The page and the tools**). The accounting: `js/story-assets/s05-drawings.js`
 counts as an asset whole, although about 2.4 KB of its 6.5 KB (gzipped) is S05's layout numbers, styles and label list rather
 than geometry. That needs a ruling from Greg or Daniel (it is in the review notes). The nine new
 scenes came in at about twice their shares; joining the files (above), taking the comments out
@@ -59,6 +67,139 @@ of the scene code and moving the review notes into `js/story-debug/flags.js` mad
 without cutting anything on screen. Keep comments to short "why" lines: this README is the
 commentary, and the scene code now carries none beyond its header lines (the builders' phase 3
 reports, the review notes and the Transitions table below carry the reasoning).
+
+## The page and the tools (phase 4)
+
+`index.html` is the page: the story in `<main id="story">`, then the tools from `#haveyoursay` on.
+`prototype.html` is gone, and the old story markup, `css/style.css`, `css/dossier.css` and
+`js/dossier.js` have left the page (`css/style.css` stays in the repo only for `privacy.html`).
+Both harnesses test `index.html`.
+
+**Who owns what.** `js/main.js` owns every tool's state and logic: the ranking, the gate, the
+country figures, the tax model, the letter, the share text, the card and the submission. Each
+tool's look lives in its own view file, `js/tools/h1.js` … `h6.js`, which only draws what
+main.js says. In `index.html` each tool sits between comment markers (`H1 REDISTRIBUTE · START`
+… `END`). The Archive's data, reading rules and preview stay in `js/room.js`.
+
+**The hooks.** main.js calls `ToolView.update(name, state)` after every change; a view calls
+`ToolView.on(name, fn)` and gets the latest state at once and after each change. A view that
+throws is logged and never stops the tool. The states, with every field, are listed under
+"TOOL VIEWS" at the top of `js/main.js`: `redistribute`, `country`, `tax`, `letter`,
+`coalition`, `globe`, `card`, `share`, and `archive` (sent by `js/room.js`, with
+`openLetter(i)` and `letterMeta(i)`). A view may add classes, styles and drawn elements; it
+never changes a figure, a word, a payload or the order of a choice.
+
+**Choices, not scroll.** Nothing in the tools reads the scroll position (brief §9): no `.rv`
+reveal, nothing that waits to be scrolled to. Only the globe and the Archive load and pause by
+visibility (audit SCR-1); their words and controls do not depend on it. The tracker is CSS
+`position: sticky` inside Redistribute, so it never sits over the other tools.
+
+**Styles.** `css/tools.css` holds only rules the tools use, on the tokens in `css/story.css`:
+shared rules first, then one section per tool, each starting with its header line
+(`/* H3 · LETTER …`). It was seven files while six builders worked at once; one file is
+16.8 KB to download instead of 21.5 KB (gzip). To work on a tool, edit its section.
+
+**Sizes** (gzip, measured after the fifth round of fixes, apart from the 60 KB story budget): the six
+view files 15.0 KB together (14.7 KB before the fixes; target 12 KB: an open decision in the review notes),
+`css/tools.css` 17.7 KB (16.8 KB before the fixes, 17.6 KB after the second round), `js/main.js` 19.6 KB (17.9 KB
+after the second round, 19.1 KB after the fourth; 20.4 KB on the old page; it keeps the reader's place and caret on
+a resize, holds back globe.gl's spare loops and, since round 5, the four clocks of its globe layer, gives up on a
+globe.gl that never arrives and lands deep links into the tools), `js/room.js` 10.4 KB (was 6.4 KB on the old page;
+the Archive's keyboard path, the reader's own sheet, the no-3D layout, and since round 4 its private three.js, its
+time limit and its 3D test). Story code after round 5: 59.71 KB of 60.
+
+**Download size, old page and new** (measured in round 5: every file the page asks for when it opens, in
+Chrome at 1440 × 900, each gzipped as the size check counts; then the page scrolled to the end). On opening,
+the page's own files: **133.9 KB on the old page (e17c27c), 197.8 KB now**, the logo (37.8 KB) counted once in
+both. Now: the story's code 59.7 KB, its assets 11.3 KB (the S05 drawings and the map), the tools' views and
+styles 32.7 KB, main.js 19.6 KB, room.js 10.4 KB, data.js 15.0 KB, backend.js and config.js 2.7 KB, the page
+itself 8.5 KB. Before: style.css and dossier.css 26.2 KB, dossier.js 10.2 KB, main.js 20.4 KB, room.js 6.4 KB,
+data.js 15.0 KB, backend.js and config.js 2.7 KB, the page 15.2 KB. From the CDN on opening, the same in both: GSAP and ScrollTrigger 44.7 KB, and supabase-js (its
+unpinned address is not cached here, so not measured). Later, only when the reader comes near them, the same
+in both: globe.gl 513.1 KB and three.js 163.2 KB. Fonts were not measured: the test browser fetches no fonts.
+(Measured by a one-off probe, not kept in the repo.)
+
+**Loops at rest** (round 5, measured with the reader still for 3 s, desktop and phone, the real libraries).
+Below the story the page asked for 64 frames a second at all times. GSAP's own clock was not the cause (it
+already sleeps when nothing moves): ScrollTrigger keeps an empty frame loop running for ever (its
+`_rafBugFix`, 60 a second) and checks the scroll position four times a second. The engine now lets that loop
+rest while the story is off screen or in still mode and restarts it when the story comes back
+(`window.requestAnimationFrame` is wrapped once in `engine.js`, next to `request()`; it drops only that one
+function, by name). Below the story the page now asks for 4 frames a second. With the coalition globe turning
+on screen it asked for 304 and now 64: globe.gl's globe layer (three-globe) ran four clocks of its own for
+layer transitions, arc dashes, path dashes and rings, none of which this globe uses (every transition is 0),
+so `globeQuiet()` in main.js keeps them paused and only globe.gl's drawing loop runs. Still running by
+design: the story's live counter while the story is on screen (60), the globe's drawing loop while it is on
+screen and turning (60), the Archive's while it is on screen (60), and ScrollTrigger's quarter-second check (4).
+
+**Removed from js/main.js** (phase 4; 878 lines removed, 521 added, against e17c27c). What each served on
+the old page; the story now tells the same figures from js/data.js, or the tools' views draw them:
+- The old story's charts: `buildDonut` with `buildSpendDonut` and `buildViolencePie` (the spend and
+  violence donuts; the spend split is S03's treemap, the violence breakdown is an open decision), `buildConflictBars`
+  (reconstruction bars, now S07), `buildDualSpenders` (the top ten budgets, now S04), `buildEmittersChart`,
+  `buildEmissions` and `buildEnvFacts` (emissions bars and cards, now S08; two facts are an open decision),
+  `drawDotField` and `buildDotLegend` (the displacement dot field, now S10), `miniPieSVG`, `buildHiPies` and
+  `buildHumanStrip` (the human-impact pies and strip, now S12's plain list), `drawLives` (the lives field and
+  its flood, now S12's one point of light and the field at rest).
+- The old story's motion: `initReveal` (the `.rv` scroll reveal: nothing in the tools waits to be scrolled
+  to now), `initScrollProgress` (the top progress bar), `rsz` (sized the empty `#bg` canvas), `cntTo` and
+  `animHeroCoalition` (the hero's count-ups; the brief keeps at most one money count-up), `tickLiveSpend`
+  (the hero's live spend; the engine's live counters replace it and pause off screen).
+- The Redistribute flow canvas: `rszFlow`, `getNodes`, `spawnP`, `drawFlow` (its loop ran all the time;
+  H1's sheet in `js/tools/h1.js` replaces it).
+- `burst` (the floating '#2' and 'removed' labels in neon green and red over a chosen cause; off-brand, and
+  the rank number now sits on the cause itself), `volColor` (the globe bars' teal-to-red ramp; the bars are one
+  brand blue, flagged), `goToCountry` (never called on the old page).
+
+**The two 3D libraries.** The globe (globe.gl, in main.js) and the Archive (three.js r160, in room.js) load
+only when the reader comes near them. The Archive keeps its three.js to itself: the file puts itself on
+`window.THREE`, and globe.gl takes any `window.THREE` it finds over its own built-in copy, so with the older
+copy the globe lost its 3D whenever the Archive was opened first ('s3.Timer is not a constructor').
+room.js now takes the copy and puts `window.THREE` back as it was the moment the file has run. Each loader
+has a 15 s limit: a download that never ends gets the still globe or the no-3D Archive (no waiting words, no
+drag hints), and a file that arrives after that changes nothing. A browser without 3D downloads neither
+library (room.js makes the same test as main.js). A reader who Tabs onto the room before it has started, in
+a browser where it then cannot be built, is moved to its message (which says why) before the room stops
+being a Tab stop, so focus is never dropped; the next Tab goes on to the letters.
+
+**Structure for screen readers.** The tools sit in one region, `<section class="tools" aria-label="Have
+your say">`, from `#haveyoursay` to the end of the Archive. Each tool's title is a heading (h2; Redistribute's
+own title is h3 under "What if we chose differently?") with its old class, so it looks the same; a
+zero-weight rule in `css/tools.css` removes the browser's heading margins. Symbols that only decorate
+(▾ ▸ ▲ ▼ ↺ ↗ ✉ ↓) sit in `<span aria-hidden="true">`, so a screen reader reads the words beside them; in a
+link or summary laid out as flex, the words and the symbol share one wrapping span so the space between them
+stays. Symbols that carry meaning stay readable: → in "Continue → …", ✓ and ⚠ in messages, ↑ ↓ in the reorder hint.
+
+**The letter's Send bar.** Below 1024 px wide Send stays at the foot of the screen while the reader is on the
+letter (the whole action bar on screens 760 px tall or more, Send alone below that), steps aside while they
+type in the letter, and stays in place under the letter on screens under 420 px tall (a phone on its side,
+300 to 400% zoom), where it would cover a quarter of the screen. On short screens Send alone is drawn over
+what follows it, so anything placed after Send must leave 20 px for its own focus ring.
+
+**Testing.** `node tools/tool-check.mjs --out tools/out/<you>` (see its header): the old page's
+recorded behaviour, keyboard and pointer journeys, consent, overlays, the globe and the
+Archive with and without 3D, deep links, brand and widths. The keyboard journey fails any focus
+ring that is partly under a bar that stays on screen (the letter's Send, the tracker), and runs
+once more at 320 × 180, a 1280 × 720 laptop at 400% zoom. `together` loads the 3D globe and the 3D room on
+one page in both orders; `no3d` runs a browser with 3D switched off, an empty three.js and two stalled
+downloads; `page` also turns a phone and a tablet while the reader types at the end of the letter (the caret's
+line must stay on screen) and hit-tests each line of the letter's contact link (44 px or more). Since round 5:
+`keyboard` and `pointer` each run once more with reduced motion and once in still mode (`?static=1`); `globe`
+counts the frames asked for while the 3D globe turns (one loop, about 60 a second); `page` follows a link into
+the tools, moves 3,000 px with the wheel and reloads, then does the same on the page opened without the link,
+and wants both to end in the same place, never back at the link's target; and the waits for the card
+after Submit allow 20 s, because on this machine under memory pressure a page timer once took longer than the
+6 s it had (round 4's lone "the card did not open"; the next step found focus inside the card). It fakes every
+outside address, so nothing reaches Supabase, formsubmit or Cloudflare.
+
+**Looking by hand.** Never serve the folder with a plain server: `js/config.js` holds the real
+Supabase address, so the page reads the real database as soon as it opens, and Submit saves a real
+entry and emails Greg. Use `node tools/preview-server.mjs` (http://localhost:4174/, also the
+"cost-of-war" preview): it blanks the backend settings in `js/config.js` (local demo mode), sends no other
+setting but SHOW_SEEDED and SEED_COUNT, serves nothing that a link leads outside the folder, and tells
+the browser not to contact Supabase, formsubmit or Cloudflare's check (see its header). Two files are not
+safe outside it (the top README says why): `archive-original.html`, which emails Greg through formsubmit
+from its own code, and `storyboard/tools/baseline.mjs`, which opens the live site with no network blocking.
 
 ## The scene definition
 
@@ -365,7 +506,7 @@ The engine owns them; scenes never draw them.
   `Story.debug.mode = "static"`, `Story.debug.reason` says why. Deep-link ids move into the plates.
   It starts for:
   - `static`: any `static` in the query (as js/dossier.js); the page's visible "Read as text"
-    link (top left of the hero, prototype.html) opens `?static=1`;
+    link (top left of the hero, index.html) opens `?static=1`;
   - `reduced-motion`: `prefers-reduced-motion: reduce`;
   - `lowpower`: `?lowpower=1`, `navigator.deviceMemory < 2`, or the data-saver setting
     (`navigator.connection.saveData`). Not `hardwareConcurrency`: iOS reports 2 for every iPhone.
@@ -376,8 +517,8 @@ The engine owns them; scenes never draw them.
   If a resize crosses 560 px (a rotation, a zoom change), the page reloads into the other mode
   on the scene that was on screen (`#s09` …) with scroll restoration off, so it lands there, and
   the exact story position is kept for that browser tab, so turning a phone sideways and back
-  returns to the same frame. Focus goes to that scene's plate. A reader below the story comes back
-  to `#haveyoursay`.
+  returns to the same frame. Focus goes to that scene's plate. A reader below the story, or with
+  anything to lose in the tools, is never reloaded (see **Phase 4** under **Resize**).
   S05 has no canvas plate: in still mode its SVG drawing (the `mid` frame) moves into the plate.
 - Motion mode: plates are visually hidden but stay readable and tabbable. Each plate has
   `tabindex="-1"`: after a deep link, and after a click or tap on the stage, the engine focuses
@@ -401,12 +542,31 @@ Every scene gets `#<id lowercased>` (`#s00` … `#s13`) at its start, plus its `
   `#impact` (index.html:538–556), so it belongs to Chapter 01's end, not to `#impact`.
 - `#mfMorph` → S05 and `#borderViz` → S10: the live page's ids for those sections, kept so old
   links still land (the storyboards ask for them; not among the brief's four).
-- `#haveyoursay` → the end section after S13 (phase 4: the tools start there). `#roomSection`
-  belongs to phase 4 and does not exist yet.
+- `#haveyoursay` → the tools, right after the story. `#roomSection` → the Archive, after the coalition.
 
 On a fresh load with a hash, the engine scrolls to the anchor. A hash it cannot read is ignored. After that it never scrolls
 for a hash change: the anchors sit at the right pixel, so the browser's own jump lands, and Back
 or Forward restore the reader's place (the engine only moves focus to the plate).
+
+A link into the tools (`#haveyoursay`, `#roomSection`, also with `?static=1`) is followed by the engine
+before js/main.js has built the tools above it (measured on a 390 × 664 phone in still mode: the Archive
+then moves 3,577 px further down).
+Chrome puts the reader back by itself; Safari has no scroll anchoring. So js/main.js (`landDeepLink`)
+puts the target back at the top of the screen once the tools are built, at load and when the fonts are in,
+until the reader moves the page themselves. Measured in Chrome with its own help taken away (no scroll
+anchoring, the hash added after the browser's jump): every tools link landed at 0 px, desktop and phone,
+moving and still. Not tested in Safari itself.
+It does nothing after a reload, or after Back to a page the browser no longer holds in memory: the browser
+then puts the reader back where they were, and that place wins over the link (round 4 pulled such a reader
+back to the link's target, up to 3,000 px from where they had moved). The one exception is the story's own
+reload when the screen changes mode, which turns the browser's restoring off, so the link lands. Measured in
+round 5: after a link, 3,000 px of wheel and a reload, or Back with the page cache off, the reader came back to
+the same pixel in 12 of 12 runs (desktop 1440 × 900 and phone 390 × 844, #haveyoursay and #roomSection), and
+8 of 8 in still mode; a fresh link still lands at 0 px. One browser behaviour remains, and it is not the link's:
+in the tool check's 375 × 812 phone, with no cause chosen (the tools locked), a reload 3,000 px above the Archive
+comes back 1,062 px further down, through the link or without it, and with or without `landDeepLink` (and once, in still mode without a link, 1,621 px). Chrome
+first restores the right place, then the tools are built above the reader (their scripts run after the story's)
+and its restoring at load settles lower. It is in the review notes.
 
 ## Handovers
 
@@ -523,24 +683,44 @@ A small scene: a blue sheet that grows to true area while its figure rides on th
 
 The engine re-lays out (`layout()` for every scene, canvas, chrome) when the stage changes
 size, and keeps the reader's place: the same `s` (the very end included), or, for a reader
-below the story (at #haveyoursay), the same distance below its end. It takes that place from
+below the story, what they were on. That part is the tools' code, not the engine's: js/main.js notes,
+on every scroll and focus below the story, the control the reader is in, if it is on screen, otherwise
+the element in the middle of the screen (never one stuck to the screen, sticky or fixed, whose place
+says nothing; a canvas counts as its box, since a canvas can give way to a still picture). Once the
+engine has laid itself out at the new size it calls `window.__keepPlace()`, which scrolls that element
+back to the same height on screen (motion and still mode alike). A reader typing in the letter (often
+taller than the screen) is kept by the caret's line instead of the letter's top: the same height if that
+is still on screen, else as near as fits (turning a 430 × 932 phone used to leave it 604 px down a 430 px screen). The tools reflow at a new width, so
+the old rule (the same distance below the story's end) landed in a different tool after a zoom or a
+half-screen window; the engine keeps it only as the fallback when nothing was noted (no tools, or
+`__keepPlace` answers false). For a reader in the story the engine takes the place from
 the last scroll position seen before the resize, because by the time the resize event fires the
 browser has already pulled `scrollY` up to fit the shorter page. The stage is `100svh`, so a
 phone's toolbar or keyboard (which only move `innerHeight`) never re-lays out or jumps; a
 rotation, split screen or desktop window resize does (and under 560 px, a reload into the
-still plates). Your `layout()` must size everything from `api.vp` alone: the harness compares
+still plates, if the reader has nothing to lose: below). Your `layout()` must size everything from `api.vp` alone: the harness compares
 every scene after a resize with a fresh load at the new size.
 
 ### Phase 4: never reload a reader who is below the story
 
-**Still open (phase 4).** Today a resize that takes the stage under 560 px tall (or back over it) reloads the page to
-switch between the moving story and the still plates. That is harmless in the prototype, but in
-phase 4 the interactive half (letters, forms) sits below the story, and a reader there must
-never be reloaded: a half-written letter would be lost. So the engine must either switch modes
-in place (tear down the stage, show the plates, keep the scroll place and every form field
-as it is) or defer the switch until the reader is back in the story, and never reload while
-anything below the story has focus or unsaved input. Until the letter form exists this is harmless
-(the reload lands back on `#haveyoursay`).
+The interactive half sits below the story, so a resize across the 560 px height (either way) must
+not cost anyone a half-written letter. The engine reloads to switch mode only when the reader is in
+the story and has nothing to lose. It does not reload when any of these is true:
+
+- the reader was below the story when the resize came (the tools are on screen, or further down);
+- focus is in something after the story (`(root.compareDocumentPosition(a) & 20) == 4` in `busy`). Focus
+  inside the story does not count: the engine itself focuses a scene's plate on every tap, after a deep
+  link and after its own reload, and a test for `& 4` alone counted that as focus in the tools (16, "inside",
+  comes with 4), so a tapped story never switched to the still plates when a phone was turned;
+- `window.__toolDirty` is set: js/main.js sets it on the first `input`, `change` or click on a
+  control outside `#story`. It is a plain flag; nothing the reader did is stored by it.
+
+Then the current mode carries on, re-laid out for the new size, and the switch waits. It happens on
+a later scroll if the reader has come back into the story with nothing to lose; otherwise it never
+happens. Resizing back over the line cancels it. Tool state is never put in sessionStorage to survive
+a reload (the engine stores only the story position there, for a reader in the story). The code is
+`due`, `under` and `busy` in `engine.js`. tools/tool-check.mjs tests all of it (`--only noreload`), and a phone
+turned on its side and back below the story with a typed letter (`--only page`, the `rotate` line).
 
 ## Checking your scene
 
@@ -611,7 +791,11 @@ restrained ones (S09 to S12) only fade.
 | S10 → S11 | The words go first, then the marks and their light; the old ladder fades in standing on the same line, which becomes S11's floor (S11's first frame, held under S10's). | After the people, the money comes back as a measure: what was asked for them against what war spends. |
 | S11 → S12 | The light on the appeal goes out, its blue drains to the ladder's grey, then the whole frame fades to the black S12 opens on. | The money story ends; what follows cannot be counted in dollars. |
 | S12 → S13 | The long black pause with "When you're ready"; the last words fade to black (S13 holds S12's last frame); then one blank sheet settles in under a light. | The counting is over; the Sheet comes back blank and belongs to the reader. |
-| S13 → #haveyoursay | The question lands in two cuts and the tab reads "Have your say"; scrubbing stops and the tools take over (phase 4). | From here the reader's choices change what they see, not the scroll. |
+| S13 → #haveyoursay → H1 | The question lands in two cuts and the tab reads "Have your say"; scrubbing stops and the page simply scrolls on. The blank sheet leaves upward, and the $2.89T sheet arrives below it under the same light, with the same corner marks, carrying that same tab and blue mark. It lies flatter, on the desk, and takes its red edge back; the story's last frame fades into the desk instead of ending on a line. Two sheets on one page, not one sheet moving: a moving sheet would be a scroll-driven object over the tools, which brief §9 rules out. (Checked by H1, and again by the integrator with the mouse wheel at a reading pace, 1440 × 900 and 375 × 812.) | The sheet the reader was just handed is the budget they now get to spend. From here their choices cut it down, not the scroll. |
+| H1 → H2 | Continue → Your country. The $2.89T sheet comes back as a dashed plane tipped back into the dark, labelled with its total, and the reader's country is cut into its near corner at true area with the red edge. | The budget the reader just spent is the world's total; their own country is one piece of it. |
+| H2 → H3 | Continue → Write the letter. The letter is the sheet: dark paper on the desk under the light, a white edge and the blue tab at its corner, the words editable. | The choices so far, the causes and the country, are written onto the sheet as a letter the reader can send. |
+| H3 → H4 → H5 | The coalition puts the reader's choice on a lit globe (one blue bar per country); submitting opens the card, a print of the same sheet with their ranked causes. | One reader's sheet joins everyone's, and they can take a copy away. |
+| H4 → H6 | After the coalition, the Archive: dark sheets hanging on threads, one per person; the reader's own blank sheet hangs there only if they opted in. | The letter sheet's last form: one sheet among many, read only after review. |
 
 **The Sheet, followed** (brief §4 and §14): the classified file (S00) → the budget line that
 becomes the $2.89T sheet (S01) → the true-area ladder (S02) → the same sheet cut into sectors,
@@ -619,7 +803,7 @@ then into ten strips (S03) → ten steel bars that fuse into one plate (S04) →
 the engineering drawing, which flattens back into the $2.89T sheet (S05) → that sheet small in a
 corner of the $21.8T sheet (S06) → the $21.8T sheet tipped into a map (S07) → the map's edge as
 the horizon, the layers folded into one line (S08) → the timeline (S09) → the border (S10) → the
-floor the old ladder stands on (S11) → one point of light (S12) → one blank sheet (S13).
+floor the old ladder stands on (S11) → one point of light (S12) → one blank sheet (S13) → that sheet, its tab kept and its red edge back, as the $2.89T the reader spends (H1) → the same total as a plane with the reader's country cut into it (H2) → the letter, written on the sheet, blue tab and all (H3) → a bar on the globe and the card the reader keeps (H4, H5) → one blank sheet hanging in the Archive, for a reader who opted in (H6). Checked by the integrator in phase 4 by scrolling the whole page with choices made, at 1440 × 900, 1024 × 768 and 375 × 812.
 
 **Count-ups**: none. No money figure runs with the scroll anywhere in the story (checked by
 sampling every visible number every 0.02 screens). The only number that changes with the scroll

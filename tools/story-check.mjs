@@ -37,7 +37,7 @@
 // every scene must then match a fresh load at the new size.
 //
 // Extra options (not in the spec, for testing the harness itself):
-//   --url <path>   page to test, relative to the repo root (default prototype.html). May carry a query.
+//   --url <path>   page to test, relative to the repo root (default index.html). May carry a query.
 //   --out <dir>    where results go (default tools/out/story)
 //   --code <dir>   folder whose js/story and css/story* the size and lint checks read (default repo root)
 //
@@ -86,7 +86,7 @@ const OFF_BRAND_LIMIT = 0.2; // % of a frame, same threshold as storyboard/tools
 /* ══ Command line ═══════════════════════════════════════════════════ */
 
 function parseArgs(argv) {
-  const o = { scenes: null, views: ["desktop", "phone"], only: new Set([...PAGE_CHECKS, ...CODE_CHECKS]), quick: false, url: "prototype.html", out: path.join(ROOT, "tools", "out", "story"), code: ROOT };
+  const o = { scenes: null, views: ["desktop", "phone"], only: new Set([...PAGE_CHECKS, ...CODE_CHECKS]), quick: false, url: "index.html", out: path.join(ROOT, "tools", "out", "story"), code: ROOT };
   for (let i = 0; i < argv.length; i++) {
     let a = argv[i], v = null;
     if (a.includes("=")) [a, v] = [a.slice(0, a.indexOf("=")), a.slice(a.indexOf("=") + 1)];
@@ -223,10 +223,25 @@ const PATIENCE = Number(process.env.STORY_CHECK_PATIENCE) || 1;
 //    so the first snapshots would never match later ones. Software from the start is stable.
 //  - the perf browser keeps the normal GPU canvas, so frame times are realistic.
 // Both drop headless Chrome's default 30 fps cap so animation frames run at about 60 fps.
+// SAFETY. index.html carries the REAL Supabase address, and submitting also emails Greg through
+// formsubmit.co. So these hosts are unreachable from the test browser (NO_BACKEND) and any request
+// to them is answered here, before it leaves (Fetch interception, set up before a page loads).
+// supabase-js gets an empty file, so js/backend.js stays dormant and the page makes no calls.
+// This harness never clicks anything in the tools.
+const NO_BACKEND = "--host-resolver-rules=MAP *.supabase.co ~NOTFOUND, MAP formsubmit.co ~NOTFOUND, MAP *.formsubmit.co ~NOTFOUND, MAP challenges.cloudflare.com ~NOTFOUND";
+const BACKEND_PATTERNS = ["*://*.supabase.co/*", "*://formsubmit.co/*", "*://*.formsubmit.co/*", "*://challenges.cloudflare.com/*", "*://cdn.jsdelivr.net/npm/@supabase/*"];
+const backendStubbed = [];
+function stubBackend(send, { requestId, request }) {
+  const lib = request.url.includes("@supabase/");
+  if (!lib) backendStubbed.push(request.url);
+  const responseHeaders = [{ name: "content-type", value: lib ? "text/javascript" : "application/json" }, { name: "access-control-allow-origin", value: "*" }];
+  send("Fetch.fulfillRequest", { requestId, responseCode: 200, responseHeaders, body: Buffer.from(lib ? "" : "[]").toString("base64") }).catch(() => {});
+}
+
 async function startChrome({ softwareCanvas }) {
   const userDir = fs.mkdtempSync(path.join(os.tmpdir(), "story-check-"));
   // Port 0 lets Chrome pick a free port; it writes the number to DevToolsActivePort.
-  const flags = ["--headless=new", "--remote-debugging-port=0", "--hide-scrollbars", "--no-first-run", "--no-default-browser-check", "--mute-audio", `--user-data-dir=${userDir}`, "--force-color-profile=srgb", "--font-render-hinting=none", "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows", "--disable-frame-rate-limit"];
+  const flags = ["--headless=new", "--remote-debugging-port=0", "--hide-scrollbars", "--no-first-run", "--no-default-browser-check", "--mute-audio", `--user-data-dir=${userDir}`, "--force-color-profile=srgb", "--font-render-hinting=none", "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows", "--disable-frame-rate-limit", NO_BACKEND];
   if (softwareCanvas) flags.push("--disable-accelerated-2d-canvas");
   const proc = spawn(CHROME, [...flags, "about:blank"], { stdio: "ignore" });
   const close = () => { try { proc.kill("SIGKILL"); } catch {} try { fs.rmSync(userDir, { recursive: true, force: true }); } catch {} };
@@ -270,6 +285,8 @@ async function startChrome({ softwareCanvas }) {
   await send("Page.enable");
   await send("Runtime.enable");
   await send("Log.enable");
+  listeners.add((m) => { if (m.method === "Fetch.requestPaused") stubBackend(send, m.params); });
+  await send("Fetch.enable", { patterns: BACKEND_PATTERNS.map((urlPattern) => ({ urlPattern })) });
   return { send, waitEvent, listeners, close: () => { try { ws.close(); } catch {} close(); } };
 }
 
@@ -1615,8 +1632,11 @@ async function main() {
     if (opts.only.has("lint")) checkLint();
   }
 
+  // Safety line: every request the page made to the backend hosts was answered here (they also
+  // do not resolve in this browser), so none can have reached the real database or email service.
+  console.log(`\nnetwork   ${backendStubbed.length} request${backendStubbed.length === 1 ? "" : "s"} to Supabase, formsubmit or Cloudflare tried, all answered here; none left this computer`);
   const failed = results.filter((r) => r.status === "fail");
-  const out = { generated: new Date().toISOString(), url: opts.url, views: opts.views, scenes: opts.scenes, quick: opts.quick, ok: failed.length === 0, checks: results, ...report };
+  const out = { generated: new Date().toISOString(), url: opts.url, views: opts.views, scenes: opts.scenes, quick: opts.quick, ok: failed.length === 0, checks: results, network: { backendRequestsAnsweredHere: backendStubbed.length, urls: [...new Set(backendStubbed.map((u) => u.split("?")[0]))] }, ...report };
   fs.writeFileSync(path.join(OUT, "report.json"), JSON.stringify(out, null, 2));
   if (report.shots.length) writeCompare();
   console.log(`\n${failed.length ? "✗" : "✓"} ${failed.length ? `${failed.length} of ${results.length} checks failed` : `all ${results.length} checks passed`}.`);

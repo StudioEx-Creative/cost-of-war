@@ -18,7 +18,7 @@
 html, body { background: var(--ground); }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { margin: 0; color: var(--white); font: 400 16px/1.5 var(--f-sans); }
-:focus-visible { outline: 2px solid var(--white); outline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--white); outline-offset: 4px; }
 .skip-link {
   position: absolute; left: 16px; top: -200px; z-index: 60;
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; box-sizing: border-box;
@@ -106,7 +106,7 @@ a[target]::after { content: "\a0\2197" / ""; }
 :where(.story-phone .plate :is(p, h2)) { font-size: 1.0625rem; }
 .plate a { color: var(--white); }
 .plate .tap { display: inline-flex; align-items: center; min-height: 44px; }
-/* "Read as text" (prototype.html): the still plates, for anyone who zooms or prefers no motion. On the hero, scrolls away. */
+/* "Read as text" (index.html): the still plates, for anyone who zooms or prefers no motion. On the hero, scrolls away. */
 .read-text { position: absolute; left: 40px; top: 12px; z-index: 50; display: inline-flex; align-items: center; min-height: 44px; color: var(--white); font: 500 11px/1 var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; text-decoration: none; }
 .story-phone .read-text { left: calc(16px + var(--mx, 0px)); top: 2px; font-size: 10px; }
 .story-static .read-text { display: none; }

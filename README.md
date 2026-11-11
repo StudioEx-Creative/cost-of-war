@@ -10,15 +10,38 @@ In 2025, violence cost humanity **$21.81 trillion** — 10.5% of everything the 
 ## Structure
 
 ```
-index.html          — page structure (5 chapters + 4-step user journey)
-css/style.css       — all styling (dark data-art aesthetic)
+index.html          — the page: the scroll story, then the tools (markers show each tool's region)
+css/story.css, css/story/ — the story's styles and the brand tokens
+css/tools.css — the tools' styles: shared rules, then one section per tool (H1 to H6)
+js/story/           — the story engine and its scenes (see js/story/README.md)
 js/data.js          — ALL data and sources live here (edit figures here only)
-js/main.js          — application logic (canvases, interactions, letter generator)
+js/main.js          — the tools' state and logic (ranking, country, tax, letter, coalition, card)
+js/tools/           — one view per tool, each reading js/main.js through ToolView
+js/room.js          — the Archive
+css/style.css       — old styles, kept only for privacy.html
 DATA-SOURCES.md     — audit trail for every figure, with primary-source links
 archive-original.html — the original single-file prototype, kept for reference
+tools/              — the safe preview server and the two test harnesses (story-check, tool-check)
 ```
 
-There is no build step. It is a static site — open `index.html` in a browser, or serve the folder with any static server.
+There is no build step. It is a static site.
+
+**Looking at it on your own computer: use the safe preview.** `js/config.js` holds the real Supabase
+address, and "Submit my priorities" also emails Greg through formsubmit.co. So any plain server
+(`python3 -m http.server`, `npx serve`, opening `index.html` from disk) talks to the real database as
+soon as the page opens, and one Submit saves a real entry and sends a real email. Instead run
+`node tools/preview-server.mjs` and open http://localhost:4174/ (the "cost-of-war" preview in
+`.claude/launch.json` does exactly this). It serves `js/config.js` with the backend settings blank, so
+the page runs in its local demo mode, and it tells the browser not to contact `*.supabase.co`,
+`formsubmit.co` or `challenges.cloudflare.com` at all. To try the real backend on purpose, use a plain
+server, and remember that every Submit is real.
+
+Two more files are not safe outside the safe preview. `archive-original.html` (the original prototype)
+emails Greg through formsubmit.co from its own code, whatever `js/config.js` says: on a plain server or
+opened from disk, its email box sends a real email (whether to remove it or blank that address is an
+open decision). `storyboard/tools/baseline.mjs` (the Phase 1 measuring tool) drives Chrome with no
+network blocking and opens the live site unless told otherwise; the page it opens asks the real
+database for its counts (it never presses Submit). Run it only on purpose.
 
 ## The narrative
 
@@ -45,7 +68,9 @@ Two integration points, both currently stubbed client-side:
    as a notification; emails are stored in the Supabase `submissions` table too.
 
 Data updates happen in `js/data.js` only — every figure has its source next to it,
-and `DATA-SOURCES.md` documents the verification trail. Annual refresh points:
+and `DATA-SOURCES.md` documents the verification trail. One exception, until Greg and Daniel decide
+(it is in `js/story-debug/flags.js`): the letter's figures are typed into `js/main.js` (`generateLetter`)
+and "$2.89T" / "$2.89 trillion" into `index.html`, as on the old page, so check them by hand at each refresh. Annual refresh points:
 SIPRI (April), GPI (June), UNHCR Global Trends (June), ICAN (June), OCHA GHO (December).
 
 ## Deploying

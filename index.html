@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>The Cost of War · Blueprint × StudioEX</title>
     <meta
       name="description"
@@ -15,781 +15,40 @@
     />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- no favicon file: an empty one stops a 404 in the console -->
+    <link rel="icon" href="data:," />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap"
       rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap"
     />
-    <link rel="stylesheet" href="css/style.css?v=2026r36" />
-    <!-- dossier layer: chrome, mirrors, scenes. Loads AFTER the base. -->
-    <link rel="stylesheet" href="css/dossier.css?v=2026r36" />
+    <link rel="stylesheet" href="css/story.css?v=p4fix5" />
+    <!-- every scene's styles, one section per scene -->
+    <link rel="stylesheet" href="css/story/scenes.css?v=p4fix5" />
+    <!-- the tools: shared rules, then one section per tool (H1 to H6) -->
+    <link rel="stylesheet" href="css/tools.css?v=p4fix5" />
   </head>
-  <body class="dossier">
-    <canvas id="bg"></canvas>
+  <body>
+    <a class="skip-link" href="#haveyoursay">Skip to Have your say</a>
+    <a class="read-text" href="?static=1">Read as text</a>
+    <!-- H6: the small link near the top. The Archive itself is after the coalition. -->
+    <a class="archive-link" href="#roomSection"><span aria-hidden="true">▸</span> Enter the archive</a>
 
-    <!-- ══ AMBIENT TEXTURE — dies at the human pivot ══ -->
-    <div class="fx" aria-hidden="true">
-      <div class="fx-grid" id="fxGrid"></div>
-      <div class="fx-scan" id="fxScan"></div>
-      <div class="fx-grain"></div>
-      <div class="fx-vignette"></div>
-    </div>
+    <!-- The story. The engine builds the stage, the deep-link anchors and the
+         reading-order plates in here (see js/story/README.md). -->
+    <main id="story" class="story" aria-label="The Cost of War, the story"></main>
 
-    <!-- ══ DOSSIER HUD ══ -->
-    <header class="hud hud-top" id="hudTop" aria-hidden="true">
-      <span class="hud-stamp">CLASSIFIED // DECLASSIFIED FOR PUBLIC RELEASE</span>
-      <span class="hud-file" id="hudFile">FILE 00 · BOOT</span>
-      <span class="hud-coord" id="hudCoord">00.0000° / 00.0000°</span>
-    </header>
-    <footer class="hud hud-bottom" aria-hidden="true">
-      <span class="hud-rec"><i class="rec-dot"></i> REC</span>
-      <span class="hud-prog"><span class="hud-prog-fill" id="hudProg"></span></span>
-      <span class="hud-src">SOURCE: SIPRI · IEP · UNHCR · ACLED · ICAN — 2026</span>
-    </footer>
+    <!-- The tools. From here on the reader's choices change what they see, not the scroll.
+         main.js owns the state and the logic; each tool's view reads it through ToolView.
+         The markers below show each builder its own region. -->
 
-    <!-- ═══ HERO · "BOOTING THE FILE" ═══ -->
-    <section class="hero" id="hero">
-      <!-- crop-mark reticle: sweeps in, contracts to a point on scroll -->
-      <svg class="reticle" id="reticle" viewBox="0 0 100 100" aria-hidden="true">
-        <g class="ret-crop">
-          <path d="M4 14 V4 H14" /><path d="M86 4 H96 V14" />
-          <path d="M96 86 V96 H86" /><path d="M14 96 H4 V86" />
-        </g>
-        <circle class="ret-ring" cx="50" cy="50" r="30" />
-        <circle class="ret-ring ret-ring-2" cx="50" cy="50" r="20" />
-        <path class="ret-cross" d="M50 8 V34 M50 66 V92 M8 50 H34 M66 50 H92" />
-        <circle class="ret-dot" cx="50" cy="50" r="1.1" />
-      </svg>
-
-      <a class="hero-logo" href="https://www.studioex.co" target="_blank" rel="noopener" aria-label="Blueprint × StudioEX">
-        <img src="assets/blueprint-logo-white.png" alt="Blueprint" />
-        <span class="hero-logo-wm">×&nbsp;<b>StudioEX</b></span>
-      </a>
-      <div class="hero-content">
-        <div class="eyebrow">
-          <span class="tick">▚</span> ACQUIRING TARGET… PATTERN RECOGNITION
-          ONLINE
-        </div>
-        <!-- assembles glyph-by-glyph out of monospace noise -->
-        <h1 class="hero-title">
-          <span class="scramble" data-final="THE">THE</span>
-          <span class="scramble hero-title-em" data-final="COST OF WAR">COST OF WAR</span>
-        </h1>
-        <p class="hero-sub">
-          Every second, violence costs humanity $691,590. This page
-          cross-references what we spend on destruction against what that same
-          money could build.
-        </p>
-        <div class="live-spend hero-centre">
-          <div class="live-spend-lbl">
-            <i class="rec-dot"></i> Since you opened this file, the world has spent
-          </div>
-          <b id="liveSpend">$0</b>
-          <div class="live-spend-foot">on its militaries</div>
-        </div>
-      </div>
-      <div class="scroll-cue" id="scrollCue">
-        ▼ &nbsp; BEGIN DEBRIEF &nbsp; ▼
-      </div>
-    </section>
-
-    <!-- ═══ THE ROOM ═══ every message written here, suspended in one space.
-         A mass-participation artwork: one sheet per person. Letters appear
-         only where someone opted in AND a moderator cleared them. -->
-    <div class="room-section" id="roomSection">
-      <div class="room-head">
-        <div class="chapter-num rv" style="color: var(--say)">
-          The artwork · Everyone who has written
-        </div>
-        <div class="sec-title rv" style="color: #fff">The Archive</div>
-        <p class="sec-desc rv rv-d1">
-          Every letter written on this page is kept here, one sheet for one
-          person — a single record made by everybody who has taken part. Move
-          through it. Open any sheet to read what a stranger told their
-          government.
-        </p>
-      </div>
-
-      <div class="room-stage" id="roomStage">
-        <canvas id="roomCanvas"></canvas>
-        <div class="room-loading" id="roomLoading">entering the archive…</div>
-        <div class="room-badge" id="roomBadge" hidden></div>
-        <div class="room-hint" id="roomHint">
-          drag to look around · click a sheet to read it
-        </div>
-        <!-- reading happens in HTML, not in 3D: legible, selectable, accessible -->
-        <div class="room-reader" id="roomReader" hidden>
-          <button class="room-reader-x" id="roomReaderX" aria-label="Close">✕</button>
-          <div class="room-reader-meta" id="roomReaderMeta"></div>
-          <div class="room-reader-body" id="roomReaderBody"></div>
-        </div>
-      </div>
-
-      <div class="room-data">
-        <div class="rd-figs">
-          <div class="rd-fig">
-            <div class="rd-n" id="rdPeople">—</div>
-            <div class="rd-l">people have written</div>
-          </div>
-          <div class="rd-fig">
-            <div class="rd-n" id="rdCountries">—</div>
-            <div class="rd-l">countries represented</div>
-          </div>
-          <div class="rd-fig">
-            <div class="rd-n" id="rdLetters">—</div>
-            <div class="rd-l">letters in the archive</div>
-          </div>
-        </div>
-        <div class="rd-split">
-          <div class="rd-block">
-            <div class="rd-h">Who is writing</div>
-            <div class="rd-ages" id="rdAges"></div>
-          </div>
-          <div class="rd-block">
-            <div class="rd-h">What the archive says</div>
-            <ul class="rd-find" id="rdFindings"></ul>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ ITINERARY / CONTENTS ═══ -->
-    <nav class="itin rv">
-      <div class="itin-track">
-        <a class="itin-item info" href="#machine">
-          <span class="itin-n">01</span>
-          <span class="itin-body"><span class="itin-t">The Machine</span><span class="itin-d">what the world spends</span></span>
-        </a>
-        <a class="itin-item info" href="#impact">
-          <span class="itin-n">02</span>
-          <span class="itin-body"><span class="itin-t">The Impact</span><span class="itin-d">what it truly costs</span></span>
-        </a>
-        <a class="itin-item act" href="#haveyoursay">
-          <span class="itin-n">▾</span>
-          <span class="itin-body"><span class="itin-t">Then it's your turn</span><span class="itin-d">redistribute · your country · your letter</span></span>
-        </a>
-      </div>
-    </nav>
-
-    <!-- ═══ CH 01 · THE MACHINE ═══ -->
-    <div class="section" id="machine">
-      <div class="chapter-num rv">Chapter 01 · The Machine</div>
-      <div class="sec-title red rv">What we spend on war</div>
-      <p class="sec-desc rv rv-d1">
-        2025 was the eleventh straight record year. The world now spends 2.5% of
-        everything it produces on its militaries, the highest share since 2009.
-      </p>
-
-      <!-- ══ THE MIRROR (the one split-screen) ══
-           what we CHOOSE to spend ($2.89T) ↔ what violence actually COSTS
-           ($21.8T). The $2,650-per-person and 10.5%-of-GDP facts live here now,
-           so the standalone info-cards and the duplicate lower mirror are gone. -->
-      <section class="scene mirror-scene cost" id="mirror01">
-        <div class="stage" id="mirror01Stage">
-          <div class="mirror" id="mirror01Mirror">
-            <div class="mirror-half half-war">
-              <div class="mh-inner">
-                <div class="mh-kicker war">What the world spends on its military</div>
-                <div class="mh-fig war" id="odo01">$0</div>
-                <div class="mh-desc">
-                  in 2025: an all-time record, 2.5% of everything the world
-                  produces. The US alone spent $954B; Europe surged 14%.
-                  <a
-                    href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-world-military-expenditure-2025"
-                    target="_blank"
-                    rel="noopener"
-                    >SIPRI 2026 ↗</a
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="mirror-half half-build">
-              <div class="mh-inner">
-                <div class="mh-kicker build">The full bill, once you count the damage</div>
-                <div class="mh-fig build">$21.8T</div>
-                <div class="mh-desc">
-                  the total economic impact of violence: 10.5% of world GDP,
-                  about <b>$2,650 taken from every person alive</b>.
-                  <a
-                    href="https://www.visionofhumanity.org/economic-impact-of-violence/"
-                    target="_blank"
-                    rel="noopener"
-                    >IEP GPI 2026 ↗</a
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="mirror-divider" id="divider01">
-              <div class="seal" id="seal01">
-                <span class="seal-x">10.5%</span>
-                <span class="seal-lbl">of world GDP<br />lost to violence</span>
-              </div>
-            </div>
-          </div>
-          <div class="mirror-readout" id="readout01" aria-hidden="true">
-            <span class="ro war">$2.89T we choose to spend</span>
-            <span class="ro-vs">↔</span>
-            <span class="ro build">$21.8T it actually costs</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- two matching donuts: where the spend goes / what the full bill is -->
-      <div class="machine-cols pies-only">
-        <!-- DONUT: spend by sector (red shades) -->
-        <div class="piecard rv">
-          <div class="viz-h">Where the $2.89T goes · by sector</div>
-          <div class="pie-layout">
-            <svg class="pie-svg" id="spendDonut" viewBox="0 0 100 100"></svg>
-            <div class="donut-legend" id="spendLegend"></div>
-          </div>
-          <div class="pie-srcs">
-            <a
-              href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-world-military-expenditure-2025"
-              target="_blank"
-              rel="noopener"
-              >SIPRI 2026 ↗</a
-            >
-            <a
-              href="https://www.icanw.org/premeditated_2025_global_nuclear_weapons_spending"
-              target="_blank"
-              rel="noopener"
-              >ICAN nuclear 2026 ↗</a
-            >
-            <a
-              href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-international-arms-transfers-2025"
-              target="_blank"
-              rel="noopener"
-              >SIPRI arms 2026 ↗</a
-            >
-          </div>
-        </div>
-
-        <!-- DONUT: what the $21.8T is made of (yellow shades) -->
-        <div class="piecard rv rv-d1">
-          <div class="viz-h">What the $21.8T is made of · by component</div>
-          <div class="pie-layout">
-            <svg class="pie-svg" id="violencePie" viewBox="0 0 100 100"></svg>
-            <div class="donut-legend" id="violenceLegend"></div>
-          </div>
-          <div class="pie-srcs">
-            <a
-              href="https://www.visionofhumanity.org/economic-impact-of-violence/"
-              target="_blank"
-              rel="noopener"
-              >IEP Global Peace Index 2026 · economic impact model ↗</a
-            >
-          </div>
-        </div>
-      </div>
-
-      <!-- ══ THE PRODUCTION LINE ══ three distinct scroll pieces (not mirrors):
-           a civilian→weapon morph, a self-drawing blueprint, a production
-           scale. They carry the $679B and +9.2% figures the old static stat
-           cards used to. -->
-      <div class="manufacture">
-        <div class="mf-eyebrow rv">
-          <span class="tick">▚</span> THE PRODUCTION LINE
-        </div>
-
-        <!-- 1 · CIVILIAN → WEAPON · same line, different output -->
-        <section class="scene mf-morph" id="mfMorph">
-          <div class="stage" id="mfMorphStage">
-            <!-- Both forms are drawn with volume rather than as flat outlines:
-                 tapered masts, an angled nacelle, blades with real chord, and a
-                 cylinder described by elliptical cross-sections. Two smaller
-                 turbines sit behind the first so it reads as a farm, not one
-                 machine. The rotor stays centred on 100,120 so the existing
-                 spin-down animation is untouched. -->
-            <svg class="morph-svg" id="morphSvg" viewBox="0 0 200 250" aria-hidden="true">
-              <g class="mo-turbine" id="moTurbine">
-                <!-- distant turbines: depth -->
-                <g class="mo-far">
-                  <path class="mo-mast" d="M31 234 L34.2 179 L35.8 179 L39 234 Z" />
-                  <ellipse class="mo-ground" cx="35" cy="234" rx="6" ry="1.7" />
-                  <path d="M35 179 L33.2 152 L36.6 153.4 Z" />
-                  <path d="M35 179 L58 193 L56.4 195.6 Z" />
-                  <path d="M35 179 L12 194 L13.6 196.6 Z" />
-                  <ellipse class="mo-hub" cx="35" cy="179" rx="2.2" ry="2.6" />
-                </g>
-                <g class="mo-far">
-                  <path class="mo-mast" d="M164 236 L166.4 190 L167.6 190 L170 236 Z" />
-                  <ellipse class="mo-ground" cx="167" cy="236" rx="5" ry="1.5" />
-                  <path d="M167 190 L165.6 168 L168.4 169.2 Z" />
-                  <path d="M167 190 L186 201 L184.6 203.2 Z" />
-                  <path d="M167 190 L148 202 L149.4 204.2 Z" />
-                  <ellipse class="mo-hub" cx="167" cy="190" rx="1.8" ry="2.1" />
-                </g>
-                <!-- main turbine: tapered tower, angled nacelle, blades with chord -->
-                <path class="mo-mast" d="M93.5 240 L97.6 126 L102.4 126 L106.5 240 Z" />
-                <ellipse class="mo-ground" cx="100" cy="240" rx="10" ry="2.8" />
-                <path class="mo-nacelle" d="M92 115.5 L110 112.5 L113 120 L95 123.5 Z" />
-                <g class="mo-blades" id="moBlades">
-                  <path d="M96.5 118 L95.4 38 Q100 27 104.4 39 L103 119.5 Z" />
-                  <path d="M102.6 123 L171 160 Q179.5 165.5 170 167.6 L100.4 127 Z" />
-                  <path d="M97.4 123 L29 160 Q20.5 165.5 30 167.6 L99.6 127 Z" />
-                </g>
-                <ellipse class="mo-hub" cx="100" cy="120" rx="4.6" ry="5.4" />
-                <!-- engineering annotation: tower-height dimension + callout -->
-                <path class="mo-dim mo-ext" d="M108 240 H130" />
-                <path class="mo-dim mo-ext" d="M108 121 H130" />
-                <path class="mo-dim" d="M126 123 V238" />
-                <path class="mo-arrow" d="M126 123 L123 130 L129 130 Z" />
-                <path class="mo-arrow" d="M126 238 L123 231 L129 231 Z" />
-                <text class="mo-anno mo-vert" x="139" y="182">H 120 M</text>
-                <path class="mo-lead" d="M110 117 L150 100 L163 100" />
-                <text class="mo-anno" x="165" y="102">NACELLE</text>
-                <text class="mo-anno mo-fig" x="8" y="16">FIG. 1a — TURBINE</text>
-              </g>
-              <g class="mo-missile" id="moMissile">
-                <!-- cylinder: silhouette + elliptical sections describing girth -->
-                <path class="mo-body" d="M87 230 L87 78 Q100 42 113 78 L113 230 Z" />
-                <ellipse class="mo-ring" cx="100" cy="82" rx="13" ry="3.6" />
-                <ellipse class="mo-ring" cx="100" cy="124" rx="13" ry="3.8" />
-                <ellipse class="mo-ring" cx="100" cy="168" rx="13" ry="3.8" />
-                <ellipse class="mo-ring" cx="100" cy="206" rx="13" ry="3.8" />
-                <ellipse class="mo-tail" cx="100" cy="230" rx="13" ry="4" />
-                <!-- near fins read solid, the far fin only as a seam -->
-                <path class="mo-fin" d="M87 202 L62 240 L87 221 Z" />
-                <path class="mo-fin" d="M113 202 L138 240 L113 221 Z" />
-                <line class="mo-seam" x1="100" y1="206" x2="100" y2="228" />
-                <line class="mo-tip" x1="100" y1="46" x2="100" y2="18" />
-                <!-- engineering annotation: length + Ø dimensions, callouts,
-                     section hatching on the propellant casing -->
-                <path class="mo-dim mo-ext" d="M115 78 H134" />
-                <path class="mo-dim mo-ext" d="M115 230 H134" />
-                <path class="mo-dim" d="M130 80 V228" />
-                <path class="mo-arrow" d="M130 80 L127 87 L133 87 Z" />
-                <path class="mo-arrow" d="M130 228 L127 221 L133 221 Z" />
-                <text class="mo-anno mo-vert" x="143" y="156">4.1 M</text>
-                <path class="mo-dim mo-ext" d="M87 232 V250" />
-                <path class="mo-dim mo-ext" d="M113 232 V250" />
-                <path class="mo-dim" d="M89 246 H111" />
-                <path class="mo-arrow" d="M89 246 L96 243 L96 249 Z" />
-                <path class="mo-arrow" d="M111 246 L104 243 L104 249 Z" />
-                <text class="mo-anno" x="100" y="243">Ø 340</text>
-                <g class="mo-hatch" id="moHatch"></g>
-                <path class="mo-lead" d="M113 96 L150 84 L163 84" />
-                <text class="mo-anno" x="165" y="86">WARHEAD</text>
-                <path class="mo-lead" d="M113 150 L150 158 L163 158" />
-                <text class="mo-anno" x="165" y="160">PROPELLANT</text>
-                <text class="mo-anno mo-fig" x="8" y="16">FIG. 1b — MUNITION</text>
-              </g>
-            </svg>
-            <div class="mf-labels">
-              <span class="mf-lab build" id="mfLabBuild">CLEAN ENERGY</span>
-              <span class="mf-lab war" id="mfLabWar">MUNITIONS</span>
-            </div>
-            <p class="mf-cap">
-              The same factories. The same steel, the same engineers.<br />
-              <b>The only variable is what we choose to build.</b>
-            </p>
-          </div>
-        </section>
-
-        <!-- 2 · SELF-DRAWING BLUEPRINT · $679B record arms revenue.
-             A full engineering drawing: side elevation, dimension lines with
-             arrowheads, numbered callout balloons, a Section A–A cut with
-             hatching, and a title block — all draw-on. -->
-        <div class="mf-blueprint rv" id="mfBlueprint">
-          <svg class="bp-svg" id="bpSvg" viewBox="0 0 360 250" aria-hidden="true">
-            <!-- graph-paper grid (built in JS) + drawing border -->
-            <g class="bp-grid" id="bpGrid"></g>
-            <rect class="bp-frame" x="4" y="4" width="352" height="242" />
-            <rect class="bp-frame bp-frame-in" x="9" y="9" width="342" height="232" />
-
-            <!-- ── SIDE ELEVATION ── centreline dash-dot -->
-            <path class="bp-line bp-centre" d="M30 96 H322" />
-            <!-- body: nose cone · casing · tapered tail · end cap -->
-            <path class="bp-line" d="M272 76 L302 96 L272 116" />
-            <path class="bp-line" d="M272 76 L60 76" />
-            <path class="bp-line" d="M272 116 L60 116" />
-            <path class="bp-line" d="M60 76 L48 82 L48 110 L60 116" />
-            <path class="bp-line bp-thin" d="M48 82 A5 14 0 0 0 48 110" />
-            <!-- cross-section station arcs -->
-            <path class="bp-line bp-thin" d="M104 76 A5 20 0 0 0 104 116" />
-            <path class="bp-line bp-thin" d="M158 76 A5 20 0 0 0 158 116" />
-            <path class="bp-line bp-thin" d="M212 76 A5 20 0 0 0 212 116" />
-            <!-- internal bulkheads (hidden detail, thin) -->
-            <path class="bp-line bp-thin" d="M240 76 L240 116" />
-            <path class="bp-line bp-thin" d="M186 76 L186 116" />
-            <path class="bp-line bp-thin" d="M120 76 L120 116" />
-            <!-- fins -->
-            <path class="bp-line" d="M60 76 L40 52 L86 76" />
-            <path class="bp-line" d="M60 116 L40 140 L86 116" />
-
-            <!-- ── DIMENSION · overall length (above) ── -->
-            <path class="bp-line bp-ext" d="M48 74 V52" />
-            <path class="bp-line bp-ext" d="M302 92 V52" />
-            <path class="bp-line bp-dim" d="M48 56 H302" />
-            <path class="bp-arrow" d="M48 56 L55 53 L55 59 Z" />
-            <path class="bp-arrow" d="M302 56 L295 53 L295 59 Z" />
-            <!-- ── DIMENSION · Ø diameter (left) ── -->
-            <path class="bp-line bp-ext" d="M46 76 H30" />
-            <path class="bp-line bp-ext" d="M46 116 H30" />
-            <path class="bp-line bp-dim" d="M34 76 V116" />
-            <path class="bp-arrow" d="M34 76 L31 82 L37 82 Z" />
-            <path class="bp-arrow" d="M34 116 L31 110 L37 110 Z" />
-
-            <!-- ── SECTION marker A–A on the main view ── -->
-            <path class="bp-line bp-cut" d="M158 66 V126" />
-
-            <!-- ── SECTION A–A detail (lower-left) ── -->
-            <circle class="bp-line" cx="74" cy="196" r="34" />
-            <circle class="bp-line bp-thin" cx="74" cy="196" r="23" />
-            <circle class="bp-line bp-thin" cx="74" cy="196" r="9" />
-            <g class="bp-hatch" id="bpHatch"></g>
-
-            <!-- ── numbered callout balloons + leaders (fade in) ── -->
-            <g class="bp-anno" id="bpAnno">
-              <path class="bp-lead" d="M287 88 L287 40" />
-              <circle class="bp-balloon" cx="287" cy="34" r="6" />
-              <text class="bp-num" x="287" y="36.6">1</text>
-              <path class="bp-lead" d="M240 116 L240 150" />
-              <circle class="bp-balloon" cx="240" cy="156" r="6" />
-              <text class="bp-num" x="240" y="158.6">2</text>
-              <path class="bp-lead" d="M158 116 L158 168" />
-              <circle class="bp-balloon" cx="158" cy="174" r="6" />
-              <text class="bp-num" x="158" y="176.6">3</text>
-              <path class="bp-lead" d="M100 116 L100 150" />
-              <circle class="bp-balloon" cx="100" cy="156" r="6" />
-              <text class="bp-num" x="100" y="158.6">4</text>
-
-              <text class="bp-tt" x="177" y="49">4 100 MM</text>
-              <text class="bp-tt bp-vert" x="24" y="96">Ø 340</text>
-              <text class="bp-tt bp-a" x="158" y="63">A</text>
-              <text class="bp-tt bp-a" x="158" y="132">A</text>
-              <text class="bp-tt" x="74" y="240">SECTION A–A · 2:1</text>
-
-              <!-- key -->
-              <text class="bp-key" x="130" y="196">1 · NOSE / SEEKER</text>
-              <text class="bp-key" x="130" y="206">2 · GUIDANCE</text>
-              <text class="bp-key" x="130" y="216">3 · WARHEAD</text>
-              <text class="bp-key" x="130" y="226">4 · PROPELLANT</text>
-
-              <!-- title block (lower-right) -->
-              <g class="bp-title">
-                <rect x="240" y="188" width="106" height="46" />
-                <path d="M240 200 H346 M240 212 H346 M240 224 H346 M294 188 V234" />
-                <text class="bp-tb bp-tb-b" x="244" y="197">FIG. 2 — MUNITION</text>
-                <text class="bp-tb" x="244" y="209">SCALE 1:40</text>
-                <text class="bp-tb" x="298" y="209">SHT 1/1</text>
-                <text class="bp-tb" x="244" y="221">DWG No. 679-B</text>
-                <text class="bp-tb bp-tb-r" x="244" y="231">STATUS: IN PRODUCTION</text>
-              </g>
-            </g>
-          </svg>
-          <div class="mf-fig-block">
-            <div class="mf-fig red" id="mfRevenue">$0</div>
-            <div class="mf-fig-lbl">
-              record revenue of the 100 largest arms makers, 2024 — the highest
-              ever recorded.
-              <a
-                href="https://www.sipri.org/media/press-release/2025/sipri-top-100-arms-producers-see-combined-revenues-surge-states-rush-modernize-and-expand-arsenals"
-                target="_blank"
-                rel="noopener"
-                >SIPRI ↗</a
-              >
-            </div>
-            <p class="mf-cap sm">
-              A record year. Every line on this schematic is somebody's profit.
-            </p>
-          </div>
-        </div>
-
-        <!-- 3 · PRODUCTION SCALE · +9.2% arms-trade growth -->
-        <div class="mf-scale rv" id="mfScale">
-          <div class="mf-fig-block">
-            <div class="mf-fig amber" id="mfGrowth">+0.0%</div>
-            <div class="mf-fig-lbl">
-              growth in the global arms trade, 2021–25 — the biggest jump in a
-              decade.
-              <a
-                href="https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-international-arms-transfers-2025"
-                target="_blank"
-                rel="noopener"
-                >SIPRI ↗</a
-              >
-            </div>
-          </div>
-          <div class="mf-conveyor" id="mfConveyor" aria-hidden="true"></div>
-        </div>
-      </div>
-
-      <!-- dual spender bars -->
-      <div class="dual-bars rv">
-        <div class="bars-col">
-          <div class="sp-head">10 largest military budgets · 2025 · $bn</div>
-          <div id="spendersAbs"></div>
-        </div>
-        <div class="bars-col">
-          <div class="sp-head">…and what that costs them · % of GDP</div>
-          <div id="spendersGdp"></div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ══ THE TURN · 01 → 02 ══ the red budget contracts to a point, an amber
-         reticle locks on, and the frame warms into the impact chapter. The
-         caption carries the actual argument: cost to the spenders → cost to
-         everyone. No skip-button here — this IS the transition, scrolled through. -->
-    <section class="scene matchcut" id="matchcut" aria-hidden="true">
-      <div class="stage" id="matchcutStage">
-        <div class="mc-warm" id="mcWarm"></div>
-        <svg class="mc" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
-          <circle class="mc-circle" cx="50" cy="50" r="22" />
-          <g class="mc-reticle">
-            <circle cx="50" cy="50" r="30" />
-            <path d="M50 12 V30 M50 70 V88 M12 50 H30 M70 50 H88" />
-            <path class="mc-ticks" d="M50 18 V22 M50 78 V82 M18 50 H22 M78 50 H82" />
-            <circle class="mc-lock" cx="50" cy="50" r="3.4" />
-          </g>
-        </svg>
-        <div class="mc-caption" id="mcCaption">
-          <span class="mc-cap-a" id="mcCapA"
-            >That was the cost to the states that spend it.</span
-          >
-          <span class="mc-cap-b" id="mcCapB">This is what it costs everyone.</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ CH 02 · THE IMPACT OF WAR (merged) ═══ -->
-    <div class="section" id="impact">
-      <div class="chapter-num rv" style="color: var(--amber)">
-        Chapter 02 · The Impact of War
-      </div>
-      <div class="sec-title amber rv">Where the $21.8 trillion goes</div>
-      <p class="sec-desc rv rv-d1">
-        That $21.8 trillion is the Institute for Economics &amp; Peace's full
-        accounting of violence: military and internal-security spending,
-        homicide, and the direct losses of armed conflict. The pie in Chapter
-        01 shows its make-up. Below is what it looks like on the ground.
-      </p>
-
-      <!-- ── DESTRUCTION ── -->
-      <div class="rv">
-        <span class="bigsub-tag">The economic wreckage</span>
-        <div class="bigsub amber">Destruction</div>
-      </div>
-      <div class="impact-grid">
-        <div class="rv">
-          <div class="viz-h">Rebuilding what war destroys · $bn needed</div>
-          <div class="conflict-bars" id="conflictBars"></div>
-        </div>
-        <div class="rv rv-d1">
-          <div class="viz-h">War and the planet</div>
-          <div class="env-grid" id="envGrid"></div>
-          <div class="viz-h" style="margin-top: 1.6rem">
-            If the world's militaries were a country · share of global CO₂
-          </div>
-          <div class="emit-chart" id="emittersChart"></div>
-          <div class="emit-cap">
-            Approx. share of global emissions. Military estimate: SGR / CEOBS ·
-            national shares: Global Carbon Project.
-          </div>
-        </div>
-      </div>
-
-      <!-- ══ THE SETBACK CLOCK ══ scrolling DOWN runs time backwards: money
-           rebuilds buildings, not the 77 years of development a war erased. -->
-      <section class="scene setback" id="setback">
-        <div class="stage" id="setbackStage">
-          <div class="sb-inner">
-            <div class="sb-kicker"><span class="tick">▚</span> GAZA · HUMAN DEVELOPMENT INDEX</div>
-            <div class="sb-year" id="sbYear">2025</div>
-            <div class="sb-lost"><span id="sbLost">0</span> YEARS ERASED</div>
-            <div class="sb-track">
-              <div class="sb-fill" id="sbFill"></div>
-              <div class="sb-ticks" id="sbTicks" aria-hidden="true"></div>
-            </div>
-            <p class="sb-cap">
-              Money can rebuild a building. It cannot rebuild time. The UN
-              estimates one war set human development in Gaza back
-              <b>77 years</b> — to 1948, before almost anyone alive today was
-              born.
-              <a
-                href="https://news.un.org/en/story/2026/04/1167336"
-                target="_blank"
-                rel="noopener"
-                >UN 2026 ↗</a
-              >
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ── DISPLACEMENT ── -->
-      <div class="rv">
-        <span class="bigsub-tag">The people scattered</span>
-        <div class="bigsub blue">Displacement</div>
-      </div>
-      <div class="disp-wrap">
-        <div class="rv">
-          <div class="disp-big" id="dispNum">117.8M</div>
-          <div class="disp-big-sub">
-            people forcibly displaced by persecution, conflict and violence at
-            the end of 2025: one in every 70 human beings. For the first time in
-            ten years the number fell, as 14.7 million people went home. Many
-            returned to rubble.
-          </div>
-          <div class="children-wrap">
-            <div class="children-top">
-              <div class="children-num" id="childrenNum">45M</div>
-              <div class="children-lbl">
-                are children · 38% of everyone displaced
-              </div>
-            </div>
-            <div class="children-track">
-              <div class="children-fill" data-w="38"></div>
-            </div>
-            <div class="recon-note" style="margin-top: 0.5rem">
-              Nearly half of the displaced have not finished growing up. Source:
-              <a
-                href="https://www.unhcr.org/global-trends"
-                target="_blank"
-                rel="noopener"
-                style="color: var(--link)"
-                >UNHCR Global Trends 2026 ↗</a
-              >
-            </div>
-          </div>
-        </div>
-        <div class="rv rv-d1">
-          <div class="gap-box">
-            <div class="gap-title">
-              Humanitarian funding: what was asked, what arrived
-            </div>
-            <div class="gap-row">
-              <div class="gap-lbl">
-                UN humanitarian appeal 2026 <span>$33B asked</span>
-              </div>
-              <div class="gap-track">
-                <div
-                  class="gap-fill"
-                  data-w="27.7"
-                  style="background: linear-gradient(90deg, #1a3a44, var(--teal))"
-                ></div>
-              </div>
-            </div>
-            <div class="gap-row">
-              <div class="gap-lbl">
-                What 2025's appeal received
-                <span>$12B · lowest in a decade</span>
-              </div>
-              <div class="gap-track">
-                <div
-                  class="gap-fill"
-                  data-w="10.1"
-                  style="background: linear-gradient(90deg, #5a3a00, var(--amber))"
-                ></div>
-              </div>
-            </div>
-            <div class="gap-row">
-              <div class="gap-lbl">
-                2025 nuclear weapons spending, for scale <span>$119B</span>
-              </div>
-              <div class="gap-track">
-                <div
-                  class="gap-fill"
-                  data-w="100"
-                  style="background: linear-gradient(90deg, #3a0000, var(--red))"
-                ></div>
-              </div>
-            </div>
-            <div class="gap-note">
-              The world's entire humanitarian system received
-              <b>$12 billion</b> last year, while nine countries spent
-              <b>$119 billion</b> maintaining nuclear weapons. Reaching all 240
-              million people in need costs about four months of nuclear-arsenal
-              budgets.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- The Border spans BOTH columns: it was making the left side twice
-           the height of the funding box and leaving dead space beside it. -->
-        <!-- ══ THE BORDER ══ most of the displaced never cross one -->
-        <div class="border-viz" id="borderViz">
-          <canvas id="borderCanvas"></canvas>
-          <div class="bd-labels" aria-hidden="true">
-            <div class="bd-side bd-home">
-              TRAPPED INSIDE<br />THEIR OWN COUNTRY<br /><b>68.7M</b>
-            </div>
-            <div class="bd-side bd-fled">
-              FLED ACROSS<br />A BORDER<br /><b>49.1M</b>
-            </div>
-          </div>
-          <div class="bd-count">
-            <span id="bdCount">0</span> forcibly displaced ·
-            <b id="bdChildren">0</b> of them children
-          </div>
-          <div class="dot-cap">
-            Most people driven from home never even leave their own country.
-            1 mark ≈ 200,000 people. UNHCR 2026.
-          </div>
-        </div>
-
-      <!-- ── HUMAN IMPACT — the machine dissolves from here ── -->
-      <div class="rv" id="humanPivot">
-        <span class="bigsub-tag">What no budget holds</span>
-        <div class="bigsub white">The Human Impact</div>
-      </div>
-      <p class="sec-desc rv" style="margin-top: 0">
-        Everything above can be counted in dollars. What follows cannot.
-      </p>
-      <div class="hi-pies rv" id="hiPies"></div>
-      <div class="human-strip rv" id="humanStrip"></div>
-
-      <!-- ══ 244,700 · ONE, THEN ALL ══
-           Opens on a single light and holds. Each point that follows is drawn
-           smaller than the last, so a person visibly becomes a pixel and the
-           reader feels the moment counting stops being possible. -->
-      <section class="scene lives-scene" id="livesScene">
-        <div class="stage" id="livesStage">
-          <canvas id="livesCanvas"></canvas>
-          <div class="lv-overlay">
-            <div class="lv-count" id="livesCount">1</div>
-            <div class="lv-lbl" id="livesLabel">
-              one person killed in armed conflict
-            </div>
-          </div>
-          <div class="lv-foot" id="livesFoot">
-            <span class="lv-rate">one every 2 min 9 sec</span>
-            <span class="lv-since"
-              ><b id="livesSince">0</b> since you opened this page</span
-            >
-            <span class="lv-src">ACLED · Dec 2024 – Nov 2025</span>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- the emotional peak — a full breath, alone -->
-    <div class="lives-breath">
-      <p class="rv">
-        Every number on this page was a person<br />who wanted to live.
-      </p>
-      <div class="lives-breath-cta rv">
-        <button
-          class="continue-btn say"
-          onclick="document.getElementById('haveyoursay').scrollIntoView({behavior:'smooth'})"
-        >
-          When you're ready <span class="ar">▾</span>
-        </button>
-      </div>
-    </div>
-
-    <div id="scrollBar"></div>
-    <div id="scrollDot"></div>
-
-    <!-- ═══════════ HAVE YOUR SAY (interactive · green) ═══════════ -->
-    <div class="hys-divider" id="haveyoursay">
+    <!-- One region for the tools, so a screen reader can jump to them; each tool's title is a heading. -->
+    <section class="tools" aria-label="Have your say">
+    <!-- ══ H1 REDISTRIBUTE · START ══ view: js/tools/h1.js, its section of css/tools.css -->
+    <div class="hys-divider" id="haveyoursay" tabindex="-1">
       <div class="hys-eyebrow"><span class="live-dot"></span>Have your say</div>
-      <div class="hys-title">What if we chose <span>differently?</span></div>
+      <h2 class="hys-title">What if we chose <span>differently?</span></h2>
       <p class="hys-lead">
         Governments hold the budgets, but the public holds the governments.
         Every figure you have just seen is the result of choices, and choices
@@ -799,47 +58,49 @@
       </p>
     </div>
 
-    <!-- sticky tracker (green) -->
-    <div class="tracker say">
-      <div class="tracker-inner">
-        <div class="ti">
-          <div class="ti-lbl">budget remaining</div>
-          <div class="ti-val g" id="tiRem">$2.89T</div>
-        </div>
-        <div class="ti-bar-w">
-          <div class="ti-bar">
-            <div class="ti-bar-fill" id="tiBar" style="width: 100%"></div>
+    <!-- the tracker sticks only while this tool is on screen -->
+    <div class="h1-scope">
+      <!-- sticky tracker -->
+      <div class="tracker">
+        <div class="tracker-inner">
+          <div class="ti">
+            <div class="ti-lbl">budget remaining</div>
+            <div class="ti-val g" id="tiRem">$2.89T</div>
+          </div>
+          <div class="ti-bar-w">
+            <div class="ti-bar">
+              <div class="ti-bar-fill" id="tiBar" style="width: 100%"></div>
+            </div>
+          </div>
+          <div class="ti ti-a">
+            <div class="ti-lbl">allocated</div>
+            <div class="ti-val a" id="tiAlloc">$0</div>
+          </div>
+          <div class="ti ti-c">
+            <div class="ti-lbl">issues funded</div>
+            <div class="ti-count" id="tiCount">0 · select issues to begin</div>
           </div>
         </div>
-        <div class="ti">
-          <div class="ti-lbl">allocated</div>
-          <div class="ti-val a" id="tiAlloc">$0</div>
-        </div>
-        <div class="ti">
-          <div class="ti-lbl">issues funded</div>
-          <div class="ti-count" id="tiCount">0 · select issues to begin</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ REDISTRIBUTION (combined select = rank) ═══ -->
-    <div class="redist" id="redistribute">
-      <div class="fund-cta">Spend the $2.89 trillion on the world instead</div>
-      <p class="fund-cta-sub">
-        Tap the causes you'd fund, <b>in order of priority — your most urgent
-        first</b>. The order you choose them in is your ranking. Watch the
-        military budget in the centre drain as you go.
-      </p>
-      <div class="redist-layout">
-        <div class="issue-col" id="issueColL"></div>
-        <div class="redist-canvas-col">
-          <canvas id="flowC"></canvas>
-          <div class="redist-prompt" id="redistPrompt">$2.89T to redistribute</div>
-        </div>
-        <div class="issue-col" id="issueColR"></div>
       </div>
 
-      <div class="summary" style="border-top: none; padding-top: 2rem">
+      <!-- ═══ REDISTRIBUTION (combined select = rank) ═══ -->
+      <div class="redist" id="redistribute">
+        <div class="h1-head">
+          <h3 class="fund-cta">Spend the $2.89 trillion on the world instead</h3>
+          <p class="fund-cta-sub">
+            Tap the causes you'd fund, <b>in order of priority — your most urgent
+            first</b>. The order you choose them in is your ranking. Watch the
+            military budget in the centre drain as you go.
+          </p>
+        </div>
+        <div class="redist-layout">
+          <div class="issue-col" id="issueColL"></div>
+          <div class="redist-canvas-col">
+            <div class="redist-prompt" id="redistPrompt" role="status">$2.89T to redistribute</div>
+          </div>
+          <div class="issue-col" id="issueColR"></div>
+        </div>
+
         <!-- live ordered priorities + reorder (the ranking, folded in) -->
         <div class="prio-panel" id="prioPanel">
           <div class="prio-head">
@@ -848,31 +109,40 @@
           </div>
           <div class="prio-list" id="prioList"></div>
         </div>
-        <div class="sum-big" id="sumBig"></div>
-        <div class="sum-stmt" id="sumStmt">
-          The money to solve these crises already exists in the world's annual
-          military budgets. This is not a question of financial capacity. It is
-          a question of political will.
+
+        <div class="h1-main">
+          <!-- the Sheet: drawn by js/tools/h1.js, a picture of the numbers in the tracker -->
+          <div class="h1-stage" id="h1Stage" aria-hidden="true"></div>
+          <div class="sum-big" id="sumBig"></div>
+          <div class="sum-stmt" id="sumStmt">
+            The money to solve these crises already exists in the world's annual
+            military budgets. This is not a question of financial capacity. It is
+            a question of political will.
+          </div>
         </div>
-        <div class="sum-btns">
-          <button class="btn btn-r" onclick="resetAll()">↺ Reset</button>
-          <button class="btn-cta-out" onclick="openShare()">↗ Share this</button>
-        </div>
-        <div class="continue-wrap" style="padding-top: 0.5rem">
-          <button
-            class="continue-btn"
-            id="toCountryBtn"
-            onclick="goToCountryFromRedist()"
-            disabled
-            style="opacity: 0.4"
-          >
-            Continue → Your country <span class="ar">▾</span>
-          </button>
+
+        <div class="h1-actions">
+          <div class="continue-wrap">
+            <button
+              class="continue-btn"
+              id="toCountryBtn"
+              onclick="goToCountryFromRedist()"
+              disabled
+            >
+              Continue → Your country <span class="ar" aria-hidden="true">▾</span>
+            </button>
+          </div>
+          <div class="sum-btns">
+            <button class="btn btn-r" onclick="resetAll()"><span aria-hidden="true">↺</span> Reset</button>
+            <button class="btn-cta-out" onclick="openShare()"><span aria-hidden="true">↗</span> Share this</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ═══ GATED JOURNEY ═══ -->
+    <!-- ══ H1 REDISTRIBUTE · END ══ -->
+
+    <!-- ══ GATE (shared): opens once a cause is chosen. H2, H3 and H4 sit inside it. ══ -->
     <div class="gated locked" id="journeyGate">
       <div class="gate-msg">
         <div class="gate-msg-inner">
@@ -882,27 +152,30 @@
           </p>
           <button
             class="continue-btn say"
-            onclick="document.getElementById('redistribute').scrollIntoView({behavior:'smooth'})"
+            onclick="goToRedistribute()"
           >
-            ▲ Choose what you'd fund
+            <span aria-hidden="true">▲</span> Choose what you'd fund
           </button>
         </div>
       </div>
       <div class="gated-content">
-        <!-- STEP 01 · COUNTRY -->
+        <!-- ══ H2 YOUR COUNTRY · START ══ view: js/tools/h2.js, its section of css/tools.css -->
         <div class="journey-section" id="countrySection">
           <div class="journey-inner">
             <div class="journey-label">Step 01</div>
-            <div class="sec-title teal">Your country</div>
+            <h2 class="sec-title">Your country</h2>
             <p class="journey-desc">
               Every nation feeds the $2.89 trillion total. See what yours
               spends, and what that money could fund instead.
             </p>
+            <!-- the world total with the country inside it, drawn by js/tools/h2.js -->
+            <div class="cc-plane" id="ccPlane"></div>
             <div class="country-ui">
               <div class="country-select-wrap">
                 <select
                   class="country-select"
                   id="countrySelect"
+                  aria-label="Your country"
                   onchange="showCountry(this.value)"
                 >
                   <option value="">Select your country…</option>
@@ -914,7 +187,7 @@
                 style="display: none"
               ></div>
             </div>
-            <div class="journey-actions" style="margin-top: 2rem">
+            <div class="journey-actions">
               <button
                 class="btn btn-t"
                 onclick="goToLetter()"
@@ -928,11 +201,14 @@
           </div>
         </div>
 
-        <!-- STEP 03 · LETTER -->
+        <!-- ══ H2 YOUR COUNTRY · END ══ -->
+
+        <!-- ══ H3 LETTER · START ══ view: js/tools/h3.js, its section of css/tools.css -->
         <div class="journey-section" id="letterSection">
           <div class="journey-inner">
+            <div class="letter-head">
             <div class="journey-label">Step 02</div>
-            <div class="sec-title" style="color: #fff">Write the letter</div>
+            <h2 class="sec-title">Write the letter</h2>
             <p class="journey-desc">
               A personal letter, pre-written from your choices and editable in
               full. Address it to your head of state. Send it, post it, or
@@ -943,6 +219,7 @@
               5 priorities, and pick your country, to complete the letter.
             </div>
             <div class="letter-fields">
+              <div class="letter-field">
               <input
                 class="field-inp"
                 type="text"
@@ -950,6 +227,9 @@
                 placeholder="Your name (optional, defaults to 'A concerned citizen')"
                 oninput="generateLetter()"
               />
+              <span class="letter-field-hint" aria-hidden="true"></span>
+              </div>
+              <div class="letter-field">
               <input
                 class="field-inp"
                 type="text"
@@ -957,11 +237,15 @@
                 placeholder="Your leader's name / title (e.g. Prime Minister Starmer)"
                 oninput="generateLetter()"
               />
+              <span class="letter-field-hint" aria-hidden="true"></span>
+              </div>
             </div>
+            </div>
+            <div class="letter-stage">
             <div class="letter-wrap">
               <div class="letter-toolbar">
-                <span class="letter-toolbar-label">Your letter · editable</span>
-                <div class="letter-toolbar-actions">
+                <span class="letter-toolbar-label" id="letterToolbarLabel">Your letter · editable</span>
+                <div class="letter-toolbar-actions" aria-live="polite">
                   <button class="tool-btn" onclick="copyLetter()">Copy</button>
                   <button class="tool-btn" onclick="emailLetter()">Email</button>
                   <button class="tool-btn" onclick="tweetLetter()">
@@ -974,15 +258,19 @@
                 id="letterOutput"
                 contenteditable="true"
                 spellcheck="true"
+                role="textbox"
+                aria-multiline="true"
+                aria-labelledby="letterToolbarLabel"
               ></div>
             </div>
-            <div class="letter-contact-note" id="letterContactNote"></div>
+            <div class="letter-actions">
             <!-- single primary action: send it to your representative -->
             <div class="letter-primary">
               <button class="continue-btn say" onclick="sendToRepresentative()">
-                ✉ Send this letter to your representative
+                <span aria-hidden="true">✉</span> Send this letter to your representative
               </button>
             </div>
+            <div class="letter-contact-note" id="letterContactNote"></div>
             <div class="letter-secondary">
               <button class="link-btn" onclick="generateShareCard()">
                 Generate shareable card
@@ -992,10 +280,14 @@
                 Skip to the coalition
               </button>
             </div>
+            </div>
+            </div>
           </div>
         </div>
 
-        <!-- STEP 04 · COALITION -->
+        <!-- ══ H3 LETTER · END ══ -->
+
+        <!-- ══ H4 COALITION · START ══ view: js/tools/h4.js, its section of css/tools.css -->
         <div
           class="journey-section"
           id="coalitionSection"
@@ -1003,19 +295,35 @@
         >
           <div class="journey-inner">
             <div class="journey-label">Step 03</div>
-            <div class="sec-title" style="color: var(--say)">
+            <h2 class="sec-title">
               Join the coalition
-            </div>
+            </h2>
             <p class="journey-desc">
               <span class="live-dot"></span>People choosing to fund the planet,
               from around the world. Add your voice to the global tally.
             </p>
 
             <!-- ═══ INTERACTIVE 3D GLOBE ═══ -->
+            <svg class="globe-defs" aria-hidden="true">
+              <defs>
+                <radialGradient id="h4Spec" cx="0.3" cy="0.26" r="0.6">
+                  <stop offset="0" stop-color="#fff" stop-opacity="0.3" />
+                  <stop offset="0.45" stop-color="#fff" stop-opacity="0.09" />
+                  <stop offset="1" stop-color="#fff" stop-opacity="0" />
+                </radialGradient>
+                <radialGradient id="h4Shade" cx="0.32" cy="0.28" r="0.9">
+                  <stop offset="0" stop-color="#0A0A0A" stop-opacity="0" />
+                  <stop offset="0.38" stop-color="#0A0A0A" stop-opacity="0.18" />
+                  <stop offset="0.68" stop-color="#0A0A0A" stop-opacity="0.78" />
+                  <stop offset="0.9" stop-color="#0A0A0A" stop-opacity="0.97" />
+                </radialGradient>
+              </defs>
+            </svg>
             <div class="globe-block">
               <div class="globe-title">The coalition, lighting up the map</div>
               <div class="globe-sub">
-                Each bar is a country's sign-ups. Drag to spin · scroll to zoom.
+                Each bar is a country's sign-ups.
+                <span class="globe-drag">Drag to spin.</span>
               </div>
               <div class="globe-wrap" id="globeWrap">
                 <div class="globe-loading" id="globeLoading">
@@ -1039,14 +347,18 @@
                   <div class="coalition-top" id="coalitionTopIssues"></div>
                 </div>
                 <div class="coalition-form">
-                  <input
-                    class="field-inp"
-                    type="email"
-                    id="coalitionEmail"
-                    placeholder="Your email (optional, for Six Degrees waitlist & Blueprint updates)"
-                  />
+                  <div class="coalition-email">
+                    <input
+                      class="field-inp"
+                      type="email"
+                      id="coalitionEmail"
+                      placeholder="Your email (optional, for Six Degrees waitlist & Blueprint updates)"
+                    />
+                    <!-- js/tools/h4.js shows the placeholder here on two lines on a phone -->
+                    <span class="coalition-ph" aria-hidden="true"></span>
+                  </div>
                   <!-- optional, banded rather than exact so it can't identify -->
-                  <select class="field-inp" id="coalitionAge">
+                  <select class="field-inp" id="coalitionAge" aria-label="Your age range (optional)">
                     <option value="">Your age range (optional)</option>
                     <option value="under-18">Under 18</option>
                     <option value="18-24">18 – 24</option>
@@ -1079,18 +391,20 @@
                   <div id="turnstileBox" class="turnstile-box"></div>
                   <button
                     class="btn btn-t"
-                    style="width: 100%; margin-top: 0.6rem"
                     onclick="submitCoalition()"
                   >
                     Submit my priorities + generate shareable card
                   </button>
-                  <div
-                    id="coalitionThanks"
-                    style="display: none"
-                    class="coalition-thanks"
-                  >
-                    ✓ Added to the coalition. Your card is ready, scroll down to
-                    download it.
+                  <div class="coalition-status">
+                    <div
+                      id="coalitionThanks"
+                      style="display: none"
+                      class="coalition-thanks"
+                      tabindex="-1"
+                    >
+                      ✓ Added to the coalition. Your card is ready, scroll down to
+                      download it.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1098,20 +412,113 @@
             </div>
           </div>
         </div>
+        <!-- ══ H4 COALITION · END ══ -->
       </div>
     </div>
 
-    <!-- after the journey: a way to (re)enter the artwork, which now lives
-         at the top of the page -->
+    <!-- ══ H6 ARCHIVE · START ══ view: js/tools/h6.js, its section of css/tools.css -->
+    <!-- after the journey, outside the gate: every letter written here -->
     <div class="room-cta">
-      <a class="room-cta-btn" href="#roomSection">▸ Enter the archive</a>
+      <a class="room-cta-btn" href="#roomSection"><span aria-hidden="true">▸</span> Enter the archive</a>
       <div class="room-cta-sub">every letter written here, yours among them</div>
     </div>
+
+    <!-- The Archive: one sheet per person. Letters appear only where someone opted in AND a moderator cleared them. -->
+    <div class="room-section" id="roomSection">
+      <div class="room-hall">
+        <div class="room-head">
+          <div class="chapter-num">
+            The artwork · Everyone who has written
+          </div>
+          <h2 class="sec-title">The Archive</h2>
+          <p class="sec-desc">
+            Every letter written on this page is kept here, one sheet for one
+            person — a single record made by everybody who has taken part. Move
+            through it. Open any sheet to read what a stranger told their
+            government.
+          </p>
+          <div class="room-badge" id="roomBadge" hidden></div>
+        </div>
+
+        <div class="room-stage" id="roomStage" tabindex="0" role="application" aria-label="The Archive, a room of hanging sheets" aria-describedby="roomKeys">
+          <canvas id="roomCanvas" aria-hidden="true"></canvas>
+          <div class="room-loading" id="roomLoading">entering the archive…</div>
+          <div class="room-aim" id="roomAim" hidden></div>
+          <!-- the reader's own sheet: only after they opted in and sent the form. Blank, unnamed, never their words. -->
+          <div class="room-mine" id="roomMine" hidden>
+            <svg class="rm-svg" aria-hidden="true"><polyline id="roomMineLead" /></svg>
+            <i class="rm-lead" aria-hidden="true"></i>
+            <span class="rm-n" aria-hidden="true">1</span>
+            <span class="rm-tag">Awaiting review</span>
+            <span class="rm-fig" aria-hidden="true"><b>FIG. 1</b><u><s></s></u></span>
+          </div>
+        </div>
+        <div class="room-fog" aria-hidden="true"></div>
+
+        <div class="room-hint" id="roomHint">
+          drag to look around · click a sheet to read it
+        </div>
+        <div class="room-keys" id="roomKeys">
+          arrow keys to look around · enter to read the ringed sheet
+        </div>
+
+        <div class="rd-figs">
+          <div class="rd-fig">
+            <div class="rd-n" id="rdPeople">—</div>
+            <div class="rd-l">people have written</div>
+          </div>
+          <div class="rd-fig">
+            <div class="rd-n" id="rdCountries">—</div>
+            <div class="rd-l">countries represented</div>
+          </div>
+          <div class="rd-fig">
+            <div class="rd-n" id="rdLetters">—</div>
+            <div class="rd-l">letters in the archive</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="room-data">
+        <div class="rd-split">
+          <div class="rd-block">
+            <div class="rd-h">Who is writing</div>
+            <div class="rd-ages" id="rdAges"></div>
+          </div>
+          <div class="rd-block">
+            <div class="rd-h">What the archive says</div>
+            <ul class="rd-find" id="rdFindings"></ul>
+          </div>
+        </div>
+        <!-- the keyboard's way to every readable letter; filled by js/tools/h6.js -->
+        <div class="room-letters" id="roomLetters" hidden>
+          <div class="rd-h" id="roomLettersH">Read the letters</div>
+          <ol class="rl-list" id="roomLettersList" aria-labelledby="roomLettersH"></ol>
+          <div class="rl-nav">
+            <button type="button" class="tool-btn" id="roomLettersPrev">Previous</button>
+            <span class="rl-page" id="roomLettersPage"></span>
+            <button type="button" class="tool-btn" id="roomLettersNext">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </section>
+
+    <!-- reading happens in HTML, not in 3D: legible, selectable, accessible -->
+    <div class="room-reader" id="roomReader" role="dialog" aria-modal="true" aria-labelledby="roomReaderMeta" hidden>
+      <div class="room-reader-sheet">
+        <div class="room-reader-scroll">
+          <button class="room-reader-x" id="roomReaderX" aria-label="Close">✕</button>
+          <div class="room-reader-meta" id="roomReaderMeta"></div>
+          <div class="room-reader-body" id="roomReaderBody"></div>
+        </div>
+      </div>
+    </div>
+    <!-- ══ H6 ARCHIVE · END ══ -->
 
     <!-- ═══ DISCLAIMER ═══ -->
     <div class="disclaimer">
       <details class="disc-box">
-        <summary class="disc-title">Methodology &amp; disclaimer ▾</summary>
+        <summary class="disc-title"><span>Methodology &amp; disclaimer <span aria-hidden="true">▾</span></span></summary>
         <div class="disc-text">
           A work of data art and advocacy, not a policy document. Defence
           spending serves real purposes — deterrence, disaster response,
@@ -1208,10 +615,11 @@
       </p>
     </footer>
 
-    <!-- ═══ SHARE OVERLAY ═══ -->
-    <div class="share-ov" id="shareOv">
+    <!-- ══ H5 CARD AND SHARE OVERLAYS · START ══ view: js/tools/h5.js, its section of css/tools.css -->
+    <!-- share overlay -->
+    <div class="share-ov" id="shareOv" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
       <div class="share-box">
-        <div class="share-title">Share The Cost of War</div>
+        <div class="share-title" id="shareTitle">Share The Cost of War</div>
         <div class="share-sub">
           Screenshot your allocation and post it. Or send the link to someone
           who should see it.
@@ -1225,7 +633,7 @@
         <button class="btn btn-t" style="width: 100%" onclick="submitEmail()">
           Keep me informed
         </button>
-        <div class="share-thanks" id="sThanks">
+        <div class="share-thanks" id="sThanks" role="status">
           ✓ Thank you. We'll be in touch about Blueprint and StudioEX projects.
         </div>
         <div class="share-note">We will never sell or share your data.</div>
@@ -1242,13 +650,14 @@
             The Six Degrees
           </button>
         </div>
-        <span class="share-close" onclick="closeShare()">Close</span>
+        <button type="button" class="share-close" onclick="closeShare()">Close</button>
       </div>
     </div>
 
-    <!-- ═══ SHAREABLE CARD OVERLAY ═══ -->
-    <div class="sc-overlay" id="scOverlay">
+    <!-- shareable card overlay -->
+    <div class="sc-overlay" id="scOverlay" role="dialog" aria-modal="true" aria-labelledby="scHeadline">
       <div class="sc-modal">
+        <div class="sc-print">
         <div id="shareCard">
           <div class="sc-header">
             <div class="sc-eyebrow">The Cost of War · 2026</div>
@@ -1269,9 +678,11 @@
             <div class="sc-footer-right">studioex.co<br />@404blueprint</div>
           </div>
         </div>
+        </div>
+        <div class="sc-side">
         <div class="sc-actions">
           <button class="btn btn-t" onclick="downloadCard()">
-            ↓ Download PNG
+            <span aria-hidden="true">↓</span> Download PNG
           </button>
           <button class="btn btn-w" onclick="shareCardTo('twitter')">
             Post to X
@@ -1283,27 +694,41 @@
             Copy for Instagram
           </button>
         </div>
-        <span
-          class="sc-close"
-          onclick="
-            document.getElementById('scOverlay').classList.remove('open')
-          "
-          >Close</span
-        >
+        <button type="button" class="sc-close" onclick="closeCard()">Close</button>
+        </div>
       </div>
     </div>
+    <!-- ══ H5 CARD AND SHARE OVERLAYS · END ══ -->
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js?v=2026r36"></script>
-    <script src="js/data.js?v=2026r36"></script>
-    <script src="js/backend.js?v=2026r36"></script>
-    <script src="js/main.js?v=2026r36"></script>
-    <!-- scroll engine + the dossier choreography, layered on top of main.js.
-         Native scroll only — no smooth-scroll library (see js/dossier.js). -->
+    <!-- The story first: it never waits for the tools' scripts or supabase-js (a slow phone draws
+         its first picture sooner). js/data.js is the only home for figures; the story reads it too. -->
+    <script src="js/data.js?v=p4fix5"></script>
+    <!-- Native scroll; no smooth-scroll library. -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="js/dossier.js?v=2026r36"></script>
-    <!-- The Room: lazy-loads Three.js only when it nears the viewport -->
-    <script src="js/room.js?v=2026r36"></script>
+    <!-- Engine: core, camera maths, chrome + atmosphere (one file) -->
+    <script src="js/story/engine.js?v=p4fix5"></script>
+    <!-- Assets the scenes read when the story starts (data and drawings, not story code):
+         S05's drawings, and S07's land outline (Natural Earth, public domain, read only) -->
+    <script src="js/story-assets/s05-drawings.js?v=p4fix5"></script>
+    <script src="js/map/land-110m.js?v=p4fix5"></script>
+    <!-- The scenes, S00 to S13, one section each; its last lines start the story -->
+    <script src="js/story/scenes.js?v=p4fix5"></script>
+    <!-- The tools, deferred: fetched at low priority, then run in exactly this order once the page
+         has been read, after the story has started. supabase-js, config, backend, main as before. -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="js/config.js?v=p4fix5"></script>
+    <script defer src="js/backend.js?v=p4fix5"></script>
+    <!-- tools: state and logic -->
+    <script defer src="js/main.js?v=p4fix5"></script>
+    <!-- tools: one view per tool, each reading main.js through ToolView -->
+    <script defer src="js/tools/h1.js?v=p4fix5"></script>
+    <script defer src="js/tools/h2.js?v=p4fix5"></script>
+    <script defer src="js/tools/h3.js?v=p4fix5"></script>
+    <script defer src="js/tools/h4.js?v=p4fix5"></script>
+    <script defer src="js/tools/h5.js?v=p4fix5"></script>
+    <script defer src="js/tools/h6.js?v=p4fix5"></script>
+    <!-- The Archive: lazy-loads Three.js only when it nears the viewport -->
+    <script defer src="js/room.js?v=p4fix5"></script>
   </body>
 </html>

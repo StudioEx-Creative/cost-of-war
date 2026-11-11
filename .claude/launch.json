@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "cost-of-war",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "4173"],
-      "port": 4173
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "PATH=/opt/homebrew/bin:/usr/local/bin:$PATH exec node tools/preview-server.mjs --port 4174"],
+      "port": 4174
     }
   ]
 }

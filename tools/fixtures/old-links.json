@@ -1,0 +1,2490 @@
+{
+ "from": "index.html at e17c27c",
+ "sources": [
+  {
+   "url": "https://acleddata.com",
+   "text": [
+    "ACLED"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://acleddata.com/series/acled-conflict-index",
+   "text": [
+    "source ↗"
+   ],
+   "where": [
+    "humanStrip"
+   ]
+  },
+  {
+   "url": "https://aoav.org.uk/explosiveviolence/",
+   "text": [
+    "AOAV / UN ↗"
+   ],
+   "where": [
+    "hiPies"
+   ]
+  },
+  {
+   "url": "https://ceobs.org/",
+   "text": [
+    "CEOBS / UNFCCC ↗",
+    "CEOBS ↗"
+   ],
+   "where": [
+    "envGrid"
+   ]
+  },
+  {
+   "url": "https://childrenandarmedconflict.un.org",
+   "text": [
+    "UN CAAC"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://iea.org",
+   "text": [
+    "IEA"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://ipbes.net",
+   "text": [
+    "IPBES"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://ipbes.net/global-assessment",
+   "text": [
+    "IPBES ↗"
+   ],
+   "where": [
+    "ix12"
+   ]
+  },
+  {
+   "url": "https://news.un.org/en/story/2025/06/1164646",
+   "text": [
+    "source ↗"
+   ],
+   "where": [
+    "humanStrip"
+   ]
+  },
+  {
+   "url": "https://news.un.org/en/story/2026/04/1167336",
+   "text": [
+    "EU / UN / World Bank RDNA 2026 ↗",
+    "Gaza RDNA 2026",
+    "UN 2026 ↗"
+   ],
+   "where": [
+    "conflictBars",
+    "page",
+    "setbackStage"
+   ]
+  },
+  {
+   "url": "https://oceanpanel.org",
+   "text": [
+    "High ↗",
+    "Ocean Panel"
+   ],
+   "where": [
+    "ix11",
+    "page"
+   ]
+  },
+  {
+   "url": "https://unctad.org/publication/technology-and-innovation-report-2023",
+   "text": [
+    "UNCTAD ↗"
+   ],
+   "where": [
+    "ix7"
+   ]
+  },
+  {
+   "url": "https://unhabitat.org",
+   "text": [
+    "UN-Habitat"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://unhabitat.org/wcr",
+   "text": [
+    "UN-Habitat ↗"
+   ],
+   "where": [
+    "ix9"
+   ]
+  },
+  {
+   "url": "https://watson.brown.edu/costsofwar",
+   "text": [
+    "Brown Univ. Costs of War",
+    "source ↗"
+   ],
+   "where": [
+    "humanStrip",
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.fao.org",
+   "text": [
+    "FAO SOFI"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.fao.org/publications/fao-flagship-publications/the-state-of-food-security-and-nutrition-in-the-world/en",
+   "text": [
+    "FAO ↗"
+   ],
+   "where": [
+    "ix0"
+   ]
+  },
+  {
+   "url": "https://www.icanw.org",
+   "text": [
+    "ICAN 2026"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.icanw.org/premeditated_2025_global_nuclear_weapons_spending",
+   "text": [
+    "ICAN nuclear 2026 ↗"
+   ],
+   "where": [
+    "machine"
+   ]
+  },
+  {
+   "url": "https://www.iea.org/reports/world-energy-outlook-2024",
+   "text": [
+    "IEA ↗"
+   ],
+   "where": [
+    "ix5"
+   ]
+  },
+  {
+   "url": "https://www.ilo.org/global/research/global-reports/weso/en/",
+   "text": [
+    "ILO ↗"
+   ],
+   "where": [
+    "ix6"
+   ]
+  },
+  {
+   "url": "https://www.ipcc.ch",
+   "text": [
+    "IPCC"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.sgr.org.uk",
+   "text": [
+    "SGR / CEOBS"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.sgr.org.uk/resources/hidden-carbon-cost-military",
+   "text": [
+    "SGR / CEOBS ↗"
+   ],
+   "where": [
+    "envGrid"
+   ]
+  },
+  {
+   "url": "https://www.sipri.org/media/press-release/2025/sipri-top-100-arms-producers-see-combined-revenues-surge-states-rush-modernize-and-expand-arsenals",
+   "text": [
+    "SIPRI ↗"
+   ],
+   "where": [
+    "mfBlueprint"
+   ]
+  },
+  {
+   "url": "https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-international-arms-transfers-2025",
+   "text": [
+    "SIPRI arms 2026 ↗",
+    "SIPRI ↗"
+   ],
+   "where": [
+    "machine",
+    "mfScale"
+   ]
+  },
+  {
+   "url": "https://www.sipri.org/publications/2026/sipri-fact-sheets/trends-world-military-expenditure-2025",
+   "text": [
+    "SIPRI 2026",
+    "SIPRI 2026 ↗"
+   ],
+   "where": [
+    "machine",
+    "mirror01Mirror",
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.undp.org/yemen",
+   "text": [
+    "UNDP ↗"
+   ],
+   "where": [
+    "conflictBars"
+   ]
+  },
+  {
+   "url": "https://www.unesco.org",
+   "text": [
+    "UNESCO"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.unesco.org/en/articles/more-children-out-school-7th-year-row-273-million",
+   "text": [
+    "UNESCO ↗"
+   ],
+   "where": [
+    "ix2"
+   ]
+  },
+  {
+   "url": "https://www.unescwa.org/",
+   "text": [
+    "UN / ESCWA ↗"
+   ],
+   "where": [
+    "conflictBars"
+   ]
+  },
+  {
+   "url": "https://www.unhcr.org/global-trends",
+   "text": [
+    "UNHCR Global Trends 2026",
+    "UNHCR Global Trends 2026 ↗"
+   ],
+   "where": [
+    "hiPies",
+    "impact",
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.unocha.org",
+   "text": [
+    "UN OCHA GHO 2026"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.unocha.org/sudan",
+   "text": [
+    "UN / World Bank ↗"
+   ],
+   "where": [
+    "conflictBars"
+   ]
+  },
+  {
+   "url": "https://www.unwomen.org",
+   "text": [
+    "UN Women"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.unwomen.org/en",
+   "text": [
+    "UN ↗"
+   ],
+   "where": [
+    "ix3"
+   ]
+  },
+  {
+   "url": "https://www.visionofhumanity.org",
+   "text": [
+    "IEP Global Peace Index 2026",
+    "IEP ↗"
+   ],
+   "where": [
+    "ix13",
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.visionofhumanity.org/economic-impact-of-violence/",
+   "text": [
+    "IEP GPI 2026 ↗",
+    "IEP Global Peace Index 2026 · economic impact model ↗"
+   ],
+   "where": [
+    "machine",
+    "mirror01Mirror"
+   ]
+  },
+  {
+   "url": "https://www.who.int",
+   "text": [
+    "WHO"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.who.int/publications/i/item/9789241513326",
+   "text": [
+    "WHO ↗"
+   ],
+   "where": [
+    "ix1"
+   ]
+  },
+  {
+   "url": "https://www.who.int/teams/environment-climate-change-and-health/water-sanitation-and-health",
+   "text": [
+    "OECD ↗"
+   ],
+   "where": [
+    "ix4"
+   ]
+  },
+  {
+   "url": "https://www.worldbank.org",
+   "text": [
+    "World Bank / Ukraine RDNA5"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.worldbank.org/en/country/iraq",
+   "text": [
+    "World Bank ↗"
+   ],
+   "where": [
+    "conflictBars"
+   ]
+  },
+  {
+   "url": "https://www.worldbank.org/en/news/press-release/2026/02/23/updated-ukraine-recovery-and-reconstruction-needs-assessment-released",
+   "text": [
+    "World Bank RDNA5 2026 ↗"
+   ],
+   "where": [
+    "conflictBars"
+   ]
+  },
+  {
+   "url": "https://www.worldbank.org/en/topic/poverty/overview",
+   "text": [
+    "Oxfam ↗"
+   ],
+   "where": [
+    "ix8"
+   ]
+  },
+  {
+   "url": "https://www.wri.org/insights/ncqg-climate-finance-goals-explained",
+   "text": [
+    "IPCC ↗"
+   ],
+   "where": [
+    "ix10"
+   ]
+  }
+ ],
+ "contacts": [
+  {
+   "url": "https://en.parliran.ir/",
+   "text": [
+    "Contact your representative ↗",
+    "Iran government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://government.ru/en/",
+   "text": [
+    "Contact your representative ↗",
+    "Russia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://japarliament.gov.jm/",
+   "text": [
+    "Contact your representative ↗",
+    "Jamaica government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://parlamento.gub.uy/",
+   "text": [
+    "Contact your representative ↗",
+    "Uruguay government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://parliament.ge/",
+   "text": [
+    "Contact your representative ↗",
+    "Georgia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://parliament.gh/",
+   "text": [
+    "Contact your representative ↗",
+    "Ghana government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://parliament.iq/",
+   "text": [
+    "Contact your representative ↗",
+    "Iraq government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://parliament.jo/",
+   "text": [
+    "Contact your representative ↗",
+    "Jordan government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://quochoi.vn/",
+   "text": [
+    "Contact your representative ↗",
+    "Vietnam government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://writetothem.com",
+   "text": [
+    "Contact your representative ↗",
+    "United Kingdom government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.althingi.is/",
+   "text": [
+    "Contact your representative ↗",
+    "Iceland government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.aph.gov.au/senators_and_members",
+   "text": [
+    "Australia government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.apn.dz/",
+   "text": [
+    "Algeria government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.arp.tn/",
+   "text": [
+    "Contact your representative ↗",
+    "Tunisia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.asamblea.gob.bo/",
+   "text": [
+    "Bolivia government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.asambleanacional.gob.ec/",
+   "text": [
+    "Contact your representative ↗",
+    "Ecuador government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.assemblee-nationale.fr/",
+   "text": [
+    "Contact your representative ↗",
+    "France government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.assemblee-nationale.sn/",
+   "text": [
+    "Contact your representative ↗",
+    "Senegal government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.assembly.go.kr/",
+   "text": [
+    "Contact your representative ↗",
+    "South Korea government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.bundestag.de/en/members",
+   "text": [
+    "Contact your representative ↗",
+    "Germany government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.camara.leg.br/",
+   "text": [
+    "Brazil government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.camera.it/",
+   "text": [
+    "Contact your representative ↗",
+    "Italy government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.cdep.ro/",
+   "text": [
+    "Contact your representative ↗",
+    "Romania government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.chambredesrepresentants.ma/",
+   "text": [
+    "Contact your representative ↗",
+    "Morocco government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.chd.lu/",
+   "text": [
+    "Contact your representative ↗",
+    "Luxembourg government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.congreso.cl/",
+   "text": [
+    "Chile government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.congreso.es/",
+   "text": [
+    "Contact your representative ↗",
+    "Spain government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.congreso.gob.ar/",
+   "text": [
+    "Argentina government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.congreso.gob.gt/",
+   "text": [
+    "Contact your representative ↗",
+    "Guatemala government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.congreso.gob.pe/",
+   "text": [
+    "Contact your representative ↗",
+    "Peru government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.congreso.gov.co/",
+   "text": [
+    "Colombia government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.congress.gov.ph/",
+   "text": [
+    "Contact your representative ↗",
+    "Philippines government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.contactingthecongress.org",
+   "text": [
+    "Contact your representative ↗",
+    "United States government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.dekamer.be/",
+   "text": [
+    "Belgium government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.diputados.gob.mx/",
+   "text": [
+    "Contact your representative ↗",
+    "Mexico government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.dpr.go.id/",
+   "text": [
+    "Contact your representative ↗",
+    "Indonesia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.eduskunta.fi/",
+   "text": [
+    "Contact your representative ↗",
+    "Finland government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.ft.dk/",
+   "text": [
+    "Contact your representative ↗",
+    "Denmark government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.hellenicparliament.gr/",
+   "text": [
+    "Contact your representative ↗",
+    "Greece government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.kna.kw/",
+   "text": [
+    "Contact your representative ↗",
+    "Kuwait government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.knesset.gov.il/",
+   "text": [
+    "Contact your representative ↗",
+    "Israel government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.lrs.lt/",
+   "text": [
+    "Contact your representative ↗",
+    "Lithuania government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.ly.gov.tw/",
+   "text": [
+    "Contact your representative ↗",
+    "Taiwan government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.majlisalshura.om/",
+   "text": [
+    "Contact your representative ↗",
+    "Oman government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.meclis.gov.az/",
+   "text": [
+    "Azerbaijan government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.my.gov.sa/",
+   "text": [
+    "Contact your representative ↗",
+    "Saudi Arabia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.mygov.in/",
+   "text": [
+    "Contact your representative ↗",
+    "India government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.na.gov.pk/",
+   "text": [
+    "Contact your representative ↗",
+    "Pakistan government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.nassnig.org/",
+   "text": [
+    "Contact your representative ↗",
+    "Nigeria government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.npc.gov.cn/",
+   "text": [
+    "China government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.nrsr.sk/",
+   "text": [
+    "Contact your representative ↗",
+    "Slovakia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.oireachtas.ie/",
+   "text": [
+    "Contact your representative ↗",
+    "Ireland government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.ourcommons.ca/",
+   "text": [
+    "Canada government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parlam.gov.et/",
+   "text": [
+    "Contact your representative ↗",
+    "Ethiopia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parlam.kz/",
+   "text": [
+    "Contact your representative ↗",
+    "Kazakhstan government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parlament.ch/",
+   "text": [
+    "Contact your representative ↗",
+    "Switzerland government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parlament.gv.at/",
+   "text": [
+    "Austria government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parlament.hu/",
+   "text": [
+    "Contact your representative ↗",
+    "Hungary government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parlament.md/",
+   "text": [
+    "Contact your representative ↗",
+    "Moldova government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parlament.rs/",
+   "text": [
+    "Contact your representative ↗",
+    "Serbia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parlamento.pt/",
+   "text": [
+    "Contact your representative ↗",
+    "Portugal government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.am/",
+   "text": [
+    "Armenia government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.bg/",
+   "text": [
+    "Bulgaria government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.go.ke/",
+   "text": [
+    "Contact your representative ↗",
+    "Kenya government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.go.th/",
+   "text": [
+    "Contact your representative ↗",
+    "Thailand government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.go.tz/",
+   "text": [
+    "Contact your representative ↗",
+    "Tanzania government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.go.ug/",
+   "text": [
+    "Contact your representative ↗",
+    "Uganda government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.gov.bd/",
+   "text": [
+    "Bangladesh government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.gov.bw/",
+   "text": [
+    "Botswana government contact page ↗",
+    "Contact your representative ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.gov.fj/",
+   "text": [
+    "Contact your representative ↗",
+    "Fiji government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.gov.mw/",
+   "text": [
+    "Contact your representative ↗",
+    "Malawi government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.gov.na/",
+   "text": [
+    "Contact your representative ↗",
+    "Namibia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.gov.np/",
+   "text": [
+    "Contact your representative ↗",
+    "Nepal government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.gov.pg/",
+   "text": [
+    "Contact your representative ↗",
+    "Papua New Guinea government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.gov.rw/",
+   "text": [
+    "Contact your representative ↗",
+    "Rwanda government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.gov.sg/",
+   "text": [
+    "Contact your representative ↗",
+    "Singapore government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.gov.za/",
+   "text": [
+    "Contact your representative ↗",
+    "South Africa government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.gov.zm/",
+   "text": [
+    "Contact your representative ↗",
+    "Zambia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.lk/",
+   "text": [
+    "Contact your representative ↗",
+    "Sri Lanka government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.mn/",
+   "text": [
+    "Contact your representative ↗",
+    "Mongolia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parliament.nz/en/",
+   "text": [
+    "Contact your representative ↗",
+    "New Zealand government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parlimen.gov.my/",
+   "text": [
+    "Contact your representative ↗",
+    "Malaysia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.parlzim.gov.zw/",
+   "text": [
+    "Contact your representative ↗",
+    "Zimbabwe government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.president.gov.ua/",
+   "text": [
+    "Contact your representative ↗",
+    "Ukraine government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.psp.cz/",
+   "text": [
+    "Contact your representative ↗",
+    "Czech Republic government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.riigikogu.ee/",
+   "text": [
+    "Contact your representative ↗",
+    "Estonia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.riksdagen.se/",
+   "text": [
+    "Contact your representative ↗",
+    "Sweden government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.sabor.hr/",
+   "text": [
+    "Contact your representative ↗",
+    "Croatia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.saeima.lv/",
+   "text": [
+    "Contact your representative ↗",
+    "Latvia government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.sejm.gov.pl/",
+   "text": [
+    "Contact your representative ↗",
+    "Poland government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.shugiin.go.jp/",
+   "text": [
+    "Contact your representative ↗",
+    "Japan government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.shura.qa/",
+   "text": [
+    "Contact your representative ↗",
+    "Qatar government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.stortinget.no/",
+   "text": [
+    "Contact your representative ↗",
+    "Norway government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.tbmm.gov.tr/",
+   "text": [
+    "Contact your representative ↗",
+    "Turkey government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.tweedekamer.nl/",
+   "text": [
+    "Contact your representative ↗",
+    "Netherlands government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  },
+  {
+   "url": "https://www.uaecabinet.ae/",
+   "text": [
+    "Contact your representative ↗",
+    "UAE government contact page ↗"
+   ],
+   "where": [
+    "countryData",
+    "letterContactNote"
+   ]
+  }
+ ],
+ "credits": [
+  {
+   "url": "https://www.studioex.co",
+   "text": [
+    "StudioEX",
+    "× StudioEX"
+   ],
+   "where": [
+    "hero",
+    "page"
+   ]
+  },
+  {
+   "url": "https://www.thesixdegrees.co",
+   "text": [
+    "The Six Degrees Project"
+   ],
+   "where": [
+    "page"
+   ]
+  }
+ ],
+ "internal": [
+  {
+   "url": "privacy.html",
+   "text": [
+    "Privacy",
+    "privacy policy"
+   ],
+   "where": [
+    "coalitionSection",
+    "page"
+   ]
+  }
+ ],
+ "deepLinks": [
+  {
+   "url": "#",
+   "text": [
+    "Share this artwork"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "#haveyoursay",
+   "text": [
+    "▾ Then it's your turnredistribute · your country · your letter"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "#impact",
+   "text": [
+    "02 The Impactwhat it truly costs"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "#machine",
+   "text": [
+    "01 The Machinewhat the world spends"
+   ],
+   "where": [
+    "page"
+   ]
+  },
+  {
+   "url": "#roomSection",
+   "text": [
+    "▸ Enter the archive"
+   ],
+   "where": [
+    "page"
+   ]
+  }
+ ],
+ "mailto": [
+  {
+   "url": "mailto:hello@studioex.co",
+   "text": [
+    "Contact"
+   ],
+   "where": [
+    "page"
+   ]
+  }
+ ],
+ "toolFigures": {
+  "note": "Every figure printed by the old tools: before any choice, and additionally across every recorded scenario and all 154 countries.",
+  "printedBeforeAnyChoice": [
+   "$0B",
+   "$1.00T/yr",
+   "$1.3T",
+   "$1.8T",
+   "$10 trillion",
+   "$100B",
+   "$100B/yr",
+   "$114B",
+   "$114B/yr",
+   "$116B",
+   "$119 billion",
+   "$150B",
+   "$150B/yr",
+   "$1T",
+   "$2.5T",
+   "$2.89 trillion",
+   "$2.89T",
+   "$200B",
+   "$200B/yr",
+   "$300B",
+   "$35B",
+   "$35B/yr",
+   "$360B",
+   "$360B/yr",
+   "$37",
+   "$371B/yr",
+   "$40 billion",
+   "$40B/yr",
+   "$50B",
+   "$50B/yr",
+   "$54B",
+   "$55",
+   "$8,543",
+   "$80B",
+   "$80B/yr",
+   "0",
+   "01",
+   "02",
+   "03",
+   "1 million",
+   "1%",
+   "1,000",
+   "1.1 billion",
+   "1.2%",
+   "1.4%",
+   "1.5",
+   "1.7%",
+   "10",
+   "10%",
+   "100,000",
+   "11",
+   "11%",
+   "117.8 million",
+   "12.5%",
+   "12.9%",
+   "13",
+   "14",
+   "15",
+   "16",
+   "160 million",
+   "18",
+   "19%",
+   "2",
+   "2 billion",
+   "2.2 billion",
+   "2.6 billion",
+   "2.8%",
+   "2024",
+   "2025",
+   "2026",
+   "2030",
+   "2035",
+   "2070",
+   "21 million",
+   "23 million",
+   "24",
+   "25",
+   "272 million",
+   "29",
+   "3",
+   "3.5 billion",
+   "3.5%",
+   "3.9%",
+   "300 million",
+   "34",
+   "34.6%",
+   "35",
+   "4",
+   "4.5 billion",
+   "404",
+   "415,000",
+   "49",
+   "5",
+   "5.2%",
+   "50",
+   "50 billion",
+   "50%",
+   "6",
+   "6%",
+   "6.9%",
+   "638",
+   "64",
+   "65",
+   "673 million",
+   "675 million",
+   "7",
+   "7%",
+   "720 million",
+   "8",
+   "8%",
+   "85%",
+   "9",
+   "9%",
+   "90%"
+  ],
+  "printedAfterChoices": [
+   "$0",
+   "$0.00",
+   "$0.005 billion",
+   "$0.005B",
+   "$0.01B",
+   "$0.02",
+   "$0.02B",
+   "$0.03B",
+   "$0.04",
+   "$0.04B",
+   "$0.05B",
+   "$0.06B",
+   "$0.07B",
+   "$0.08B",
+   "$0.13",
+   "$0.16",
+   "$0.1B",
+   "$0.25",
+   "$0.27",
+   "$0.2B",
+   "$0.36",
+   "$0.3B",
+   "$0.4B",
+   "$0.5B",
+   "$0.6B",
+   "$0.75",
+   "$0.76",
+   "$0.7B",
+   "$0.83",
+   "$0.8B",
+   "$1,022",
+   "$1,115",
+   "$1,189",
+   "$1,208",
+   "$1,301",
+   "$1,394",
+   "$1,487",
+   "$1,580",
+   "$1,673",
+   "$1,753",
+   "$1,859",
+   "$1,951",
+   "$1.00T",
+   "$1.01T",
+   "$1.02",
+   "$1.02T",
+   "$1.06T",
+   "$1.07T",
+   "$1.13T",
+   "$1.16T",
+   "$1.21T",
+   "$1.22T",
+   "$1.27",
+   "$1.32T",
+   "$1.33T",
+   "$1.36T",
+   "$1.37T",
+   "$1.52T",
+   "$1.53",
+   "$1.53T",
+   "$1.56T",
+   "$1.57T",
+   "$1.67T",
+   "$1.68T",
+   "$1.73",
+   "$1.73T",
+   "$1.76T",
+   "$1.78",
+   "$1.7M",
+   "$1.82T",
+   "$1.83T",
+   "$1.86T",
+   "$1.87T",
+   "$1.88T",
+   "$1.89T",
+   "$1.90T",
+   "$1.92T",
+   "$1.93T",
+   "$10",
+   "$10,000",
+   "$100",
+   "$100k",
+   "$102",
+   "$10B",
+   "$11",
+   "$11,789",
+   "$114 billion",
+   "$11B",
+   "$122,857/yr",
+   "$122B",
+   "$13",
+   "$132",
+   "$13B",
+   "$14",
+   "$143,832",
+   "$15",
+   "$154B",
+   "$16",
+   "$162B",
+   "$17",
+   "$18,586",
+   "$18.2B",
+   "$18B",
+   "$190B",
+   "$19B",
+   "$1B",
+   "$1M",
+   "$2,137",
+   "$2,323",
+   "$2,509",
+   "$2,602",
+   "$2,788",
+   "$2,974",
+   "$2.02T",
+   "$2.03T",
+   "$2.04",
+   "$2.13T",
+   "$2.26T",
+   "$2.28T",
+   "$2.29",
+   "$2.31",
+   "$2.36T",
+   "$2.38T",
+   "$2.39",
+   "$2.39T",
+   "$2.40T",
+   "$2.43T",
+   "$2.48T",
+   "$2.49T",
+   "$2.51T",
+   "$2.52T",
+   "$2.55",
+   "$2.56T",
+   "$2.57T",
+   "$2.5M",
+   "$2.61T",
+   "$2.62T",
+   "$2.66",
+   "$2.69T",
+   "$2.73T",
+   "$2.77T",
+   "$2.79T",
+   "$2.80",
+   "$2.81T",
+   "$2.82T",
+   "$2.85T",
+   "$2.86T",
+   "$2.87T",
+   "$20",
+   "$20 billion",
+   "$20,749",
+   "$20,816",
+   "$207",
+   "$20B",
+   "$212,211",
+   "$21B",
+   "$22",
+   "$22,474",
+   "$22B",
+   "$23B",
+   "$246,400",
+   "$24B",
+   "$25",
+   "$267B",
+   "$274",
+   "$276B",
+   "$279",
+   "$27B",
+   "$280B",
+   "$2B",
+   "$3 billion",
+   "$3,160",
+   "$3,242",
+   "$3,252",
+   "$3,438",
+   "$3,615",
+   "$3,717",
+   "$3,903",
+   "$3.06",
+   "$3.31",
+   "$3.56",
+   "$3.82",
+   "$304",
+   "$30B",
+   "$317B",
+   "$32",
+   "$33,158",
+   "$330B",
+   "$336B",
+   "$34 billion",
+   "$34B",
+   "$35,313",
+   "$37,171",
+   "$371B",
+   "$372",
+   "$376B",
+   "$38B",
+   "$394",
+   "$398B",
+   "$3B",
+   "$4,042",
+   "$4,182",
+   "$4,646",
+   "$4,832",
+   "$4.07",
+   "$4.33",
+   "$4.58",
+   "$4.80",
+   "$400B",
+   "$40B",
+   "$411B",
+   "$456B",
+   "$465",
+   "$47B",
+   "$48",
+   "$48,000",
+   "$485B",
+   "$498B",
+   "$4B",
+   "$5,204",
+   "$5,573",
+   "$5,582",
+   "$5.09",
+   "$5.35",
+   "$5.86",
+   "$51",
+   "$511B",
+   "$525B",
+   "$558",
+   "$57",
+   "$58",
+   "$581",
+   "$5B",
+   "$6 billion",
+   "$6,040",
+   "$6,203",
+   "$6.0M/yr",
+   "$6.36",
+   "$6.87",
+   "$606B",
+   "$62",
+   "$62 billion",
+   "$625B",
+   "$62B",
+   "$632",
+   "$650",
+   "$66,178",
+   "$66,286",
+   "$67B",
+   "$68 billion",
+   "$686",
+   "$68B",
+   "$6B",
+   "$6M",
+   "$7,434",
+   "$7,899",
+   "$7.13",
+   "$7.64",
+   "$72B",
+   "$73,662",
+   "$743",
+   "$75,453",
+   "$756B",
+   "$760B",
+   "$7B",
+   "$8.15",
+   "$8.66",
+   "$8.88",
+   "$8.91",
+   "$836",
+   "$83B",
+   "$84 billion",
+   "$842",
+   "$84B",
+   "$858B",
+   "$871",
+   "$871B",
+   "$872",
+   "$89 billion",
+   "$896,000",
+   "$89B",
+   "$8B",
+   "$9",
+   "$9,293",
+   "$9.42",
+   "$91",
+   "$92 billion",
+   "$929",
+   "$92B",
+   "$93",
+   "$954 billion",
+   "$954B",
+   "$956B",
+   "$969",
+   "$972B",
+   "$985B",
+   "$987B",
+   "$9B",
+   "0%",
+   "0.00%",
+   "0.01%",
+   "0.02%",
+   "0.03%",
+   "0.07%",
+   "0.1%",
+   "0.10%",
+   "0.14%",
+   "0.17%",
+   "0.1M",
+   "0.21%",
+   "0.24%",
+   "0.28%",
+   "0.2M",
+   "0.3%",
+   "0.31%",
+   "0.35%",
+   "0.38%",
+   "0.3M",
+   "0.4%",
+   "0.45%",
+   "0.4M",
+   "0.5%",
+   "0.5M",
+   "0.6%",
+   "0.62%",
+   "0.63%",
+   "0.66%",
+   "0.69%",
+   "0.6M",
+   "0.7%",
+   "0.73%",
+   "0.7M",
+   "0.8%",
+   "0.80%",
+   "0.83%",
+   "0.8M",
+   "0.9%",
+   "0.9M",
+   "1",
+   "1.04%",
+   "1.1%",
+   "1.18%",
+   "1.1M",
+   "1.3%",
+   "1.32%",
+   "1.3M",
+   "1.4M",
+   "1.5%",
+   "1.5M",
+   "1.6%",
+   "1.63%",
+   "1.8%",
+   "1.9%",
+   "10,000",
+   "10.5%",
+   "100%",
+   "102M",
+   "105.3%",
+   "109%",
+   "10M",
+   "11,847",
+   "11,848",
+   "11.1%",
+   "11.64%",
+   "11.8%",
+   "114%",
+   "116M",
+   "118%",
+   "11M",
+   "12",
+   "12%",
+   "122,857",
+   "124M",
+   "127M",
+   "128M",
+   "12M",
+   "13%",
+   "13.2%",
+   "13.7%",
+   "134%",
+   "13M",
+   "14%",
+   "14,857",
+   "14.7%",
+   "1410M",
+   "1428M",
+   "144M",
+   "14M",
+   "15%",
+   "150,000",
+   "155%",
+   "16%",
+   "167%",
+   "16M",
+   "17%",
+   "17.1%",
+   "170%",
+   "172M",
+   "177%",
+   "17M",
+   "18%",
+   "18M",
+   "19.7%",
+   "190%",
+   "194%",
+   "199,714",
+   "19M",
+   "2%",
+   "2.1%",
+   "2.15%",
+   "2.1M",
+   "2.3%",
+   "2.36%",
+   "2.4%",
+   "2.4M",
+   "2.5%",
+   "2.5M",
+   "2.6%",
+   "2.6M",
+   "2.7%",
+   "2.7M",
+   "2.87%",
+   "2.8M",
+   "2.9%",
+   "2.91%",
+   "20%",
+   "200,000",
+   "208%",
+   "20M",
+   "21%",
+   "21.1%",
+   "210%",
+   "216M",
+   "219,333",
+   "21M",
+   "22%",
+   "22.4%",
+   "223%",
+   "223M",
+   "22M",
+   "23%",
+   "230%",
+   "237%",
+   "2385%",
+   "23M",
+   "24%",
+   "240%",
+   "240M",
+   "25%",
+   "254%",
+   "257%",
+   "26%",
+   "26.3%",
+   "263%",
+   "265%",
+   "26M",
+   "2726%",
+   "278M",
+   "27M",
+   "28%",
+   "28,571",
+   "285%",
+   "28M",
+   "29%",
+   "295%",
+   "2M",
+   "3%",
+   "3.08%",
+   "3.19%",
+   "3.2%",
+   "3.4%",
+   "3.4M",
+   "3.7%",
+   "3.7M",
+   "3.95%",
+   "30%",
+   "30M",
+   "31%",
+   "31M",
+   "32%",
+   "326%",
+   "33%",
+   "33.04%",
+   "336%",
+   "34%",
+   "340M",
+   "34M",
+   "35%",
+   "36M",
+   "37%",
+   "37M",
+   "38%",
+   "38M",
+   "3M",
+   "4%",
+   "4.1M",
+   "4.2%",
+   "4.5%",
+   "4.7%",
+   "40%",
+   "40M",
+   "41%",
+   "42M",
+   "44M",
+   "45%",
+   "45M",
+   "46M",
+   "47%",
+   "475%",
+   "48%",
+   "48M",
+   "49M",
+   "4M",
+   "5%",
+   "5.0%",
+   "5.3%",
+   "5.4M",
+   "5.5%",
+   "5.5M",
+   "5.6%",
+   "5.7M",
+   "5.9%",
+   "50,000",
+   "51%",
+   "52%",
+   "52.6%",
+   "52M",
+   "53%",
+   "54%",
+   "543%",
+   "54M",
+   "55M",
+   "57%",
+   "586,667",
+   "59M",
+   "5M",
+   "6.0M",
+   "6.1%",
+   "6.5%",
+   "6.58%",
+   "6.6%",
+   "6.8%",
+   "60%",
+   "60M",
+   "62%",
+   "65%",
+   "66%",
+   "67M",
+   "68%",
+   "68M",
+   "69%",
+   "6M",
+   "7.1%",
+   "7.4%",
+   "7.5%",
+   "7.9%",
+   "72M",
+   "73%",
+   "74%",
+   "75%",
+   "78%",
+   "7M",
+   "8,571",
+   "8.4%",
+   "8.5%",
+   "8.6M",
+   "8.9%",
+   "81%",
+   "82%",
+   "83%",
+   "837%",
+   "84%",
+   "840%",
+   "84M",
+   "85,714",
+   "85M",
+   "86%",
+   "89%",
+   "89M",
+   "8M",
+   "9.2%",
+   "9.4%",
+   "9.7%",
+   "91%",
+   "92%",
+   "93%",
+   "95%",
+   "954%",
+   "960%",
+   "97%",
+   "98%",
+   "99%",
+   "99M",
+   "9M",
+   "CHF 1",
+   "CHF 100",
+   "CHF 122,857/yr",
+   "CHF 2.04",
+   "CHF 35,313",
+   "CHF 6M",
+   "CHF 743",
+   "R$1",
+   "R$100",
+   "R$122,857/yr",
+   "R$2.55",
+   "R$35,313",
+   "R$6M",
+   "R$929",
+   "kr 1",
+   "kr 1,580",
+   "kr 1,766",
+   "kr 1,859",
+   "kr 100",
+   "kr 122,857/yr",
+   "kr 35,313",
+   "kr 4.33",
+   "kr 4.84",
+   "kr 5.09",
+   "kr 6M",
+   "£0",
+   "£0.00",
+   "£0.11",
+   "£0.20",
+   "£0.60",
+   "£1,189",
+   "£1,260",
+   "£1.66",
+   "£1.7M",
+   "£10,000",
+   "£100k",
+   "£103,379",
+   "£11",
+   "£12",
+   "£122,857/yr",
+   "£14,914",
+   "£149",
+   "£152,526",
+   "£1M",
+   "£2,137",
+   "£2,905",
+   "£2.5M",
+   "£20,816",
+   "£200,000/yr",
+   "£219",
+   "£246,400",
+   "£283",
+   "£3,615",
+   "£3.45",
+   "£35,313",
+   "£4,006",
+   "£4,012",
+   "£4,459",
+   "£41",
+   "£418",
+   "£42",
+   "£48,000",
+   "£5.86",
+   "£54,232",
+   "£6.0M/yr",
+   "£605",
+   "£66,178",
+   "£66,286",
+   "£686",
+   "£6M",
+   "£7.96",
+   "£72",
+   "£73,662",
+   "£896,000",
+   "¥0",
+   "¥0.00",
+   "¥0.07",
+   "¥0.12",
+   "¥0.36",
+   "¥1,189",
+   "¥1,301",
+   "¥1,580",
+   "¥1,768",
+   "¥1.01",
+   "¥1.7M",
+   "¥10,000",
+   "¥100k",
+   "¥122,857/yr",
+   "¥133",
+   "¥172",
+   "¥1M",
+   "¥2,438",
+   "¥2,442",
+   "¥2,714",
+   "¥2.10",
+   "¥2.5M",
+   "¥20,816",
+   "¥246,400",
+   "¥25",
+   "¥254",
+   "¥3,615",
+   "¥3.56",
+   "¥33,011",
+   "¥35,313",
+   "¥368",
+   "¥4.33",
+   "¥4.84",
+   "¥44",
+   "¥48,000",
+   "¥6.0M/yr",
+   "¥6.68",
+   "¥6.69",
+   "¥62,926",
+   "¥66,178",
+   "¥66,286",
+   "¥686",
+   "¥6M",
+   "¥7.44",
+   "¥73,662",
+   "¥767",
+   "¥896,000",
+   "¥9,078",
+   "¥90",
+   "¥92,842",
+   "₩100k",
+   "₩122,857/yr",
+   "₩1M",
+   "₩2,416",
+   "₩35,313",
+   "₩6.62",
+   "₩6M",
+   "₪100k",
+   "₪122,857/yr",
+   "₪13",
+   "₪1M",
+   "₪35,313",
+   "₪4,832",
+   "₪6M",
+   "€1,208",
+   "€1,301",
+   "€1,394",
+   "€1,580",
+   "€1,766",
+   "€1,951",
+   "€1.02",
+   "€100k",
+   "€122,857/yr",
+   "€1M",
+   "€2,137",
+   "€2,323",
+   "€2.29",
+   "€3.31",
+   "€3.56",
+   "€3.82",
+   "€35,313",
+   "€372",
+   "€4.33",
+   "€4.84",
+   "€5.35",
+   "€5.86",
+   "€6.36",
+   "€6M",
+   "€836",
+   "₹100k",
+   "₹122,857/yr",
+   "₹1M",
+   "₹2,137",
+   "₹35,313",
+   "₹5.86",
+   "₹6M",
+   "₺1,766",
+   "₺100k",
+   "₺122,857/yr",
+   "₺1M",
+   "₺35,313",
+   "₺4.84",
+   "₺6M",
+   "₽100k",
+   "₽122,857/yr",
+   "₽19",
+   "₽1M",
+   "₽35,313",
+   "₽6,970",
+   "₽6M"
+  ]
+ }
+}

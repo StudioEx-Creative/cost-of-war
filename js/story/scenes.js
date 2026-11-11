@@ -1345,6 +1345,7 @@
       });
       el("p", null, CA, null, pl);
       api.link(u, s, null, el("p", "t-src", null, null, pl), "tap");
+      api.link(S.get("envFacts[1].url"), F("envFacts[1].src"), null, el("p", "t-src", null, null, pl), "tap");
     },
 
     layout: function (api) {

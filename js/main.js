@@ -17,458 +17,144 @@ function fmt(b) {
     : "$" + Math.round(b) + "B";
 }
 
-// ═══ BG CANVAS ══════════════════════════════════════════════════
-// The drifting particle field is retired: the dossier's grid + grain +
-// vignette sit on top of it, so it was invisible while still clearing and
-// redrawing 90 arcs every single frame, forever, competing for rAF with the
-// smooth-scroll and the scroll-driven timelines. The canvas element stays
-// (other code resizes against it) but nothing animates on it.
-const bgEl = document.getElementById("bg");
-function rsz() {
-  if (!bgEl) return;
-  bgEl.width = innerWidth;
-  bgEl.height = innerHeight;
-}
-rsz();
-window.addEventListener("resize", () => {
-  rsz();
-  rszFlow();
-  drawDotField();
-  drawLives();
-});
-
-// ═══ LIVE SPEND TICKER ══════════════════════════════════════════
-const pageOpened = Date.now();
-function tickLiveSpend() {
-  const el = document.getElementById("liveSpend");
-  if (el) {
-    const spent = ((Date.now() - pageOpened) / 1000) * MIL_PER_SECOND;
-    el.textContent = "$" + Math.floor(spent).toLocaleString();
+// ═══ TOOL VIEWS ═════════════════════════════════════════════════
+// main.js owns the state and the logic of every tool. The views (js/tools/h1.js … h6.js) only
+// draw it: ToolView.on(name, fn) calls fn(state) now (with the latest state, if there is one) and
+// after every change. main.js calls ToolView.update(name, state). A view that throws is logged
+// and never stops the tool. The states:
+//   "redistribute"  ranking chosen[{i,rank,name,cost,costText}] blocked[i] defence allocated remaining
+//                   remainingPct allocatedText remainingText count gateOpen
+//   "country"       null (nothing to show) or name spend spendText pctGdp population contact
+//                   shareOfDefence comparisons[{i,name,cost,pct,covers,canFund}] trend{value,known,rising}
+//   "tax"           country currency position income incomeText rate annualTax annualTaxText
+//                   milShareOfTax milSharePct toWar toWarText perDay perDayText used
+//   "letter"        rankDone countryDone complete text
+//   "coalition"     count tally showSeeded revealed submitted country letterOptIn
+//                   globalPriorities[{i,name,w,barPct,pct}] globe[{country,count,lat,lng,alt,color}]
+//   "globe"         mode ("webgl" or "flat") instance (the globe.gl object) landsIn (ms until a turn ends)
+//   "card"          open and, while open: country spendText totalB totalText pctOfBudget count revealed
+//                   top5[{rank,i,name,costText}]
+//   "share"         open
+//   "archive"       (from js/room.js) ready sample stats ages letters openLetter(i) letterMeta(i)
+window.ToolView = (function () {
+  const subs = {},
+    last = {};
+  function send(fn, state) {
+    try {
+      fn(state);
+    } catch (e) {
+      console.error("[ToolView]", e);
+    }
   }
-  requestAnimationFrame(tickLiveSpend);
-}
-
-// ═══ HERO COUNTERS ══════════════════════════════════════════════
-function cntTo(el, target, dur) {
-  const s = performance.now();
-  (function f(now) {
-    const p = Math.min((now - s) / dur, 1),
-      v = target * (1 - Math.pow(1 - p, 4));
-    el.textContent =
-      "$" + (v >= 1000 ? (v / 1000).toFixed(1) + "T" : v.toFixed(0) + "B");
-    if (p < 1) requestAnimationFrame(f);
-  })(performance.now());
-}
-
-// ═══ SCROLL REVEAL ══════════════════════════════════════════════
-function initReveal() {
-  const io = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          e.target.classList.add("on");
-          e.target.querySelectorAll?.("[data-w]").forEach((b) => {
-            b.style.width = b.dataset.w + "%";
-          });
-          if (e.target.dataset.w) e.target.style.width = e.target.dataset.w + "%";
-          io.unobserve(e.target);
-        }
-      });
+  return {
+    on(name, fn) {
+      (subs[name] = subs[name] || []).push(fn);
+      if (name in last) send(fn, last[name]);
     },
-    { threshold: 0.15 },
-  );
-  document.querySelectorAll(".rv").forEach((el) => io.observe(el));
-  const io2 = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          e.target.querySelectorAll("[data-w]").forEach((b) => {
-            b.style.width = b.dataset.w + "%";
-          });
-          io2.unobserve(e.target);
-        }
-      });
+    update(name, state) {
+      last[name] = state;
+      (subs[name] || []).forEach((fn) => send(fn, state));
     },
-    { threshold: 0.3 },
-  );
-  document.querySelectorAll(".gap-box").forEach((el) => io2.observe(el));
-}
+  };
+})();
 
-// ═══ SPEND DONUT (SVG) ══════════════════════════════════════════
-// Reusable donut: items [{label,color}], valueKey gives the magnitude.
-function buildDonut(svgId, legendId, items, valueKey, centerVal, centerLabel) {
-  const svg = document.getElementById(svgId);
-  const legend = document.getElementById(legendId);
-  if (!svg || !legend) return;
-  const total = items.reduce((s, x) => s + x[valueKey], 0);
-  const cx = 50,
-    cy = 50,
-    r = 37,
-    sw = 15;
-  const C = 2 * Math.PI * r;
-  const NS = "http://www.w3.org/2000/svg";
+// Has the reader changed anything in the tools? The story engine reads this: a resize must never
+// reload them away. A plain flag: nothing the reader did is stored by it.
+window.__toolDirty = false;
+["input", "change", "click"].forEach((type) =>
+  document.addEventListener(
+    type,
+    (e) => {
+      const t = e.target;
+      if (t.closest && !t.closest("#story") && t.closest("input, select, textarea, button, [contenteditable], .ix"))
+        window.__toolDirty = true;
+    },
+    true,
+  ),
+);
 
-  const track = document.createElementNS(NS, "circle");
-  track.setAttribute("cx", cx);
-  track.setAttribute("cy", cy);
-  track.setAttribute("r", r);
-  track.setAttribute("fill", "none");
-  track.setAttribute("stroke", "#0d0d12");
-  track.setAttribute("stroke-width", sw);
-  svg.appendChild(track);
-
-  const g = document.createElementNS(NS, "g");
-  g.setAttribute("transform", `rotate(-90 ${cx} ${cy})`);
-  svg.appendChild(g);
-
-  let offset = 0;
-  items.forEach((s, i) => {
-    const frac = s[valueKey] / total;
-    const seg = document.createElementNS(NS, "circle");
-    seg.setAttribute("class", "donut-seg");
-    seg.setAttribute("data-i", i);
-    seg.setAttribute("cx", cx);
-    seg.setAttribute("cy", cy);
-    seg.setAttribute("r", r);
-    seg.setAttribute("fill", "none");
-    seg.setAttribute("stroke", s.color);
-    seg.setAttribute("stroke-width", sw);
-    seg.setAttribute("stroke-dasharray", `0 ${C}`);
-    seg.style.strokeDashoffset = -offset * C;
-    g.appendChild(seg);
-    setTimeout(() => {
-      seg.style.transition = "stroke-dasharray 1.1s cubic-bezier(.16,1,.3,1)";
-      seg.setAttribute(
-        "stroke-dasharray",
-        `${frac * C - 0.6} ${C - frac * C + 0.6}`,
-      );
-    }, 300 + i * 110);
-    offset += frac;
-
-    const amtTxt =
-      valueKey === "pct" ? Math.round(frac * 100) + "%" : fmt(s[valueKey]);
-    const row = document.createElement("div");
-    row.className = "dleg";
-    row.dataset.i = i;
-    row.innerHTML = `<span class="dleg-sw" style="background:${s.color}"></span>${s.label}<span class="dleg-amt">${amtTxt}</span>`;
-    const dim = () =>
-      svg
-        .querySelectorAll(".donut-seg")
-        .forEach((e) =>
-          e.classList.toggle("dim", e.getAttribute("data-i") !== String(i)),
-        );
-    const undim = () =>
-      svg.querySelectorAll(".donut-seg").forEach((e) => e.classList.remove("dim"));
-    row.addEventListener("mouseenter", dim);
-    row.addEventListener("mouseleave", undim);
-    seg.addEventListener("mouseenter", dim);
-    seg.addEventListener("mouseleave", undim);
-    legend.appendChild(row);
-  });
-
-  const v = document.createElementNS(NS, "text");
-  v.setAttribute("class", "donut-center-v");
-  v.setAttribute("x", cx);
-  v.setAttribute("y", cy - 1);
-  v.setAttribute("text-anchor", "middle");
-  v.setAttribute("font-size", "13");
-  v.textContent = centerVal;
-  svg.appendChild(v);
-  const l = document.createElementNS(NS, "text");
-  l.setAttribute("class", "donut-center-l");
-  l.setAttribute("x", cx);
-  l.setAttribute("y", cy + 8);
-  l.setAttribute("text-anchor", "middle");
-  l.setAttribute("font-size", "4.4");
-  l.textContent = centerLabel;
-  svg.appendChild(l);
-}
-
-function buildSpendDonut() {
-  buildDonut(
-    "spendDonut",
-    "spendLegend",
-    spendBreakdown,
-    "amtB",
-    "$2.89T",
-    "MILITARY · 2025",
-  );
-}
-
-// ═══ EMISSIONS MINI GRID ════════════════════════════════════════
-function buildEmissions() {
-  const g = document.getElementById("emGrid");
-  if (!g) return;
-  for (let i = 0; i < 100; i++) {
-    const c = document.createElement("div");
-    c.className = "em-cell" + (i < 6 ? " on" : "");
-    g.appendChild(c);
+// Keep a reader's place in the tools when the window changes size (a zoom, a half-screen window, a
+// turned phone or tablet). The tools reflow at a new width, so the same distance below the story
+// lands in a different tool. While the reader is below the story this notes what they are on: the
+// control they are in, if it is on screen, otherwise what sits in the middle of the screen (never
+// something stuck to the screen, whose place there says nothing; a canvas counts as its box, since
+// it can give way to a still picture). The story engine calls window.__keepPlace() once it has laid
+// itself out at the new size, and that puts the noted element back at the same height on screen.
+// Typing in the letter, which is often taller than the screen, the caret's line is noted instead of
+// the letter's top, and comes back on screen at the new size (a turned phone is much shorter).
+(function () {
+  const story = document.getElementById("story");
+  let mark = null,
+    markTop = 0,
+    caretTop = null,
+    hold = 0;
+  const after = (a) => !!(a && a.nodeType === 1 && story && (story.compareDocumentPosition(a) & 20) === 4);
+  const free = (a) => {
+    for (let e = a; e && e.nodeType === 1; e = e.parentElement)
+      if (/sticky|fixed/.test(getComputedStyle(e).position)) return null;
+    return a.tagName === "CANVAS" ? a.parentElement : a;
+  };
+  // the line the caret is on in an editable element, on screen now (null if it cannot be read)
+  const caretOf = (a) => {
+    const s = getSelection();
+    if (!a.isContentEditable || !s.rangeCount || !a.contains(s.focusNode)) return null;
+    const r = document.createRange();
+    r.setStart(s.focusNode, s.focusOffset);
+    let q = r.getClientRects()[0];
+    if (!q) {
+      // at a line break the caret has no box of its own: take the node it sits beside
+      const n = s.focusNode.nodeType === 1 ? s.focusNode.childNodes[s.focusOffset] || s.focusNode.childNodes[s.focusOffset - 1] : s.focusNode;
+      if (n && n.nodeType === 1) q = n.getBoundingClientRect();
+      else if (n) {
+        r.selectNodeContents(n);
+        q = r.getClientRects()[0];
+      }
+    }
+    return q && q.height ? q : null;
+  };
+  function note() {
+    if (hold) return;
+    // in the story (or at its very end) the engine keeps the place itself: nothing to note
+    if (!story || story.getBoundingClientRect().bottom >= innerHeight - 1) return void (mark = null);
+    let a = document.activeElement,
+      r = after(a) && a.getBoundingClientRect(),
+      c = r && caretOf(a);
+    // a caret scrolled out of sight: the reader is reading elsewhere, not typing here
+    if (c && !(c.bottom > 0 && c.top < innerHeight)) r = c = null;
+    if (!(r && r.bottom > 0 && r.top < innerHeight)) {
+      a = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+      a = after(a) ? free(a) : null;
+    }
+    mark = a;
+    caretTop = c ? c.top : null;
+    if (a) markTop = a.getBoundingClientRect().top;
   }
-}
-
-function buildViolencePie() {
-  buildDonut(
-    "violencePie",
-    "violenceLegend",
-    violenceBreakdown,
-    "pct",
-    "$21.8T",
-    "VIOLENCE · 2025",
-  );
-}
-
-// ═══ CONFLICT COST BARS ═════════════════════════════════════════
-function buildConflictBars() {
-  const wrap = document.getElementById("conflictBars");
-  if (!wrap) return;
-  const max = Math.max(...conflictCosts.map((c) => c.amtB));
-  conflictCosts.forEach((c) => {
-    const row = document.createElement("div");
-    row.className = "cf-row";
-    row.innerHTML = `
-      <div class="cf-top"><div class="cf-name">${c.name}</div><div class="cf-amt">${fmt(c.amtB)}</div></div>
-      <div class="cf-track"><div class="cf-fill" data-w="${((c.amtB / max) * 100).toFixed(1)}"></div></div>
-      <div class="cf-note">${c.note} · <a href="${c.url}" target="_blank" rel="noopener">${c.src} ↗</a></div>`;
-    wrap.appendChild(row);
+  window.addEventListener("scroll", note, { passive: true });
+  document.addEventListener("focusin", note);
+  // typing moves the caret without scrolling
+  document.addEventListener("selectionchange", note);
+  // between a resize and the engine's new layout the browser may scroll on its own: not a place
+  window.addEventListener("resize", () => {
+    clearTimeout(hold);
+    hold = setTimeout(() => {
+      hold = 0;
+      note(); // where the reader is now, at rest
+    }, 400);
   });
-}
-
-// ═══ ENVIRONMENTAL FACT CARDS ═══════════════════════════════════
-function buildEnvFacts() {
-  const g = document.getElementById("envGrid");
-  if (!g) return;
-  g.innerHTML = envFacts
-    .map(
-      (f) =>
-        `<div class="envc"><div class="envc-fig">${f.fig}</div><div class="envc-lbl">${f.lbl}</div><div class="envc-src"><a href="${f.url}" target="_blank" rel="noopener">${f.src} ↗</a></div></div>`,
-    )
-    .join("");
-}
-
-// ═══ EMITTER COMPARISON BARS ════════════════════════════════════
-function buildEmittersChart() {
-  const wrap = document.getElementById("emittersChart");
-  if (!wrap) return;
-  const max = Math.max(...emittersCompare.map((e) => e.pct));
-  wrap.innerHTML = emittersCompare
-    .map(
-      (e) =>
-        `<div class="emit-row${e.hot ? " hot" : ""}"><div class="emit-name">${e.name}</div><div class="emit-track"><div class="emit-fill" data-w="${((e.pct / max) * 100).toFixed(0)}"></div></div><div class="emit-val">${e.pct}%</div></div>`,
-    )
-    .join("");
-  // animate when scrolled into view
-  const io = new IntersectionObserver(
-    (es) => {
-      es.forEach((x) => {
-        if (x.isIntersecting) {
-          wrap
-            .querySelectorAll(".emit-fill")
-            .forEach((b, k) =>
-              setTimeout(() => (b.style.width = b.dataset.w + "%"), k * 80),
-            );
-          io.disconnect();
-        }
-      });
-    },
-    { threshold: 0.3 },
-  );
-  io.observe(wrap);
-}
-
-// ═══ HUMAN-IMPACT MINI PIES ═════════════════════════════════════
-function miniPieSVG(pct, color) {
-  const r = 42,
-    cx = 50,
-    cy = 50,
-    C = 2 * Math.PI * r;
-  const on = (pct / 100) * C;
-  return `<svg viewBox="0 0 100 100">
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#15151c" stroke-width="14"/>
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="14"
-      stroke-dasharray="${on.toFixed(1)} ${(C - on).toFixed(1)}" transform="rotate(-90 ${cx} ${cy})"
-      stroke-linecap="butt"/>
-    <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="22" fill="#fff">${pct}%</text>
-  </svg>`;
-}
-function buildHiPies() {
-  const wrap = document.getElementById("hiPies");
-  if (!wrap) return;
-  const items = [
-    {
-      pct: humanImpactExtra.civilianShare,
-      color: "#ff2d2d",
-      big: "Most of those killed are civilians",
-      lbl: "Up to 90% of those killed and wounded by explosive weapons in towns and cities are civilians, not combatants.",
-      src: "AOAV / UN",
-      url: "https://aoav.org.uk/explosiveviolence/",
-    },
-    {
-      pct: humanImpactExtra.childrenPct,
-      color: "#00e5ff",
-      big: "A third of the displaced are children",
-      lbl: "38% of the 117.8 million people displaced by war and persecution are children: about 45 million.",
-      src: "UNHCR Global Trends 2026",
-      url: "https://www.unhcr.org/global-trends",
-    },
-  ];
-  wrap.innerHTML = items
-    .map(
-      (it) =>
-        `<div class="hi-pie">${miniPieSVG(it.pct, it.color)}<div class="hi-pie-txt"><div class="hi-pie-big">${it.big}</div><div class="hi-pie-lbl">${it.lbl}</div><div class="hi-pie-src"><a href="${it.url}" target="_blank" rel="noopener">${it.src} ↗</a></div></div></div>`,
-    )
-    .join("");
-}
-
-// ═══ DUAL SPENDER BARS ══════════════════════════════════════════
-function buildDualSpenders() {
-  const abs = document.getElementById("spendersAbs");
-  const gdp = document.getElementById("spendersGdp");
-  if (!abs || !gdp) return;
-  const maxAbs = Math.max(...topSpenders.map((s) => s.amt));
-  const maxGdp = Math.max(...topSpenders.map((s) => s.gdp));
-  topSpenders.forEach((s) => {
-    const a = document.createElement("div");
-    a.className = "b2-row";
-    a.innerHTML = `<div class="b2-name">${s.name}</div><div class="b2-track"><div class="b2-fill red" data-w="${((s.amt / maxAbs) * 100).toFixed(1)}"></div></div><div class="b2-val">$${s.amt >= 100 ? Math.round(s.amt) : s.amt}B</div>`;
-    abs.appendChild(a);
-  });
-  // GDP sorted descending for a different shape
-  [...topSpenders]
-    .sort((x, y) => y.gdp - x.gdp)
-    .forEach((s) => {
-      const peak = s.gdp === maxGdp;
-      const g = document.createElement("div");
-      g.className = "b2-row" + (peak ? " peak" : "");
-      g.innerHTML = `<div class="b2-name">${s.name}</div><div class="b2-track"><div class="b2-fill amber" data-w="${((s.gdp / maxGdp) * 100).toFixed(1)}"></div></div><div class="b2-val">${s.gdp}%</div>`;
-      gdp.appendChild(g);
-    });
-}
-
-// ═══ DISPLACEMENT DOT FIELD (multi-colour) ══════════════════════
-function drawDotField() {
-  const c = document.getElementById("dotField");
-  if (!c) return;
-  const dpr = window.devicePixelRatio || 1;
-  const w = c.parentElement.getBoundingClientRect().width;
-  if (w <= 0) return;
-  // build ordered colour list, 1 dot = 100k people
-  const dots = [];
-  displacementBreakdown.forEach((cat) => {
-    const n = Math.round(cat.millions * 10);
-    for (let i = 0; i < n; i++) dots.push(cat.color);
-  });
-  const cols = Math.floor(w / 8);
-  const rows = Math.ceil(dots.length / cols);
-  const h = rows * 8 + 4;
-  c.width = w * dpr;
-  c.height = h * dpr;
-  c.style.width = w + "px";
-  c.style.height = h + "px";
-  const x = c.getContext("2d");
-  x.scale(dpr, dpr);
-  dots.forEach((col, i) => {
-    const cx = (i % cols) * 8 + 4,
-      cy = Math.floor(i / cols) * 8 + 4;
-    x.beginPath();
-    x.arc(cx, cy, 1.7, 0, Math.PI * 2);
-    x.fillStyle = col;
-    x.globalAlpha = 0.8;
-    x.fill();
-  });
-  x.globalAlpha = 1;
-}
-
-function buildDotLegend() {
-  const el = document.getElementById("dotLegend");
-  if (!el) return;
-  el.innerHTML = displacementBreakdown
-    .map(
-      (c) =>
-        `<span class="dot-leg"><i style="background:${c.color}"></i>${c.label} · ${c.millions}M</span>`,
-    )
-    .join("");
-}
-
-// ═══ HUMAN STAT STRIP (condensed) ═══════════════════════════════
-function buildHumanStrip() {
-  const wrap = document.getElementById("humanStrip");
-  if (!wrap) return;
-  const strip = [
-    {
-      num: "244,700",
-      lbl: "people killed in armed conflict in the last year, one every two minutes",
-      url: "https://acleddata.com/series/acled-conflict-index",
-    },
-    {
-      num: "11,967",
-      lbl: "children killed or maimed in a single year, the highest ever recorded",
-      url: "https://news.un.org/en/story/2025/06/1164646",
-    },
-    {
-      num: "1 in 6",
-      lbl: "people on Earth were exposed to conflict in 2025",
-      url: "https://acleddata.com/series/acled-conflict-index",
-    },
-    {
-      num: "4.5M+",
-      lbl: "deaths from the post-9/11 wars alone, including disease and collapse",
-      url: "https://watson.brown.edu/costsofwar",
-    },
-  ];
-  wrap.innerHTML = strip
-    .map(
-      (s) =>
-        `<div class="hsc"><div class="hsc-num">${s.num}</div><div class="hsc-lbl">${s.lbl}</div><div class="hsc-src"><a href="${s.url}" target="_blank" rel="noopener">source ↗</a></div></div>`,
-    )
-    .join("");
-}
-
-// ═══ LIVES PIXEL FIELD ══════════════════════════════════════════
-function drawLives() {
-  const c = document.getElementById("livesCanvas");
-  if (!c) return;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w =
-    c.parentElement.getBoundingClientRect().width -
-    (window.innerWidth <= 620 ? 40 : 64);
-  if (w <= 0) return;
-  const total = DEATHS_PER_YEAR;
-  const spacing = 2;
-  const cols = Math.floor(w / spacing);
-  const rows = Math.ceil(total / cols);
-  const h = rows * spacing + 2;
-  c.width = w * dpr;
-  c.height = h * dpr;
-  c.style.width = w + "px";
-  c.style.height = h + "px";
-  const x = c.getContext("2d");
-  x.scale(dpr, dpr);
-  for (let i = 0; i < total; i++) {
-    const col = i % cols,
-      row = Math.floor(i / cols);
-    const a = 0.25 + Math.random() * 0.55;
-    x.fillStyle = `rgba(255,255,255,${a.toFixed(2)})`;
-    x.fillRect(col * spacing, row * spacing, 1, 1);
-  }
-  // scale gridlines every 50,000 deaths — bright white, clearly legible
-  const perRow = cols; // ≈ deaths per pixel-row
-  x.textBaseline = "bottom";
-  x.font = "bold 13px 'IBM Plex Mono', monospace";
-  for (let mark = 50000; mark < total; mark += 50000) {
-    const y = Math.round((mark / perRow) * spacing) + 0.5;
-    x.strokeStyle = "rgba(255,255,255,0.9)";
-    x.lineWidth = 1.5;
-    x.beginPath();
-    x.moveTo(0, y);
-    x.lineTo(w, y);
-    x.stroke();
-    const label = mark.toLocaleString();
-    x.fillStyle = "rgba(0,0,0,0.85)";
-    x.fillRect(0, y - 16, x.measureText(label).width + 8, 15);
-    x.fillStyle = "#fff";
-    x.fillText(label, 4, y - 2);
-  }
-}
+  window.__keepPlace = () => {
+    if (!mark || !mark.isConnected || !mark.getClientRects().length) return false;
+    const c = caretTop !== null && caretOf(mark);
+    if (c) {
+      // the caret's line at the same height if that is still on screen, else as near as it fits
+      const v = window.visualViewport,
+        top = v ? v.offsetTop : 0,
+        h = v ? v.height : innerHeight,
+        want = Math.max(top + 16, Math.min(caretTop, top + h - c.height - 16));
+      window.scrollBy({ top: c.top - want, behavior: "instant" });
+    } else window.scrollBy({ top: mark.getBoundingClientRect().top - markTop, behavior: "instant" });
+    return true;
+  };
+})();
 
 // ═══ ISSUE CARDS (two columns, compact) ═════════════════════════
 function buildIssues() {
@@ -481,35 +167,39 @@ function buildIssues() {
     const card = document.createElement("div");
     card.className = "ix";
     card.id = "ix" + i;
+    const moreLabel = (open) =>
+      `<span class="ix-chev" aria-hidden="true">${open ? "▴" : "▾"}</span><span class="ix-more-t"> ${open ? "Show less" : "Read more &amp; sources"} · <span class="ix-pct">${pct}% of the budget</span></span>`;
+    // what a screen reader says: the same words, and which cause they belong to
+    const moreName = (open) =>
+      `${open ? "Show less" : "Read more & sources"} · ${pct}% of the budget · ${iss.name}`;
     card.innerHTML = `
-      <div class="ix-top">
-        <div class="ix-sdg">${iss.sdg}</div>
-        <div class="ix-chk"></div>
-        <div class="ix-name">${iss.name}</div>
-        <div class="ix-cost" style="color:${iss.color}">${fmt(iss.cost)}<span class="yr">/yr</span></div>
-      </div>
+      <button type="button" class="ix-pick">
+        <span class="ix-sdg">${iss.sdg}</span>
+        <span class="ix-chk"></span>
+        <span class="ix-name">${iss.name}</span>
+        <span class="ix-cost">${fmt(iss.cost)}<span class="yr">/yr</span></span>
+      </button>
       <div class="ix-sum">${iss.sum}</div>
       <div class="ix-detail">${iss.detail}</div>
       <div class="ix-foot">
-        <span class="ix-more">▾ Read more &amp; sources · <span class="ix-pct">${pct}% of the budget</span></span>
-        <span class="ix-src"><a href="${iss.url}" target="_blank" rel="noopener">${iss.src.split(" ")[0]} ↗</a></span>
+        <button type="button" class="ix-more" aria-expanded="false" aria-label="${moreName(false)}">${moreLabel(false)}</button>
+        <span class="ix-src"><a href="${iss.url}" target="_blank" rel="noopener"><span>${iss.src.split(" ")[0]} <span aria-hidden="true">↗</span></span></a></span>
       </div>`;
     card.addEventListener("click", (e) => {
       if (e.target.closest("a")) return;
       if (e.target.closest(".ix-more")) {
-        card.classList.toggle("ix-exp");
+        const open = card.classList.toggle("ix-exp");
         const m = card.querySelector(".ix-more");
-        m.innerHTML = card.classList.contains("ix-exp")
-          ? `▴ Show less · <span class="ix-pct">${pct}% of the budget</span>`
-          : `▾ Read more &amp; sources · <span class="ix-pct">${pct}% of the budget</span>`;
+        m.innerHTML = moreLabel(open);
+        m.setAttribute("aria-expanded", open);
+        m.setAttribute("aria-label", moreName(open));
         return;
       }
+      if (e.target !== card && !e.target.closest(".ix-pick")) return; // only the cause's own button chooses it
       toggleIssue(i);
     });
     (i < half ? colL : colR).appendChild(card);
   });
-  // teach the gesture: gently pulse the first card until first interaction
-  document.getElementById("ix0")?.classList.add("ix-pulse");
 }
 
 // ═══ SELECT = RANK ══════════════════════════════════════════════
@@ -517,19 +207,14 @@ function buildIssues() {
 // array of issue indices the letter / share card / submission depend on;
 // `sel` is its Set mirror, used by the pie + tracker.
 function toggleIssue(i) {
-  document
-    .querySelectorAll(".ix-pulse")
-    .forEach((c) => c.classList.remove("ix-pulse"));
   const card = document.getElementById("ix" + i);
   if (card && card.classList.contains("ix-cant") && !sel.has(i)) return;
   if (sel.has(i)) {
     sel.delete(i);
     ranking = ranking.filter((x) => x !== i);
-    if (card) burst(card, "removed", "#ff2d2d");
   } else {
     sel.add(i);
     ranking.push(i); // selection order = priority order
-    if (card) burst(card, "#" + ranking.length, "#00ff88");
   }
   allocated = 0;
   sel.forEach((x) => (allocated += issueData[x].cost));
@@ -607,6 +292,8 @@ function updateGate() {
   const gate = document.getElementById("journeyGate");
   const prompt = document.getElementById("redistPrompt");
   if (!gate) return;
+  const content = gate.querySelector(".gated-content");
+  if (content) content.inert = sel.size < 1;
   if (sel.size >= 1) {
     gate.classList.remove("locked");
     if (prompt) {
@@ -620,207 +307,6 @@ function updateGate() {
       prompt.classList.remove("go");
     }
   }
-}
-
-// ═══ BURST ══════════════════════════════════════════════════════
-function burst(card, txt, col) {
-  const r = card.getBoundingClientRect();
-  const el = document.createElement("div");
-  el.className = "burst";
-  el.style.cssText = `left:${r.left + r.width / 2 - 40}px;top:${r.top + 8}px;color:${col};text-shadow:0 0 10px ${col}`;
-  el.textContent = txt;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 950);
-}
-
-// ═══ FLOW CANVAS ════════════════════════════════════════════════
-const fC = document.getElementById("flowC"),
-  fX = fC.getContext("2d");
-let fW,
-  fH,
-  fParts = [];
-const dpr = window.devicePixelRatio || 1;
-
-function rszFlow() {
-  const panel = fC.parentElement;
-  const availW = panel
-    ? panel.getBoundingClientRect().width
-    : window.innerWidth * 0.5;
-  // smaller, sticky-friendly pie on phones; big on desktop
-  const cap = window.innerWidth <= 760 ? 230 : 620;
-  const sz = Math.round(Math.min(availW, window.innerHeight * 0.82, cap));
-  fW = fC.width = sz * dpr;
-  fH = fC.height = sz * dpr;
-  fC.style.width = sz + "px";
-  fC.style.height = sz + "px";
-}
-
-function getNodes() {
-  const cx = fW / 2,
-    cy = fH / 2;
-  const n = sel.size;
-  const bigR = Math.min(fW, fH) * 0.15;
-  const arr = [...sel];
-  const nodes = [];
-  if (n === 0) return { cx, cy, bigR, nodes };
-  const scale = Math.min(fW, fH) * 0.22;
-  const rawRs = arr.map((idx) => Math.sqrt(issueData[idx].cost / DEFENCE) * scale);
-  const maxRaw = Math.max(...rawRs);
-  const margin = Math.min(fW, fH) * 0.04;
-  const minRing = bigR + maxRaw * 1.1 + margin;
-  const maxRing = Math.min(fW, fH) / 2 - maxRaw - margin;
-  const packRing = n > 1 ? (n * maxRaw * 1.15) / Math.PI : minRing;
-  const ringDist = Math.max(minRing, Math.min(maxRing, packRing));
-  arr.forEach((idx, k) => {
-    const iss = issueData[idx];
-    const angle = (k / n) * Math.PI * 2 - Math.PI / 2;
-    const r = Math.sqrt(iss.cost / DEFENCE) * scale;
-    nodes.push({
-      x: cx + Math.cos(angle) * ringDist,
-      y: cy + Math.sin(angle) * ringDist,
-      r,
-      color: iss.color,
-      idx,
-    });
-  });
-  return { cx, cy, bigR, nodes };
-}
-
-function spawnP(cx, cy, tx, ty, col) {
-  fParts.push({
-    x: cx,
-    y: cy,
-    tx,
-    ty,
-    col,
-    life: 1,
-    spd: 0.005 + Math.random() * 0.009,
-    ox: cx + (Math.random() - 0.5) * 50 * dpr,
-    oy: cy + (Math.random() - 0.5) * 50 * dpr,
-  });
-}
-
-function drawFlow() {
-  fX.clearRect(0, 0, fW, fH);
-  const { cx, cy, bigR, nodes } = getNodes();
-  const rem = Math.max(0, DEFENCE - allocated);
-  const warPct = rem / DEFENCE;
-  const baseF = Math.round(Math.min(fW, fH) * 0.017);
-
-  const grd = fX.createRadialGradient(cx, cy, 0, cx, cy, bigR * 2.5);
-  grd.addColorStop(0, "rgba(255,45,45,0.07)");
-  grd.addColorStop(1, "rgba(0,0,0,0)");
-  fX.fillStyle = grd;
-  fX.beginPath();
-  fX.arc(cx, cy, bigR * 2.5, 0, Math.PI * 2);
-  fX.fill();
-
-  fX.beginPath();
-  fX.arc(cx, cy, bigR, 0, Math.PI * 2);
-  fX.fillStyle = "rgba(40,0,0,0.6)";
-  fX.fill();
-  if (warPct > 0) {
-    fX.beginPath();
-    fX.moveTo(cx, cy);
-    fX.arc(cx, cy, bigR, -Math.PI / 2, -Math.PI / 2 + warPct * Math.PI * 2);
-    fX.closePath();
-    fX.fillStyle = "rgba(255,45,45,0.55)";
-    fX.fill();
-  }
-  const rim = fX.createRadialGradient(cx, cy, bigR * 0.86, cx, cy, bigR * 1.14);
-  rim.addColorStop(0, "rgba(255,45,45,0.38)");
-  rim.addColorStop(1, "rgba(255,45,45,0)");
-  fX.fillStyle = rim;
-  fX.beginPath();
-  fX.arc(cx, cy, bigR * 1.14, 0, Math.PI * 2);
-  fX.fill();
-
-  fX.textAlign = "center";
-  fX.textBaseline = "middle";
-  fX.fillStyle = "rgba(255,255,255,0.45)";
-  fX.font = `${Math.round(baseF * 0.85)}px 'IBM Plex Mono',monospace`;
-  fX.fillText("GLOBAL MILITARY BUDGET", cx, cy - bigR * 0.24);
-  const lcol = warPct < 0.3 ? "#ff2d2d" : warPct < 0.6 ? "#f5a623" : "#00ff88";
-  fX.fillStyle = lcol;
-  fX.font = `${Math.round(baseF * 1.9)}px 'Bebas Neue',sans-serif`;
-  fX.fillText(fmt(rem), cx, cy + bigR * 0.06);
-  fX.fillStyle = "rgba(255,255,255,0.28)";
-  fX.font = `${Math.round(baseF * 0.75)}px 'IBM Plex Mono',monospace`;
-  fX.fillText("remaining", cx, cy + bigR * 0.3);
-
-  nodes.forEach((n) => {
-    fX.save();
-    fX.setLineDash([2 * dpr, 4 * dpr]);
-    const lg = fX.createLinearGradient(cx, cy, n.x, n.y);
-    lg.addColorStop(0, "rgba(255,45,45,0.25)");
-    lg.addColorStop(1, n.color + "33");
-    fX.strokeStyle = lg;
-    fX.lineWidth = dpr * 0.7;
-    fX.beginPath();
-    fX.moveTo(cx, cy);
-    fX.lineTo(n.x, n.y);
-    fX.stroke();
-    fX.restore();
-
-    const ng = fX.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 2.2);
-    ng.addColorStop(0, n.color + "22");
-    ng.addColorStop(0.6, n.color + "0a");
-    ng.addColorStop(1, "transparent");
-    fX.fillStyle = ng;
-    fX.beginPath();
-    fX.arc(n.x, n.y, n.r * 2.2, 0, Math.PI * 2);
-    fX.fill();
-
-    fX.beginPath();
-    fX.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-    fX.fillStyle = n.color + "65";
-    fX.fill();
-    fX.beginPath();
-    fX.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-    fX.fillStyle = "rgba(0,0,0,0.28)";
-    fX.fill();
-
-    fX.textAlign = "center";
-    fX.textBaseline = "middle";
-    // legible floor so even small nodes (e.g. Zero Hunger) read clearly
-    const fs = Math.max(baseF * 1.25, Math.min(baseF * 1.9, n.r * 0.4));
-    fX.save();
-    fX.shadowColor = "rgba(0,0,0,0.85)";
-    fX.shadowBlur = 4 * dpr;
-    fX.fillStyle = "#fff";
-    fX.font = `${Math.round(fs)}px 'Bebas Neue',sans-serif`;
-    fX.fillText(issueData[n.idx].name.toUpperCase(), n.x, n.y - fs * 0.62);
-    fX.fillStyle = n.color;
-    fX.font = `${Math.round(fs * 1.25)}px 'Bebas Neue',sans-serif`;
-    fX.fillText(fmt(issueData[n.idx].cost), n.x, n.y + fs * 0.62);
-    fX.restore();
-
-    if (Math.random() < 0.03) spawnP(cx, cy, n.x, n.y, n.color);
-  });
-
-  fParts = fParts.filter((p) => {
-    p.life -= p.spd;
-    const t = 1 - p.life;
-    p.x = p.ox + (p.tx - p.ox) * t;
-    p.y = p.oy + (p.ty - p.oy) * t;
-    const alpha = Math.round(p.life * 130)
-      .toString(16)
-      .padStart(2, "0");
-    fX.beginPath();
-    fX.arc(p.x, p.y, 1.4 * dpr, 0, Math.PI * 2);
-    fX.fillStyle = p.col + alpha;
-    fX.fill();
-    return p.life > 0;
-  });
-
-  if (sel.size === 0) {
-    fX.textAlign = "center";
-    fX.textBaseline = "middle";
-    fX.fillStyle = "rgba(112,128,144,0.7)";
-    fX.font = `${baseF * 1.1}px 'IBM Plex Mono',monospace`;
-    fX.fillText("Select issues to fund", fW / 2, fH * 0.9);
-  }
-  requestAnimationFrame(drawFlow);
 }
 
 // ═══ RESET ══════════════════════════════════════════════════════
@@ -842,9 +328,11 @@ function resetAll() {
 // ═══ SHARE ══════════════════════════════════════════════════════
 function openShare() {
   document.getElementById("shareOv").classList.add("open");
+  ToolView.update("share", { open: true });
 }
 function closeShare() {
   document.getElementById("shareOv").classList.remove("open");
+  ToolView.update("share", { open: false });
 }
 function submitEmail() {
   const v = document.getElementById("emailIn").value.trim();
@@ -885,22 +373,6 @@ function doShare(type) {
   }
 }
 
-// ═══ SCROLL PROGRESS ════════════════════════════════════════════
-function initScrollProgress() {
-  const bar = document.getElementById("scrollBar");
-  const dot = document.getElementById("scrollDot");
-  window.addEventListener(
-    "scroll",
-    () => {
-      const h = document.documentElement.scrollHeight - window.innerHeight;
-      const pct = h > 0 ? Math.min(window.scrollY / h, 1) : 0;
-      if (bar) bar.style.height = pct * 100 + "%";
-      if (dot) dot.style.top = pct * 100 + "vh";
-    },
-    { passive: true },
-  );
-}
-
 // ═══ PRIORITIES (live ranking = selection order) ════════════════
 // Renders rank badges on the cards + the ordered "your priorities" list
 // with reorder controls. `ranking` is the single source of truth.
@@ -917,7 +389,7 @@ function renderPriorities() {
       const rk = document.createElement("div");
       rk.className = "ix-rank";
       rk.textContent = pos + 1;
-      card.prepend(rk);
+      card.querySelector(".ix-pick").prepend(rk);
     }
   });
 
@@ -926,23 +398,20 @@ function renderPriorities() {
   const panel = document.getElementById("prioPanel");
   const cont = document.getElementById("toCountryBtn");
   if (panel) panel.classList.toggle("show", ranking.length > 0);
-  if (cont) {
-    cont.disabled = ranking.length === 0;
-    cont.style.opacity = ranking.length === 0 ? "0.4" : "1";
-  }
+  if (cont) cont.disabled = ranking.length === 0;
   if (list) {
     list.innerHTML = ranking
       .map(
         (idx, p) =>
-          `<div class="prio-item">
+          `<div class="prio-item" data-i="${idx}">
              <span class="prio-rank">${p + 1}</span>
-             <span class="prio-dot" style="background:${issueData[idx].color}"></span>
+             <span class="prio-dot" style="--s:${Math.sqrt(issueData[idx].cost / DEFENCE).toFixed(4)}"></span>
              <span class="prio-name">${issueData[idx].name}</span>
              <span class="prio-cost">${fmt(issueData[idx].cost)}/yr</span>
              <span class="prio-moves">
-               <button class="prio-mv" title="Move up" onclick="moveRank(${idx},-1)" ${p === 0 ? "disabled" : ""}>↑</button>
-               <button class="prio-mv" title="Move down" onclick="moveRank(${idx},1)" ${p === ranking.length - 1 ? "disabled" : ""}>↓</button>
-               <button class="prio-rm" title="Remove" onclick="toggleIssue(${idx})">✕</button>
+               <button class="prio-mv" title="Move up" aria-label="Move ${issueData[idx].name} up" onclick="moveRank(${idx},-1)" ${p === 0 ? "disabled" : ""}>↑</button>
+               <button class="prio-mv" title="Move down" aria-label="Move ${issueData[idx].name} down" onclick="moveRank(${idx},1)" ${p === ranking.length - 1 ? "disabled" : ""}>↓</button>
+               <button class="prio-rm" title="Remove" aria-label="Remove ${issueData[idx].name}" onclick="toggleIssue(${idx})">✕</button>
              </span>
            </div>`,
       )
@@ -950,6 +419,32 @@ function renderPriorities() {
   }
   generateLetter();
   buildGlobalPriorities();
+  viewRedistribute();
+}
+
+function viewRedistribute() {
+  const rem = Math.max(0, DEFENCE - allocated);
+  ToolView.update("redistribute", {
+    ranking: [...ranking],
+    chosen: ranking.map((i, p) => ({
+      i,
+      rank: p + 1,
+      name: issueData[i].name,
+      cost: issueData[i].cost,
+      costText: fmt(issueData[i].cost),
+    })),
+    blocked: issueData
+      .map((iss, i) => (!sel.has(i) && allocated + iss.cost > DEFENCE ? i : -1))
+      .filter((i) => i > -1),
+    defence: DEFENCE,
+    allocated,
+    remaining: rem,
+    remainingPct: (rem / DEFENCE) * 100,
+    allocatedText: fmt(allocated),
+    remainingText: fmt(rem),
+    count: sel.size,
+    gateOpen: sel.size >= 1,
+  });
 }
 
 function moveRank(idx, dir) {
@@ -960,17 +455,24 @@ function moveRank(idx, dir) {
   renderPriorities();
 }
 
+// the page moves only when the reader asks it to, and never smoothly under reduced motion
+function goTo(id) {
+  const still =
+    location.search.includes("static") ||
+    matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document
+    .getElementById(id)
+    ?.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "start" });
+}
+
 // continue: confirm the ordered list, then flow to the country step
 function goToCountryFromRedist() {
-  if (ranking.length === 0) {
-    document
-      .getElementById("redistribute")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    return;
-  }
-  document
-    .getElementById("countrySection")
-    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  goTo(ranking.length === 0 ? "redistribute" : "countrySection");
+}
+function goToRedistribute() {
+  goTo("redistribute");
+  // the keyboard goes where the page went: the first cause, not back to the gate's button
+  document.querySelector("#ix0 .ix-pick")?.focus({ preventScroll: true });
 }
 
 // ═══ COUNTRY ════════════════════════════════════════════════════
@@ -1020,6 +522,7 @@ function showCountry(name) {
   const btn = document.getElementById("countryNextBtn");
   if (!c || !box) {
     if (box) box.style.display = "none";
+    ToolView.update("country", null);
     return;
   }
   selectedCountry = c;
@@ -1029,21 +532,25 @@ function showCountry(name) {
   }
   box.style.display = "block";
   const spend = c[2];
-  const comparisons = issueData
-    .slice(0, 6)
-    .map((iss) => {
-      const pct = Math.min((spend / iss.cost) * 100, 100);
-      const covers = ((spend / iss.cost) * 100).toFixed(0);
-      const canFund = spend >= iss.cost;
-      return `<div class="cc-bar-row">
-      <div class="cc-bar-lbl">${iss.name}</div>
-      <div class="cc-bar-track"><div class="cc-bar-fill" style="width:0%;background:${iss.color}" data-w="${pct.toFixed(1)}"></div></div>
-      <div class="cc-bar-val" style="color:${canFund ? "var(--green)" : "var(--muted)"}">${covers}%</div>
-    </div>`;
-    })
+  const compared = issueData.slice(0, 6).map((iss, i) => ({
+    i,
+    name: iss.name,
+    cost: iss.cost,
+    pct: Math.min((spend / iss.cost) * 100, 100),
+    covers: ((spend / iss.cost) * 100).toFixed(0),
+    canFund: spend >= iss.cost,
+  }));
+  const comparisons = compared
+    .map(
+      (m) => `<div class="cc-bar-row">
+      <div class="cc-bar-lbl">${m.name}</div>
+      <div class="cc-bar-track"><div class="cc-bar-fill" style="width:${m.pct.toFixed(1)}%" data-w="${m.pct.toFixed(1)}"></div></div>
+      <div class="cc-bar-val${m.canFund ? " can" : ""}">${m.covers}%</div>
+    </div>`,
+    )
     .join("");
   const contactHTML = c[5]
-    ? `<a href="${c[5]}" target="_blank" rel="noopener">Contact your representative ↗</a>`
+    ? `<a href="${c[5]}" target="_blank" rel="noopener"><span>Contact your representative <span aria-hidden="true">↗</span></span></a>`
     : "";
 
   // ── spending trend indicator ──
@@ -1052,7 +559,7 @@ function showCountry(name) {
   const known = trendVal !== undefined;
   const rising = tv >= 0;
   const trendHTML = `<div class="trend-ind">
-      <div class="trend-arrow ${rising ? "up" : "down"}">${rising ? "▲" : "▼"}</div>
+      <div class="trend-arrow ${rising ? "up" : "down"}" aria-hidden="true">${rising ? "▲" : "▼"}</div>
       <div>
         <div class="trend-val ${rising ? "up" : "down"}">${rising ? "+" : ""}${tv}%</div>
         <div class="trend-cap">${known ? "change in " + c[0] + "'s military spend, 2024 to 2025" : "no national figure; shown is the world average (ex-US), which rose " + GLOBAL_TREND + "%"}. ${rising ? "Spending is climbing." : "Spending is falling."}</div>
@@ -1060,13 +567,13 @@ function showCountry(name) {
     </div>`;
 
   // ── most-chosen priorities among people in this country (seeded + live) ──
-  const cTally = countryPriorityTally(c[0]);
+  const cTally = SHOW_SEEDED ? countryPriorityTally(c[0]) : [];
   const cMax = Math.max(...cTally.map((t) => t.w));
   const prioHTML = cTally
     .slice(0, 6)
     .map(
       (t) =>
-        `<div class="prio-bar-row"><div class="prio-bar-name">${issueData[t.i].name}</div><div class="prio-bar-track"><div class="prio-bar-fill" style="background:${issueData[t.i].color};width:0%" data-w="${((t.w / cMax) * 100).toFixed(0)}"></div></div><div class="prio-bar-pct">${Math.round((t.w / cTally.reduce((s, x) => s + x.w, 0)) * 100)}%</div></div>`,
+        `<div class="prio-bar-row"><div class="prio-bar-name">${issueData[t.i].name}</div><div class="prio-bar-track"><div class="prio-bar-fill" style="width:${((t.w / cMax) * 100).toFixed(0)}%" data-w="${((t.w / cMax) * 100).toFixed(0)}"></div></div><div class="prio-bar-pct">${Math.round((t.w / cTally.reduce((s, x) => s + x.w, 0)) * 100)}%</div></div>`,
     )
     .join("");
 
@@ -1077,7 +584,7 @@ function showCountry(name) {
 <div class="cc-note">Your country contributes ${((spend / DEFENCE) * 100).toFixed(2)}% of the $2.89T global military total. This is the scale of your nation's stake in how the world chooses to spend its resources.</div>
 <div class="cc-extra">
   <div><div class="cc-extra-h">Where ${c[0]} is heading</div>${trendHTML}</div>
-  <div><div class="cc-extra-h">What people in ${c[0]} would fund first</div>${prioHTML}</div>
+  ${SHOW_SEEDED ? `<div><div class="cc-extra-h">What people in ${c[0]} would fund first</div>${prioHTML}</div>` : ""}
 </div>
 <div class="tax-box">
   <div class="tax-box-h big">Where does your tax money go?</div>
@@ -1089,17 +596,22 @@ function showCountry(name) {
   </div>
   <div class="tax-result show" id="taxResult"></div>
 </div>`;
-  setTimeout(() => {
-    box.querySelectorAll(".cc-bar-fill, .prio-bar-fill").forEach((el) => {
-      el.style.transition = "width 1.3s cubic-bezier(.16,1,.3,1)";
-      el.style.width = el.dataset.w + "%";
-    });
-  }, 100);
   updateTaxSlider(false);
   generateLetter();
   const note = document.getElementById("letterContactNote");
   if (note && c[5])
-    note.innerHTML = `Find your representative: <a href="${c[5]}" target="_blank">${c[0]} government contact page ↗</a>`;
+    note.innerHTML = `Find your representative: <a href="${c[5]}" target="_blank">${c[0]} government contact page <span aria-hidden="true">↗</span></a>`;
+  ToolView.update("country", {
+    name: c[0],
+    spend,
+    spendText: "$" + spend + "B",
+    pctGdp: c[3],
+    population: c[4],
+    contact: c[5] || null,
+    shareOfDefence: ((spend / DEFENCE) * 100).toFixed(2),
+    comparisons: compared,
+    trend: { value: tv, known, rising },
+  });
 }
 
 // ═══ PERSONAL TAX → WAR (income slider) ═════════════════════════
@@ -1144,10 +656,27 @@ function updateTaxSlider(fromUser) {
   };
   if (fromUser) generateLetter();
   out.innerHTML = `
-    <div class="tax-amt">${cur}${fmtMoney(toWar)}<span style="font-size:0.9rem;color:var(--ink-soft)"> /yr</span></div>
+    <div class="tax-amt">${cur}${fmtMoney(toWar)}<span class="tax-yr"> /yr</span></div>
     <div class="tax-lbl">of your income tax goes to ${selectedCountry[0]}'s military each year, about <b>${cur}${perDay < 10 ? perDay.toFixed(2) : Math.round(perDay).toLocaleString()} a day</b>. That's ${(milShareOfTax * 100).toFixed(1)}% of the roughly ${cur}${fmtMoney(annualTax)} you'd pay in income tax.</div>
     <div class="tax-note">Indicative estimate. Assumes government spending ≈ ${Math.round(GOV_SPEND_GDP * 100)}% of GDP and a representative progressive tax rate; not tax advice. Built to wire into real national tax data later.</div>`;
   out.classList.add("show");
+  ToolView.update("tax", {
+    country: selectedCountry[0],
+    currency: cur,
+    position: +slider.value,
+    income,
+    incomeText: fmtMoney(income),
+    rate: effectiveTaxRate(income),
+    annualTax,
+    annualTaxText: fmtMoney(annualTax),
+    milShareOfTax,
+    milSharePct: (milShareOfTax * 100).toFixed(1),
+    toWar,
+    toWarText: fmtMoney(toWar),
+    perDay,
+    perDayText: perDay < 10 ? perDay.toFixed(2) : Math.round(perDay).toLocaleString(),
+    used: userTax.used,
+  });
 }
 
 // ═══ LETTER (with red placeholders when incomplete) ═════════════
@@ -1233,6 +762,7 @@ ${country}`;
   // contenteditable: render HTML so red prompts show; copy uses innerText
   out.innerHTML = letter.replace(/\n/g, "<br>");
   out.dataset.plain = out.innerText;
+  ToolView.update("letter", { rankDone, countryDone, complete, text: out.dataset.plain });
 }
 
 function copyLetter() {
@@ -1241,9 +771,10 @@ function copyLetter() {
   navigator.clipboard.writeText(txt).then(() => {
     const b = document.querySelector(".tool-btn");
     if (b) {
-      const o = b.textContent;
+      // always back to "Copy": reading the label at click time kept "✓ Copied" after a second click within 2 s
       b.textContent = "✓ Copied";
-      setTimeout(() => (b.textContent = o), 2000);
+      clearTimeout(b._copied);
+      b._copied = setTimeout(() => (b.textContent = "Copy"), 2000);
     }
   });
 }
@@ -1306,26 +837,21 @@ function sendToRepresentative() {
   }
 }
 
-function goToCountry() {
-  document
-    .getElementById("countrySection")
-    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 function goToLetter() {
-  document
-    .getElementById("letterSection")
-    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  goTo("letterSection");
 }
 function goToCoalition() {
-  document
-    .getElementById("coalitionSection")
-    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  goTo("coalitionSection");
 }
 
 // ═══ COALITION ══════════════════════════════════════════════════
 // Live data comes from Supabase (js/backend.js) when configured;
 // otherwise we fall back to this browser's localStorage (demo mode).
 const SEED_COUNT = (window.COW_CONFIG && window.COW_CONFIG.SEED_COUNT) || 2847;
+// Off (the default): no invented count, tally, nudge, bar or globe sign-up shows, only real
+// participation. On: exactly the seeded behaviour. js/data.js keeps the seeds either way.
+const SHOW_SEEDED = !!(window.COW_CONFIG && window.COW_CONFIG.SHOW_SEEDED);
+const SEED_BASE = SHOW_SEEDED ? SEED_COUNT : 0;
 
 function getLocalSubs() {
   try {
@@ -1346,7 +872,7 @@ function getTally() {
   // live backend (shared across all visitors)
   if (window.__cowConfigured && window.__cowLive && window.__cowLive.ready) {
     return {
-      count: SEED_COUNT + window.__cowLive.count,
+      count: SEED_BASE + window.__cowLive.count,
       tally: { ...window.__cowLive.tally },
     };
   }
@@ -1359,7 +885,7 @@ function getTally() {
         tally[i] = (tally[i] || 0) + 1;
       });
   });
-  return { count: SEED_COUNT + local.length, tally };
+  return { count: SEED_BASE + local.length, tally };
 }
 
 // simple deterministic hash so a country always gets the same variation
@@ -1373,7 +899,8 @@ function strHash(s) {
 function globalPriorityTally() {
   const { tally } = getTally();
   return seededPriorityWeights
-    .map((w, i) => ({ i, w: w + (tally[i] || 0) }))
+    .map((w, i) => ({ i, w: (SHOW_SEEDED ? w : 0) + (tally[i] || 0) }))
+    .filter((t) => SHOW_SEEDED || t.w > 0)
     .sort((a, b) => b.w - a.w);
 }
 
@@ -1399,6 +926,10 @@ function buildGlobalPriorities() {
   const wrap = document.getElementById("globalPrio");
   if (!wrap) return;
   const tally = globalPriorityTally();
+  if (!tally.length) {
+    wrap.innerHTML = ""; // SHOW_SEEDED off and no real votes yet: nothing to draw
+    return;
+  }
   const total = tally.reduce((s, t) => s + t.w, 0);
   const max = tally[0].w;
   wrap.innerHTML =
@@ -1407,33 +938,27 @@ function buildGlobalPriorities() {
       .slice(0, 8)
       .map(
         (t) =>
-          `<div class="prio-bar-row"><div class="prio-bar-name">${issueData[t.i].name}</div><div class="prio-bar-track"><div class="prio-bar-fill" style="background:${issueData[t.i].color};width:0%" data-w="${((t.w / max) * 100).toFixed(0)}"></div></div><div class="prio-bar-pct">${Math.round((t.w / total) * 100)}%</div></div>`,
+          `<div class="prio-bar-row"><div class="prio-bar-name">${issueData[t.i].name}</div><div class="prio-bar-track"><div class="prio-bar-fill" style="width:${((t.w / max) * 100).toFixed(0)}%" data-w="${((t.w / max) * 100).toFixed(0)}"></div></div><div class="prio-bar-pct">${Math.round((t.w / total) * 100)}%</div></div>`,
       )
       .join("");
-  // animate when visible
-  const io = new IntersectionObserver(
-    (es) => {
-      es.forEach((e) => {
-        if (e.isIntersecting) {
-          wrap
-            .querySelectorAll(".prio-bar-fill")
-            .forEach((b) => (b.style.width = b.dataset.w + "%"));
-          io.disconnect();
-        }
-      });
-    },
-    { threshold: 0.2 },
-  );
-  io.observe(wrap);
 }
 
 // ═══ INTERACTIVE 3D GLOBE (coalition) ═══════════════════════════
 let globeInstance = null;
 
-// merge: seeded base + this browser's local subs + live backend (when wired)
+// merge: seeded base + this browser's local subs + live backend (when wired).
+// Once the database has answered it already counts this browser's earlier sign-ups, so with
+// SHOW_SEEDED off only this visit's own sign-up is added to it (sent after the count was read):
+// a returning reader is counted once. SHOW_SEEDED on keeps the old sum exactly.
 function getCountrySignups() {
-  const out = Object.assign({}, seededCountrySignups);
-  getLocalSubs().forEach((s) => {
+  const out = Object.assign({}, SHOW_SEEDED ? seededCountrySignups : null);
+  const mine =
+    SHOW_SEEDED || !window.__cowCountrySignups
+      ? getLocalSubs()
+      : coalitionSubmission
+        ? [coalitionSubmission]
+        : [];
+  mine.forEach((s) => {
     if (s.country && s.country !== "Unknown")
       out[s.country] = (out[s.country] || 0) + 1;
   });
@@ -1443,28 +968,6 @@ function getCountrySignups() {
     });
   }
   return out;
-}
-
-// neon gradient by volume: teal → green → amber → red
-function volColor(t) {
-  const stops = [
-    [0.0, [0, 229, 255]],
-    [0.4, [0, 255, 136]],
-    [0.75, [245, 166, 35]],
-    [1.0, [255, 45, 45]],
-  ];
-  let a = stops[0],
-    b = stops[stops.length - 1];
-  for (let i = 0; i < stops.length - 1; i++) {
-    if (t >= stops[i][0] && t <= stops[i + 1][0]) {
-      a = stops[i];
-      b = stops[i + 1];
-      break;
-    }
-  }
-  const f = (t - a[0]) / (b[0] - a[0] || 1);
-  const c = a[1].map((v, i) => Math.round(v + (b[1][i] - v) * f));
-  return `rgb(${c[0]},${c[1]},${c[2]})`;
 }
 
 function globeData() {
@@ -1481,7 +984,7 @@ function globeData() {
       lat: c[0],
       lng: c[1],
       alt: 0.04 + Math.sqrt(t) * 0.6,
-      color: volColor(t),
+      color: "#3C8FDE",
     });
   });
   return pts;
@@ -1500,8 +1003,66 @@ function hasWebGL() {
 }
 
 function globeFallback() {
-  const block = document.querySelector(".globe-block");
-  if (block) block.style.display = "none"; // existing bar-chart view remains
+  ToolView.update("globe", { mode: "flat" }); // the view draws the globe as a still sphere
+}
+
+// how far the camera stands from the globe, in globe radii: the view (js/tools/h4.js) reads it too
+const GLOBE_ALTITUDE = 2.05;
+// bars are kept inside the canvas; with no invented sign-ups the tallest is often one person
+function globeBarAlt(d) {
+  return d.alt * (SHOW_SEEDED ? 0.55 : 0.25);
+}
+// where the globe turns to for a country: it stands up and to the left of centre, so its bar shows
+// its height and clears the inset
+function globeTurn(lat, lng) {
+  const narrow = window.innerWidth < 1024;
+  return [Math.max(-70, Math.min(70, lat - 26)), lng + (narrow ? 15 : 20)];
+}
+function globeStill() {
+  return (
+    location.search.includes("static") ||
+    matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+// The render loop runs only while the globe is on screen and something is moving on it.
+let globeOnScreen = false,
+  globeRunning = true,
+  globeAwakeUntil = 0,
+  globeSleepTimer = 0,
+  globeLayers = null; // globe.gl's globe layer (three-globe): see globeQuiet
+function globeRun() {
+  if (!globeInstance) return;
+  const moving =
+    globeOnScreen &&
+    (globeInstance.controls().autoRotate ||
+      performance.now() < globeAwakeUntil);
+  if (moving !== globeRunning) {
+    globeRunning = moving;
+    moving ? globeInstance.resumeAnimation() : globeInstance.pauseAnimation();
+  }
+  globeQuiet();
+}
+// globe.gl starts (and resumeAnimation restarts) four clocks inside its globe layer (three-globe):
+// one for layer transitions and three for arc dashes, path dashes and rings. This globe has none of
+// those (every transition is 0, the graticule's dashes do not move, no arcs or rings), so they are
+// kept paused and only globe.gl's own drawing loop runs: 1 loop instead of 5 while the globe turns.
+// The layer joins the scene a moment after the globe is made, so it is looked for until found.
+function globeQuiet() {
+  if (!globeInstance) return;
+  if (!globeLayers)
+    globeInstance.scene().traverse((o) => {
+      if (!globeLayers && typeof o.getGlobeRadius === "function" && typeof o.pauseAnimation === "function") globeLayers = o;
+    });
+  if (globeLayers) globeLayers.pauseAnimation();
+}
+function globeWake(ms) {
+  globeAwakeUntil = Math.max(globeAwakeUntil, performance.now() + ms);
+  globeRun();
+  clearTimeout(globeSleepTimer);
+  globeSleepTimer = setTimeout(
+    globeRun,
+    globeAwakeUntil - performance.now() + 30,
+  );
 }
 
 function buildGlobe() {
@@ -1516,8 +1077,37 @@ function buildGlobe() {
   } else {
     const s = document.createElement("script");
     s.src = "https://cdn.jsdelivr.net/npm/globe.gl";
-    s.onload = initGlobe;
-    s.onerror = globeFallback;
+    // While globe.gl's own file runs it builds spare copies of its layers, and their animation
+    // loops (four, 60 times a second) would run for the rest of the visit: pauseAnimation cannot
+    // reach them. Frames asked for while that file runs are never started. The globe's own
+    // loops start later, in initGlobe, and pause off screen as before.
+    const raf = window.requestAnimationFrame,
+      gate = function (cb) {
+        return document.currentScript === s ? 0 : raf.call(window, cb);
+      };
+    const done = () => {
+      if (window.requestAnimationFrame === gate) window.requestAnimationFrame = raf;
+    };
+    window.requestAnimationFrame = gate;
+    // A download that never ends gets the still globe after 15 s, not 'rendering the globe…' for
+    // ever. If the file arrives after that, the still globe stays (the gate above still holds its
+    // spare loops back while it runs).
+    let settled = false;
+    const settle = (fn) => {
+      clearTimeout(late);
+      if (settled) return;
+      settled = true;
+      fn();
+    };
+    const late = setTimeout(() => settle(globeFallback), 15000);
+    s.onload = () => {
+      done();
+      settle(initGlobe);
+    };
+    s.onerror = () => {
+      done();
+      settle(globeFallback);
+    };
     document.head.appendChild(s);
   }
 }
@@ -1532,20 +1122,16 @@ function initGlobe() {
   if (loading) loading.remove();
   const mobile = window.innerWidth <= 760;
   try {
-    globeInstance = Globe()(wrap)
+    globeInstance = Globe({ animateIn: false })(wrap)
       .width(wrap.clientWidth)
       .height(wrap.clientHeight)
       .backgroundColor("rgba(0,0,0,0)")
-      .globeImageUrl(
-        "https://unpkg.com/three-globe/example/img/earth-night.jpg",
-      )
-      .showAtmosphere(true)
-      .atmosphereColor("#00e5ff")
-      .atmosphereAltitude(0.16)
+      .showAtmosphere(false)
       .pointsData(globeData())
+      .pointsTransitionDuration(0)
       .pointLat("lat")
       .pointLng("lng")
-      .pointAltitude("alt")
+      .pointAltitude(globeBarAlt)
       .pointColor("color")
       .pointRadius(mobile ? 0.55 : 0.42)
       .pointResolution(mobile ? 6 : 12)
@@ -1554,21 +1140,37 @@ function initGlobe() {
         (d) =>
           `<div class="globe-tip"><b>${d.country}</b><br>${d.count.toLocaleString()} sign-ups</div>`,
       );
+    setTimeout(globeQuiet, 100);
     const controls = globeInstance.controls();
-    controls.autoRotate = true;
+    controls.autoRotate = !globeStill();
     controls.autoRotateSpeed = 0.55;
-    controls.enableZoom = true;
-    controls.minDistance = 180;
-    controls.maxDistance = 600;
-    globeInstance.pointOfView({ lat: 22, lng: 5, altitude: 2.05 }, 0);
-    if (mobile && globeInstance.renderer)
+    controls.enableZoom = false; // wheel zoom would trap the page scroll
+    globeInstance.pointOfView(
+      { lat: 22, lng: 22, altitude: GLOBE_ALTITUDE },
+      0,
+    );
+    if (globeInstance.renderer)
       globeInstance
         .renderer()
-        .setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+        .setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2));
+    // no render loop while the globe is off screen, or on screen with nothing moving
+    new IntersectionObserver((es) => {
+      globeOnScreen = es[es.length - 1].isIntersecting;
+      if (globeOnScreen) globeWake(600);
+      else globeRun();
+    }).observe(wrap);
+    ["pointerdown", "pointermove"].forEach((t) =>
+      wrap.addEventListener(t, () => globeWake(1600)),
+    );
+    // once the reader takes hold of it, the slow spin stops for good
+    wrap.addEventListener("pointerdown", () => (controls.autoRotate = false));
     window.addEventListener("resize", () => {
-      if (globeInstance)
-        globeInstance.width(wrap.clientWidth).height(wrap.clientHeight);
+      if (!globeInstance) return;
+      globeInstance.width(wrap.clientWidth).height(wrap.clientHeight);
+      globeWake(400);
     });
+    ToolView.update("globe", { mode: "webgl", instance: globeInstance });
+    if (coalitionSubmission) rewardGlobe(coalitionSubmission.country); // loaded after a submit
   } catch (e) {
     console.warn("[cow] globe init failed:", e.message);
     globeFallback();
@@ -1576,29 +1178,27 @@ function initGlobe() {
 }
 
 function refreshGlobe() {
-  if (globeInstance) globeInstance.pointsData(globeData());
+  if (!globeInstance) return;
+  globeInstance.pointsData(globeData());
+  globeWake(600);
 }
 
-// peak-end reward: fly to the user's country and pulse a ring on their pin
+// peak-end reward: turn to the reader's country; the view rings it and draws the inset
 function rewardGlobe(country) {
   if (!globeInstance) return;
   const c = countryCoords[country];
   if (!c) return;
   try {
+    const dur = globeStill() ? 0 : 900;
     globeInstance.controls().autoRotate = false;
-    globeInstance.pointOfView({ lat: c[0], lng: c[1], altitude: 1.7 }, 1400);
-    globeInstance
-      .ringsData([{ lat: c[0], lng: c[1] }])
-      .ringColor(() => (t) => `rgba(0,255,136,${1 - t})`)
-      .ringMaxRadius(7)
-      .ringPropagationSpeed(3)
-      .ringRepeatPeriod(650);
-    setTimeout(() => {
-      if (globeInstance) {
-        globeInstance.ringsData([]);
-        globeInstance.controls().autoRotate = true;
-      }
-    }, 6500);
+    const v = globeTurn(c[0], c[1]);
+    globeInstance.pointOfView({ lat: v[0], lng: v[1], altitude: GLOBE_ALTITUDE }, dur);
+    globeWake(dur + 800);
+    ToolView.update("globe", {
+      mode: "webgl",
+      instance: globeInstance,
+      landsIn: dur,
+    });
   } catch (e) {}
 }
 
@@ -1641,10 +1241,39 @@ function initCoalition() {
       topDiv.appendChild(div);
     });
   }
-  setTimeout(() => {
-    const f = document.getElementById("coalitionBarFill");
-    if (f) f.style.width = Math.min((count / 10000) * 100, 100) + "%";
-  }, 700);
+  const f = document.getElementById("coalitionBarFill");
+  if (f) {
+    // the count against a target of 10,000 is a seeded device: it goes with the seeds
+    f.style.width = SHOW_SEEDED ? Math.min((count / 10000) * 100, 100) + "%" : "0%";
+    const barWrap = f.closest(".coalition-bar-wrap");
+    if (barWrap) barWrap.hidden = !SHOW_SEEDED;
+  }
+  viewCoalition();
+}
+
+let coalitionSubmission = null; // what the view may know of this reader's own sign-up
+function viewCoalition() {
+  const { count, tally } = getTally();
+  const g = globalPriorityTally(),
+    total = g.reduce((s, t) => s + t.w, 0),
+    max = g.length ? g[0].w : 1;
+  ToolView.update("coalition", {
+    count,
+    tally,
+    showSeeded: SHOW_SEEDED,
+    revealed: count >= COALITION_REVEAL,
+    submitted: !!coalitionSubmission,
+    country: coalitionSubmission ? coalitionSubmission.country : null,
+    letterOptIn: coalitionSubmission ? coalitionSubmission.letterOptIn : false,
+    globalPriorities: g.slice(0, 8).map((t) => ({
+      i: t.i,
+      name: issueData[t.i].name,
+      w: t.w,
+      barPct: +((t.w / max) * 100).toFixed(0),
+      pct: Math.round((t.w / total) * 100),
+    })),
+    globe: globeData(),
+  });
 }
 
 const COALITION_REVEAL = 10000; // below this, a raw count reads as "few care"
@@ -1665,24 +1294,11 @@ function animCoalitionNum(target) {
   el.classList.remove("soft");
   if (suffix) suffix.textContent = "people have made their choice";
   const s = performance.now(),
-    from = SEED_COUNT,
+    from = SEED_BASE,
     dur = 1800;
   (function f(now) {
     const p = Math.min((now - s) / dur, 1),
       v = Math.round(from + (target - from) * (1 - Math.pow(1 - p, 4)));
-    el.textContent = v.toLocaleString();
-    if (p < 1) requestAnimationFrame(f);
-  })(s);
-}
-
-function animHeroCoalition(target) {
-  const el = document.getElementById("hCoalition");
-  if (!el) return;
-  const s = performance.now(),
-    dur = 2400;
-  (function f(now) {
-    const p = Math.min((now - s) / dur, 1),
-      v = Math.round(target * (1 - Math.pow(1 - p, 4)));
     el.textContent = v.toLocaleString();
     if (p < 1) requestAnimationFrame(f);
   })(s);
@@ -1757,6 +1373,7 @@ function submitCoalition() {
   if (btn) btn.disabled = true;
   const emailEl = document.getElementById("coalitionEmail");
   if (emailEl) emailEl.disabled = true;
+  coalitionSubmission = { country, letterOptIn };
   const { count } = getTally();
   animCoalitionNum(count);
   initCoalition();
@@ -1788,14 +1405,14 @@ function generateShareCard() {
       const iss = issueData[idx];
       const row = document.createElement("div");
       row.className = "sc-row";
-      row.innerHTML = `<div class="sc-rn">${pos + 1}</div><div class="sc-dot" style="background:${iss.color}"></div><div class="sc-in">${iss.name}</div><div class="sc-ic" style="color:${iss.color}">${fmt(iss.cost)}/yr</div>`;
+      row.innerHTML = `<div class="sc-rn">${pos + 1}</div><div class="sc-dot"></div><div class="sc-in">${iss.name}</div><div class="sc-ic">${fmt(iss.cost)}/yr</div>`;
       issDiv.appendChild(row);
     });
   }
 
   const statL = document.getElementById("scStatLeft");
   if (statL)
-    statL.innerHTML = `Total annual cost:<br>${total}<br><br>${Math.round((totalB / DEFENCE) * 100)}% of the global military budget`;
+    statL.innerHTML = `Total annual cost:<br><b>${total}</b><br>${Math.round((totalB / DEFENCE) * 100)}% of the global military budget`;
   const statR = document.getElementById("scStatRight");
   // keep the share card qualitative until the coalition is large enough that
   // the number itself helps the cause (see COALITION_REVEAL)
@@ -1809,19 +1426,44 @@ function generateShareCard() {
   if (cl) cl.textContent = `From ${country} · ${spend} annual military spend`;
 
   document.getElementById("scOverlay")?.classList.add("open");
+  ToolView.update("card", {
+    open: true,
+    country,
+    spendText: spend,
+    totalB,
+    totalText: total,
+    pctOfBudget: Math.round((totalB / DEFENCE) * 100),
+    count,
+    revealed: count >= COALITION_REVEAL,
+    top5: ranking.slice(0, 5).map((i, p) => ({ rank: p + 1, i, name: issueData[i].name, costText: fmt(issueData[i].cost) })),
+  });
+}
+
+function closeCard() {
+  document.getElementById("scOverlay")?.classList.remove("open");
+  ToolView.update("card", { open: false });
 }
 
 function downloadCard() {
   if (window.html2canvas) {
-    html2canvas(document.getElementById("shareCard"), {
+    // the picture is the card flat on: it squares up on the desk while it is taken
+    const overlay = document.getElementById("scOverlay");
+    overlay.classList.add("sc-flat");
+    const card = document.getElementById("shareCard");
+    html2canvas(card, {
       backgroundColor: "#000",
       scale: 2,
+      // html2canvas copies the whole page and asks every canvas it copies for a 2D drawing
+      // context. On a canvas not yet in use (the Archive's room, before it is built) that
+      // claims it for 2D for good, and the 3D room can then never start. So skip every
+      // canvas outside the card: the picture is of the card only.
+      ignoreElements: (el) => el.tagName === "CANVAS" && !card.contains(el),
     }).then((c) => {
       const a = document.createElement("a");
       a.download = "cost-of-war-my-priorities.png";
       a.href = c.toDataURL("image/png");
       a.click();
-    });
+    }).finally(() => overlay.classList.remove("sc-flat"));
   } else {
     const s = document.createElement("script");
     s.src =
@@ -1859,32 +1501,19 @@ function shareCardTo(type) {
 }
 
 // ═══ INIT ═══════════════════════════════════════════════════════
-window.addEventListener("load", () => {
-  tickLiveSpend();
-  buildSpendDonut();
-  buildViolencePie();
-  buildEnvFacts();
-  buildEmittersChart();
-  buildConflictBars();
-  buildDualSpenders();
-  drawDotField();
-  buildDotLegend();
-  buildHumanStrip();
-  buildHiPies();
-  drawLives();
+// Runs at once (this script sits at the end of the page), so the tools have their full height
+// before the story engine follows a deep link to them.
+(function initTools() {
   buildIssues();
   buildCountrySelect();
   initCoalition();
   buildGlobalPriorities();
   initTurnstile();
-  initScrollProgress();
-  initReveal();
-  rszFlow();
-  drawFlow();
   updateTracker();
   updateSummary();
   updateGate();
   generateLetter();
+  viewRedistribute();
   // lazy-build the 3D globe when the coalition section nears the viewport
   const gblock = document.querySelector(".globe-block");
   if (gblock) {
@@ -1905,25 +1534,39 @@ window.addEventListener("load", () => {
   window.onCowHydrated = function () {
     const { count } = getTally();
     animCoalitionNum(count);
-    animHeroCoalition(count);
     initCoalition();
     buildGlobalPriorities();
     refreshGlobe();
   };
-  // animate impact GDP bar when scrolled into view
-  const igf = document.getElementById("impactGdpFill");
-  if (igf) {
-    const io = new IntersectionObserver(
-      (es) => {
-        es.forEach((e) => {
-          if (e.isIntersecting) {
-            igf.style.width = igf.dataset.w + "%";
-            io.disconnect();
-          }
-        });
-      },
-      { threshold: 0.3 },
-    );
-    io.observe(igf);
-  }
-});
+})();
+
+// A link straight into the tools (#haveyoursay, #roomSection, ?static=1#roomSection) lands where it
+// points in any browser. The story follows it as soon as it starts, before this file has built the
+// tools above the target (390 × 664 phone, still mode: the Archive then sits 3,577 px lower). Chrome puts the
+// reader back by itself (scroll anchoring, and the link followed again at load); Safari has no scroll
+// anchoring. So, until the reader moves the page themselves, the target goes back to the top of the
+// screen now, at load and once the fonts are in.
+// Not after a reload, or Back to a page the browser no longer holds in memory: the browser then puts
+// the reader back where they were (scroll restoration), and that place wins over the link. (The story
+// turns restoration off only for its own reload when the screen changes mode; then the link lands.)
+(function landDeepLink() {
+  const story = document.getElementById("story");
+  const nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+  if (nav && /^(reload|back_forward)$/.test(nav.type) && history.scrollRestoration !== "manual") return;
+  let t = null;
+  try {
+    t = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  } catch (e) {}
+  if (!t || !story || (story.compareDocumentPosition(t) & 20) !== 4) return; // the story lands its own
+  const hash = location.hash;
+  let moved = false;
+  ["wheel", "touchstart", "keydown", "pointerdown"].forEach((type) =>
+    window.addEventListener(type, () => (moved = true), { capture: true, passive: true, once: true }),
+  );
+  const land = () => {
+    if (!moved && location.hash === hash && t.getClientRects().length) t.scrollIntoView({ block: "start", behavior: "instant" });
+  };
+  land();
+  window.addEventListener("load", land);
+  if (document.fonts) document.fonts.ready.then(land);
+})();

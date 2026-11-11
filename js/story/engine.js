@@ -474,6 +474,10 @@
   var raf = 0, onScreen = true, active = null, current = null, last = { s: 0, p: 0, st: null };
   function readS() { return clamp((window.scrollY - storyTop) / vp.H, 0, TOTAL); }
   function request() { if (!raf && mode === "motion" && started) raf = requestAnimationFrame(function () { raf = 0; if (onScreen) renderAt(readS()); }); }
+  // ScrollTrigger's endless empty frame loop rests off screen and in still mode
+  var raf0 = requestAnimationFrame, rest = 0;
+  window.requestAnimationFrame = function (f) { return started && (mode != "motion" || !onScreen) && f.name == "_rafBugFix" ? (rest = f, 0) : raf0.call(window, f); };
+  function nap() { if (rest && onScreen && mode == "motion") raf0.call(window, rest), rest = 0; request(); }
   function chromeOn(d) { return !!d.chrome; }
   function atmOn(d) { return !d.restrained; }
   function ramp(s, i, on) {
@@ -571,6 +575,12 @@
     location.reload();
   }
 
+  // Never reload a reader who is below the story, in a tool or has changed anything there (README, Phase 4).
+  var due = null;
+  function under() { return root.getBoundingClientRect().bottom < vp.H - 1; }
+  function busy(below) { var a = document.activeElement; return below || window.__toolDirty || (a && (root.compareDocumentPosition(a) & 20) == 4); } // after the story, not in it
+  window.addEventListener("scroll", function () { if (due && !under() && !busy()) { var f = due; due = null; f(); } }, { passive: true });
+
   var readyResolve, revealDone = Promise.resolve(), ready = new Promise(function (r) { readyResolve = r; });
   Story.start = function () {
     if (started || !(root = document.getElementById("story"))) return console.error("Story: #story missing or started twice");
@@ -614,7 +624,7 @@
     } else window.addEventListener("scroll", request, { passive: true });
     if (window.IntersectionObserver) new IntersectionObserver(function (es) {
       onScreen = es[es.length - 1].isIntersecting;
-      if (onScreen) request();
+      nap();
     }, { rootMargin: "-1px 0px" }).observe(root);
     var lastW = root.clientWidth, lastH = vp.H, rz = 0, Y = window.scrollY, at, dy;
     window.addEventListener("scroll", function () { if (!rz) Y = window.scrollY; }, { passive: true });
@@ -624,12 +634,13 @@
         var W = root.clientWidth, H = stage.clientHeight;
         rz = 0;
         if (W !== lastW || H !== lastH) {
-          if (H < SHORT) return remode(dy >= 0 ? "haveyoursay" : active.id, at);
+          due = H < SHORT ? function (s) { remode(active.id, s == null ? readS() : s); } : null;
+          if (due && !busy(at > TOTAL)) return due(at);
           lastW = W; lastH = H;
           layoutAll();
           refreshST();
           if (at <= TOTAL) scrollToS(Math.max(0, at));
-          else window.scrollTo(0, storyTop + (TOTAL + 1) * vp.H + dy);
+          else (window.__keepPlace && __keepPlace()) || window.scrollTo(0, storyTop + (TOTAL + 1) * vp.H + dy);
         }
         Y = window.scrollY;
         renderAt(readS());
@@ -668,10 +679,14 @@
     });
     scenes.forEach(function (d) { io ? io.observe(d.plate) : platesInView.add(d.plate); });
     wakeLive();
-    var lastW = vp.W;
+    var lastW = vp.W, below = under();
+    window.addEventListener("scroll", function () { below = under(); }, { passive: true });
     window.addEventListener("resize", function () {
-      if (reason === "short" && probe.clientHeight >= SHORT) return remode((scenes.filter(function (d) { return d.plate.getBoundingClientRect().bottom > 2; })[0] || { id: "haveyoursay" }).id);
-      if (probe.clientWidth !== lastW) { lastW = probe.clientWidth; layoutAll(); }
+      if (reason === "short") {
+        due = probe.clientHeight >= SHORT ? function () { remode((scenes.filter(function (d) { return d.plate.getBoundingClientRect().bottom > 2; })[0] || { id: "haveyoursay" }).id); } : null;
+        if (due && !busy(below)) return due();
+      }
+      if (probe.clientWidth !== lastW) { lastW = probe.clientWidth; layoutAll(); if (below && window.__keepPlace) __keepPlace(); }
     });
     var t = hashEl(), pl = t && t.closest(".plate");
     if (t) t.scrollIntoView();
