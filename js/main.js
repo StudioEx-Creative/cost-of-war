@@ -1133,7 +1133,7 @@ function initGlobe() {
       .pointLng("lng")
       .pointAltitude(globeBarAlt)
       .pointColor("color")
-      .pointRadius(mobile ? 0.55 : 0.42)
+      .pointRadius(mobile ? 0.9 : 0.75) // thick enough to read as a bar standing on the land
       .pointResolution(mobile ? 6 : 12)
       .pointsMerge(false)
       .pointLabel(

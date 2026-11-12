@@ -320,9 +320,11 @@
     R.pointer = new THREE.Vector2();
     R.THREE = THREE;
     R.dummy = dummy;
-    R.yaw = 0;
-    R.pitch = 0;
-    R.dolly = 0;
+    // where the reader stands and looks; each move sets a target and the camera glides to it
+    R.yaw = R.ty = 0;
+    R.pitch = R.tp = 0;
+    R.px = R.tx = 0;
+    R.pz = R.tz = 17;
     R.v = new THREE.Vector3();
     R.t0 = performance.now();
   }
@@ -343,7 +345,7 @@
     R.camera.rotation.order = "YXZ";
     R.camera.rotation.y = R.yaw;
     R.camera.rotation.x = R.pitch;
-    R.camera.position.z = 17 - R.dolly;
+    R.camera.position.set(R.px, 1.6, R.pz);
     R.camera.updateMatrixWorld();
   }
 
@@ -374,10 +376,33 @@
       }
       R.mesh.instanceMatrix.needsUpdate = true;
     }
+    glide(0.14);
     pointCamera();
     R.renderer.render(R.scene, R.camera);
     placeMine();
+    if (aimed && !el.aim.hidden) aim();
     requestAnimationFrame(frame);
+  }
+
+  // ease the camera toward its target (k = 1 lands at once: reduced motion, or no loop running)
+  function glide(k) {
+    R.yaw += (R.ty - R.yaw) * k;
+    R.pitch += (R.tp - R.pitch) * k;
+    R.px += (R.tx - R.px) * k;
+    R.pz += (R.tz - R.pz) * k;
+  }
+  // one step of the reader's: turn (radians), tilt, walk (units along the way they face)
+  function move(turn, tilt, walk) {
+    if (!R.renderer) return;
+    R.ty += turn;
+    R.tp = Math.max(-0.9, Math.min(0.9, R.tp + tilt));
+    if (walk) {
+      var x = R.tx - Math.sin(R.ty) * walk, z = R.tz - Math.cos(R.ty) * walk, d = Math.hypot(x, z);
+      if (d > 17) { x *= 17 / d; z *= 17 / d; } // stay inside the room
+      R.tx = x;
+      R.tz = z;
+    }
+    if (reduce || !running) { glide(1); still(); }
   }
 
   function start() {
@@ -551,14 +576,15 @@
         if (aimed) openReader(aimed.p);
         return;
       }
-      if (k === "ArrowLeft") R.yaw += 0.07;
-      else if (k === "ArrowRight") R.yaw -= 0.07;
-      else if (k === "ArrowUp") R.pitch = Math.min(0.9, R.pitch + 0.05);
-      else if (k === "ArrowDown") R.pitch = Math.max(-0.9, R.pitch - 0.05);
+      if (k === "ArrowLeft") move(0.2, 0, 0);
+      else if (k === "ArrowRight") move(-0.2, 0, 0);
+      else if (k === "ArrowUp") move(0, 0.08, 0);
+      else if (k === "ArrowDown") move(0, -0.08, 0);
+      else if (k === "w" || k === "W") move(0, 0, 2.5);
+      else if (k === "s" || k === "S") move(0, 0, -2.5);
       else return;
       e.preventDefault();
       aim();
-      still();
     });
     stage.addEventListener("focus", function () {
       if (stage.matches(":focus-visible")) aim();
@@ -666,8 +692,8 @@
       lx = e.clientX;
       ly = e.clientY;
       moved += Math.abs(dx) + Math.abs(dy);
-      R.yaw -= dx * 0.0032;
-      R.pitch = Math.max(-0.9, Math.min(0.9, R.pitch - dy * 0.0026));
+      R.ty = R.yaw -= dx * 0.0032; // a drag is held by the hand: no glide
+      R.tp = R.pitch = Math.max(-0.9, Math.min(0.9, R.pitch - dy * 0.0026));
       still(); // reduced motion has no loop, and must still be able to look around
     });
     stage.addEventListener("pointerup", function (e) {
@@ -679,6 +705,23 @@
     // No wheel capture. The room now sits directly under the title, so it must
     // never trap the page scroll; you drag to look, and the page scrolls past
     // it normally. (Dolly stays 0.)
+  }
+
+  // the buttons under the room: the same moves as the keys, for a mouse, a finger or Tab
+  function bindNav() {
+    var nav = document.getElementById("roomNav");
+    if (!nav) return;
+    nav.hidden = false;
+    nav.addEventListener("click", function (e) {
+      var b = e.target.closest("button"), n = b && b.getAttribute("data-nav");
+      if (!n) return;
+      if (n === "read") {
+        aim();
+        if (aimed) openReader(aimed.p);
+        return;
+      }
+      move({ left: 0.35, right: -0.35 }[n] || 0, 0, { in: 2.5, out: -2.5 }[n] || 0);
+    });
   }
 
   function pick(e) {
@@ -793,6 +836,7 @@
         bindControls();
         bindKeys();
         hangMine();
+        bindNav();
         if (el.loading) el.loading.hidden = true;
         R.renderer.render(R.scene, R.camera);
         if (!reduce) {

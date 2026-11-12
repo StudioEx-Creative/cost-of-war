@@ -930,6 +930,12 @@ footer a { display: inline-flex; align-items: center; justify-content: center; m
 .room-hint, .room-keys { position: absolute; right: 64px; bottom: 64px; z-index: 3; max-width: 46%; font: 400 11px/1.4 var(--f-mono); letter-spacing: 0.14em; text-align: right; text-transform: uppercase; color: var(--grey); pointer-events: none; }
 .room-keys { visibility: hidden; background: var(--ground); box-shadow: 0 0 0 6px var(--ground); color: var(--white); }
 .room-stage:focus-visible ~ .room-keys { visibility: visible; }
+/* the walk controls: real buttons over the room's lower left (under it on phones) */
+.room-nav { position: absolute; right: 64px; bottom: 92px; z-index: 4; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; max-width: 46%; }
+.room-nav[hidden] { display: none; }
+.room-nav button { min-width: 44px; min-height: 44px; padding: 0 14px; background: rgba(10, 10, 10, 0.72); border: 1px solid rgba(255, 255, 255, 0.34); color: var(--white); font: 500 12px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+.room-nav button:hover { border-color: var(--white); }
+.room-nav button[data-nav="read"] { border-color: var(--blue); }
 
 /* the room's focus ring: on the sheet Enter would open */
 .room-aim { position: absolute; left: 0; top: 0; box-sizing: border-box; border: 2px solid var(--white); pointer-events: none; }
@@ -1024,6 +1030,8 @@ footer a { display: inline-flex; align-items: center; justify-content: center; m
   .room-head .sec-title { order: 2; margin: 0 16px; font-size: clamp(36px, 10.7vw, 40px); line-height: 1; }
   .room-hint { position: static; order: 3; max-width: none; margin: 12px 16px 0; font: 400 14px/1.5 var(--f-sans); letter-spacing: 0; text-align: left; text-transform: none; color: var(--soft); }
   .room-keys { display: none; }
+  .room-nav { position: static; order: -1; max-width: none; justify-content: flex-start; margin: 12px 16px 0; }
+  .room-nav button[data-nav="read"] { flex: 1 1 100%; }
   .room-stage:focus-visible ~ .room-keys { position: static; order: 3; display: block; max-width: none; margin: 8px 16px 0; text-align: left; font-size: 10px; box-shadow: none; }
   .room-head .sec-desc { order: 4; margin: 12px 16px 0; font-size: 16px; }
   .room-badge { position: absolute; left: 16px; right: 16px; top: 44px; z-index: 3; font-size: 10px; line-height: 1.5; padding: 4px 8px; }

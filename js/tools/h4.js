@@ -9,7 +9,7 @@
   if (!section || !wrap) return;
   var block = section.querySelector(".globe-block");
   var RAD = Math.PI / 180,
-    LINE = "rgba(255,255,255,0.34)",
+    LINE = "rgba(255,255,255,0.2)",
     BLUE = "#3C8FDE",
     RING = 'fill="none" stroke="' + BLUE + '" stroke-width="1.5"',
     NS = "http://www.w3.org/2000/svg";
@@ -54,6 +54,25 @@
     for (lat = -60; lat <= 60; lat += 20) { a = []; for (i = -180; i <= 180; i += 3) a.push([lat, i]); out.push(a); }
     return out;
   }
+  // The world's coastlines (Natural Earth 1:110m, js/map/world-110m.js), loaded only with the globe.
+  // Each is a list of [lat, lng] marked .c, so the 3D globe can draw it brighter than the grid.
+  var COAST = "rgba(255,255,255,0.72)", coast = null, coastFile = null;
+  function land() {
+    if (coast) return coast;
+    var w = window.LAND_WORLD_110M;
+    if (w) {
+      coast = w.map(function (r) { var a = []; for (var i = 0; i < r.length; i += 2) a.push([r[i + 1] / 10, r[i] / 10]); a.c = 1; return a; });
+      return coast;
+    }
+    if (!coastFile) {
+      coastFile = document.createElement("script");
+      coastFile.src = "js/map/world-110m.js";
+      coastFile.onload = function () { if (mode === "webgl" && inst) inst.pathsData(paths()); else drawFlat(); place(); };
+      document.head.appendChild(coastFile);
+    }
+    return [];
+  }
+  function paths() { return graticule().concat(land()); }
   // the light on the sphere: from the upper left, with a rim on that limb
   function light(cx, cy, R) {
     var a = 196 * RAD, b = 292 * RAD, f = function (t, k) { return (k ? cy + R * Math.sin(t) : cx + R * Math.cos(t)).toFixed(1); };
@@ -63,7 +82,8 @@
   }
   function sphere(cx, cy, R, lat0, lng0, bars) {
     var P = ortho(lat0, lng0, R), d = graticule().map(function (g) { return trace(P, cx, cy, g); }).join("");
-    var s = circle(cx, cy, R, 'fill="#121315"') + '<path d="' + d + '" fill="none" stroke="' + LINE + '"/>' + light(cx, cy, R);
+    var s = circle(cx, cy, R, 'fill="#121315"') + '<path d="' + d + '" fill="none" stroke="' + LINE + '"/>' +
+      '<path d="' + land().map(function (g) { return trace(P, cx, cy, g); }).join("") + '" fill="none" stroke="' + COAST + '" stroke-linejoin="round"/>' + light(cx, cy, R);
     bars.forEach(function (b) {
       var v = P(b.lat, b.lng);
       if (v[2] > 0) s += '<line x1="' + (cx + v[0]) + '" y1="' + (cy - v[1]) + '" x2="' + (cx + v[0] * (1 + b.h)) + '" y2="' + (cy - v[1] * (1 + b.h)) + '" stroke="' + BLUE + '" stroke-width="4"/>';
@@ -89,9 +109,9 @@
       if (o.isDirectionalLight) o.intensity = 0;
       else if (o.isAmbientLight) { o.color.set("#ffffff"); o.intensity = Math.PI; }
     });
-    g.pathsData(graticule()).pathPoints(function (p) { return p; })
+    g.pathsData(paths()).pathPoints(function (p) { return p; })
       .pathPointLat(function (q) { return q[0]; }).pathPointLng(function (q) { return q[1]; })
-      .pathPointAlt(0.002).pathColor(function () { return LINE; }).pathTransitionDuration(0);
+      .pathPointAlt(0.002).pathColor(function (p) { return p.c ? COAST : LINE; }).pathTransitionDuration(0);
     var over = svgEl("globe-light"), W = wrap.clientWidth, H = wrap.clientHeight, R = radius(H);
     over.setAttribute("viewBox", "0 0 " + W + " " + H);
     over.innerHTML = light(W / 2, H / 2, R) + circle(W / 2, H / 2, R + 5, 'class="globe-ring"');
