@@ -474,7 +474,6 @@
   var raf = 0, onScreen = true, active = null, current = null, last = { s: 0, p: 0, st: null };
   function readS() { return clamp((window.scrollY - storyTop) / vp.H, 0, TOTAL); }
   function request() { if (!raf && mode === "motion" && started) raf = requestAnimationFrame(function () { raf = 0; if (onScreen) renderAt(readS()); }); }
-  // ScrollTrigger's endless empty frame loop rests off screen and in still mode
   var raf0 = requestAnimationFrame, rest = 0;
   window.requestAnimationFrame = function (f) { return started && (mode != "motion" || !onScreen) && f.name == "_rafBugFix" ? (rest = f, 0) : raf0.call(window, f); };
   function nap() { if (rest && onScreen && mode == "motion") raf0.call(window, rest), rest = 0; request(); }
@@ -575,10 +574,9 @@
     location.reload();
   }
 
-  // Never reload a reader who is below the story, in a tool or has changed anything there (README, Phase 4).
   var due = null;
   function under() { return root.getBoundingClientRect().bottom < vp.H - 1; }
-  function busy(below) { var a = document.activeElement; return below || window.__toolDirty || (a && (root.compareDocumentPosition(a) & 20) == 4); } // after the story, not in it
+  function busy(below) { var a = document.activeElement; return below || window.__toolDirty || (a && (root.compareDocumentPosition(a) & 20) == 4); }
   window.addEventListener("scroll", function () { if (due && !under() && !busy()) { var f = due; due = null; f(); } }, { passive: true });
 
   var readyResolve, revealDone = Promise.resolve(), ready = new Promise(function (r) { readyResolve = r; });

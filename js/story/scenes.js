@@ -1807,7 +1807,7 @@
 
   function field(v) {
     var ph = v.phone, W = v.W, H = v.H * (ph ? 0.79 : 1), q = ph || W * H < 5e5 ? 2 : 1, u = 1 / (ph ? 120 : 260) / v.k, o = at(v), a = 2447, n = 1, t = 0, key = W + "x" + v.H,
-      cv = document.createElement("canvas"), w = (cv.width = Math.ceil(W * q)), g = cv.getContext("2d"), im = g.createImageData(w, (cv.height = Math.ceil(H * q))), d = im.data, N = S.get("DEATHS_PER_YEAR"), x, y, X, Y, c, i;
+      cv = document.createElement("canvas"), w = (cv.width = Math.ceil(W * q)), g = cv.getContext("2d"), im = g.createImageData(w, (cv.height = Math.ceil(H * q))), d = im.data, N = S.get("DEATHS_PER_YEAR"), P = new Uint32Array(N), B = new Uint8Array(N), x, y, X, Y, c, i;
     function r() { a ^= a << 13; a ^= a >>> 17; a ^= a << 5; return (a >>> 0) / 4294967296; }
     new Uint32Array(d.buffer).fill(0xffffff);
     J = { k: key, run: function (m) {
@@ -1816,11 +1816,16 @@
         c = Math.sin(2.4 * x * u + 2 * Math.sin(1.7 * y * u)) + Math.sin(2.2 * y * u + 2 * Math.sin(1.9 * x * u));
         if (!d[i] && Math.hypot(x - o.x, y - o.y) > 10 && r() < (0.9 + 0.05 * c) * (ph ? sm(0.78, 0.52, Y + 0.1 - 0.1 * X)
           : sm(0.74, 0.3, Y - 0.42 * X) * sm(0.55, 1.3, Math.hypot(3.13 * X - 0.98, 5.45 * Y - 4.34))))
-          d[i] = 20 + 220 * Math.pow(r(), 4.6) * (0.65 + 0.175 * c), n++;
+          B[n] = d[i] = 20 + 220 * Math.pow(r(), 4.6) * (0.65 + 0.175 * c), P[n++] = i;
       }
       if (n < N && t < 2e7) return;
-      g.putImageData(im, 0, 0);
-      F = { k: key, c: cv, q: q };
+      for (i = n; i--; ) d[P[i]] = 0;
+      F = { k: key, c: cv, q: q, n: n, s: 0, f: function (m) {
+        if (F.s == m) return;
+        for (; F.s < m; F.s++) d[P[F.s]] = B[F.s];
+        for (; F.s > m; ) d[P[--F.s]] = 0;
+        g.putImageData(im, 0, 0);
+      } };
       J = 0;
     } };
   }
@@ -1884,6 +1889,7 @@
         point: sm(0.06, 0.12, p) * out,
         one: sm(0.15, 0.2, p) * (1 - sm(0.26, 0.31, p)),
         field: sm(0.3, 0.44, p) * out,
+        n: S.clamp((p - 0.3) / 0.2, 0, 1), o: out,
         content: sm(0.62, 0.67, p) * (1 - sm(0.8, 0.85, p)),
         close: sm(0.85, 0.9, p),
         ready: sm(0.89, 0.94, p),
@@ -1896,9 +1902,10 @@
 
     draw: function (g, st, api) {
       var v = api.vp, o = at(v), px = g.getTransform().a, r = (v.phone ? 170 : 300) * v.k, b = g.createRadialGradient(o.x, o.y, 0, o.x, o.y, r);
-      if (st.field > 0) {
+      if (st.n > 0) {
         if (!ready(v)) job(v).run(1 / 0);
-        g.globalAlpha = st.field;
+        F.f(Math.round(Math.pow(F.n, st.n)));
+        g.globalAlpha = st.o;
         g.imageSmoothingEnabled = px < F.q;
         g.drawImage(F.c, 0, 0, F.c.width / F.q, F.c.height / F.q);
       }

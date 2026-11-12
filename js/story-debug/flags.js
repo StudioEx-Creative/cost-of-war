@@ -36,6 +36,8 @@
     ["H1", "design", "Feedback: once a cause is chosen, the 'Have your say' tab and the '$2.89T' label sit above the dashed outline of the whole budget, so they never cover the pieces in the drained band."],
     ["H4", "design", "Feedback: the coalition globe now draws the world's coastlines (Natural Earth 1:110m land, public domain, js/map/world-110m.js, 16 KB compressed, loaded only with the globe; Antarctica left out), on the 3D globe, the still globe and the close-up. Grid lines dimmer, sign-up bars thicker."],
     ["H6", "copy", "Feedback, new words: the Archive's buttons 'Turn left', 'Walk in', 'Step back', 'Turn right' and 'Read the nearest sheet', and the keys line now adds 'W and S to walk'. Approve the words."],
+    ["H1", "copy", "Feedback, new words: '▲ Most important to you' now sits above rank 1 in 'Your priorities, in order', in brand blue, and rank 1's name and number are set larger. Approve the words."],
+    ["S12", "design", "Feedback: the 244,700 points no longer fade in as one picture. They arrive in the order they were scattered, driven by the scroll: one, two, three, then faster and faster until all are there (over a fifth of the scene); scrolling back takes them away in reverse. Restrained scene: no cut, no sound."],
     ["H6", "design", "Feedback: moving in the Archive glides instead of jumping, and the reader can now walk through the room (W and S, or the buttons), kept inside the room's edge. A drag still turns at once, as the hand moves."],
 
     // Phase 4 defaults: reversible, each one a decision for Greg (spec, "Defaults for open decisions")
