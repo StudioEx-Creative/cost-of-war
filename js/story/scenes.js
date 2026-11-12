@@ -326,14 +326,14 @@
         box = { x: m.x + k * sx, y: m.y + k * (sy - cs * (ph ? 500 : 900)), w: k * cs * (ph ? 343 : 1440), h: k * cs * (ph ? 500 : 900) },
         t = { rx: L(ph ? 6 : 5, ph ? 32 : 30, e), ry: L(-1, -4, e), rz: L(-1, ph ? -6 : -5, e), persp: (ph ? 900 : 1500) * k, ox: m.x + k * (ph ? 187.5 : 720), oy: m.y + k * (ph ? 406 : 450) },
         rs = S.ladder(R.map(function (r) { return r[0]; }), fit, box, ["blue", "red", "red", "red"], { edge: 1.5 * cs * k, tilt: t }),
-        a = rs.a, A = rs[a], b = cam.bbox(A, t), n = p < 0.5 ? 18 : 6, d = ph ? [268, 304, 86, 90, 0.1, 0.9] : [96, 104, 240, 150, 0.06, 0.92],
+        a = rs.a, A = rs[a], b = cam.bbox(A, t), u = a < 3 ? Math.log(fit / A.rung.value) / Math.log(rs[a + 1].rung.value / A.rung.value) : (p - 0.92) * 12.5, n = p < 0.5 ? 18 : 6, d = ph ? [268, 304, 86, 90, 0.1, 0.9] : [96, 104, 240, 150, 0.06, 0.92],
         o = cam.project(rs[3].x, rs[3].y + rs[3].h, 0, t);
       A.edge = 2 * cs * k;
       A.tab = 1;
       A.tabSize = (ph ? 8 : 12) * cs * k;
       return {
         sheet: null,
-        pool: A, rs: rs, a: a, p: p > 0, r: m.r, cl: v.short ? v.stage : null,
+        pool: A, rs: rs, a: a, u: u, p: p > 0, r: m.r, cl: v.short ? v.stage : null,
         c: rs.slice(0, 3).map(function (q) { var c = cam.project(q.x + q.w, q.y, 0, t); return [(c.x - m.x) / k, (c.y - m.y) / k]; }),
         br: b.w >= 0.9 * v.W && b.h >= (ph ? 450 * k : 0.9 * v.H) ? null
           : [{ x: b.x - n, y: b.y - n, w: b.w + 2 * n, h: b.h + 2 * n }, p < 0.5 ? !(ph && p < 0.36) && "ACQUIRING · LADDER" : a > 2 ? "LOCKED · SHEET LYING BACK" : "LOCKED · LADDER", p >= 0.5],
@@ -347,6 +347,7 @@
       Q.forEach(function (q, i) {
         var c = st.c[i], j = a - 1 - i, on = +(i < a), x, y;
         set(q.s, "opacity", +(a === i));
+        [1, 3, 4].forEach(function (j, n) { set(q.e[j], "opacity", S.clamp(st.u * 20 - 1 - 2 * n, 0, 1)); });
         if (q.h) set(q.h, "opacity", +(st.p && a === i - 1));
         if (!q.k) return;
         x = ph ? Math.min(339 - 20 * r, c[0] + 26 * r + 6 * j * r) : SL[i][0];
@@ -637,7 +638,7 @@
     },
 
     state: function (p, v) {
-      var ph = v.phone, m = S.sb(v), k = m.k, b = V[+ph], g = S.clamp((p - GL) / (SN - GL), 0, 1), sn = p >= SN, rid = g && !sn, fu = sm(FU, 1, p),
+      var ph = v.phone, m = S.sb(v), k = m.k, b = V[+ph], g = S.clamp((p - GL) / (SN - GL), 0, 1), w = sm(0.7, 1, g), sn = p >= SN, rid = g && !sn, fu = sm(FU, 1, p),
         e = Math.sin((Math.PI / 2) * g), dx = ph || p < GL ? 0 : sn ? 130 - 110 * sm(SN, FU, p) : 130 * e,
         t = ph ? { rx: L(8, 34, fu), ry: L(22, 4, fu), rz: L(-2, -4, fu) }
           : { rx: p < FU ? L(-11, -4, Math.min(1, p / 0.8)) : L(-4, 44, fu), ry: p < SN ? 6 + 8 * e : L(L(14, 3, sm(SN, 0.8, p)), 0, fu), rz: -4 * fu },
@@ -646,13 +647,13 @@
       function P(x, y) { return [m.x + k * x, m.y + k * y]; }
       function Q(r, a) { return { x: m.x + k * r.x, y: m.y + k * r.y, w: k * r.w, h: k * r.h, a: a }; }
       A.forEach(function (a, i) {
-        var l = (a.amt * b[3]) / A[0].amt, sl = sn ? G.indexOf(i) : i, mv = i == MV && rid, r,
+        var l = (a.amt * b[3]) / A[0].amt, sl = L(i, G.indexOf(i), w), mv = i == MV && rid, r,
           o = ph ? { x: b[4], y: b[0] + i * b[2] + 20, w: l, h: b[1] } : { x: b[4] + i * b[2] + dx, y: b[0] - l, w: b[1], h: l };
         if (mv) sl = i * (1 - g);
-        r = ph ? { x: b[4] + (mv ? 150 : 0), y: L(b[0] + sl * b[2] + 20, 166 + sl * 28, fu), w: l, h: L(b[1], 28, fu) }
-          : { x: L(b[4] + sl * b[2], 410 + sl * b[1], fu) + dx, y: b[0] - l - (mv ? 150 * Math.min(1, g * 6) : 0), w: b[1], h: l };
+        r = ph ? { x: b[4] + (mv ? 150 * (1 - w) : 0), y: L(b[0] + sl * b[2] + 20, 166 + sl * 28, fu), w: l, h: L(b[1], 28, fu) }
+          : { x: L(b[4] + sl * b[2], 410 + sl * b[1], fu) + dx, y: b[0] - l - (mv ? 150 * Math.min(1, g * 6) * (1 - w) : 0), w: b[1], h: l };
         if (mv) for (j = 0; j < 5; j++) gh.push(Q({ x: ph && j ? r.x : L(o.x, r.x, j / 5), y: L(o.y, r.y, j / 5), w: r.w, h: r.h }, 0.15 + j / 7));
-        if (sn && !fu && sl != i) gh.push(Q(o, 0.3));
+        if (w && !fu && !mv && sl != i) gh.push(Q(o, 0.3 * w));
         lab.push(P(r.x, ph ? r.y - 20 : r.y + l));
         R.push(r);
         r = pts[sl] = Object.assign(Q(r), { tilt: t, tone: i == red && fu < 0.5 ? "red" : "neutral", edge: ((i == red ? 2 : 1) * (1 - sm(0.6, 1, fu))) || 0.01, tab: i == red && fu < 0.5, tabSize: (ph ? 5 : 8) * k, shadow: false, mv: mv, sl: sl });
@@ -663,6 +664,7 @@
       });
       M = R[MV];
       Z = rid ? [M.x - 10, M.y - 128, ph ? 0.2 : 0.28 * (1 + 0.4 * g)] : sn ? (ph ? [70, 602, 1] : [872, 214, 1]) : ph ? [14, 590, 0.75] : [700, 158, 0.79];
+      if (rid && !ph) Z = Z.map(function (q, j) { return L(q, [872, 214, 1][j], w); });
       z = ph && !rid ? S.sb(v, "t") : m;
       var zy = z.y + z.k * Z[1];
       if (ph && rid) {
@@ -692,7 +694,7 @@
       BX.forEach(function (e, i) {
         var mv = st.bars[i].mv, fl = mv && ph, q = v.short && !fl && cam.project(st.lab[i][0], st.lab[i][1], 0, st.t);
         if (q) at(e, [q.x, q.y], 0, null); else at(e, st.lab[i], 0, fl ? null : undefined);
-        set(e, "opacity", nf);
+        set(e, "opacity", nf * (st.bars[i].sl % 1 ? 0.25 : 1));
         set(e.q[3], "opacity", mv ? 0 : st.rd);
         set(e.q[0], "transform", mv ? "translate(" + -e.q[0].d + "px,3px)" : "none");
         set(e.q[1], "opacity", +!mv);
