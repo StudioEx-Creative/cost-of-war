@@ -23,11 +23,11 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap"
     />
-    <link rel="stylesheet" href="css/story.css?v=p4fix5" />
+    <link rel="stylesheet" href="css/story.css?v=2026r-scroll1" />
     <!-- every scene's styles, one section per scene -->
-    <link rel="stylesheet" href="css/story/scenes.css?v=p4fix5" />
+    <link rel="stylesheet" href="css/story/scenes.css?v=2026r-scroll1" />
     <!-- the tools: shared rules, then one section per tool (H1 to H6) -->
-    <link rel="stylesheet" href="css/tools.css?v=p4fix5" />
+    <link rel="stylesheet" href="css/tools.css?v=2026r-scroll1" />
   </head>
   <body>
     <a class="skip-link" href="#haveyoursay">Skip to Have your say</a>
@@ -709,33 +709,33 @@
 
     <!-- The story first: it never waits for the tools' scripts or supabase-js (a slow phone draws
          its first picture sooner). js/data.js is the only home for figures; the story reads it too. -->
-    <script src="js/data.js?v=p4fix5"></script>
+    <script src="js/data.js?v=2026r-scroll1"></script>
     <!-- Native scroll; no smooth-scroll library. -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
     <!-- Engine: core, camera maths, chrome + atmosphere (one file) -->
-    <script src="js/story/engine.js?v=p4fix5"></script>
+    <script src="js/story/engine.js?v=2026r-scroll1"></script>
     <!-- Assets the scenes read when the story starts (data and drawings, not story code):
          S05's drawings, and S07's land outline (Natural Earth, public domain, read only) -->
-    <script src="js/story-assets/s05-drawings.js?v=p4fix5"></script>
-    <script src="js/map/land-110m.js?v=p4fix5"></script>
+    <script src="js/story-assets/s05-drawings.js?v=2026r-scroll1"></script>
+    <script src="js/map/land-110m.js?v=2026r-scroll1"></script>
     <!-- The scenes, S00 to S13, one section each; its last lines start the story -->
-    <script src="js/story/scenes.js?v=p4fix5"></script>
+    <script src="js/story/scenes.js?v=2026r-scroll1"></script>
     <!-- The tools, deferred: fetched at low priority, then run in exactly this order once the page
          has been read, after the story has started. supabase-js, config, backend, main as before. -->
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script defer src="js/config.js?v=p4fix5"></script>
-    <script defer src="js/backend.js?v=p4fix5"></script>
+    <script defer src="js/config.js?v=2026r-scroll1"></script>
+    <script defer src="js/backend.js?v=2026r-scroll1"></script>
     <!-- tools: state and logic -->
-    <script defer src="js/main.js?v=p4fix5"></script>
+    <script defer src="js/main.js?v=2026r-scroll1"></script>
     <!-- tools: one view per tool, each reading main.js through ToolView -->
-    <script defer src="js/tools/h1.js?v=p4fix5"></script>
-    <script defer src="js/tools/h2.js?v=p4fix5"></script>
-    <script defer src="js/tools/h3.js?v=p4fix5"></script>
-    <script defer src="js/tools/h4.js?v=p4fix5"></script>
-    <script defer src="js/tools/h5.js?v=p4fix5"></script>
-    <script defer src="js/tools/h6.js?v=p4fix5"></script>
+    <script defer src="js/tools/h1.js?v=2026r-scroll1"></script>
+    <script defer src="js/tools/h2.js?v=2026r-scroll1"></script>
+    <script defer src="js/tools/h3.js?v=2026r-scroll1"></script>
+    <script defer src="js/tools/h4.js?v=2026r-scroll1"></script>
+    <script defer src="js/tools/h5.js?v=2026r-scroll1"></script>
+    <script defer src="js/tools/h6.js?v=2026r-scroll1"></script>
     <!-- The Archive: lazy-loads Three.js only when it nears the viewport -->
-    <script defer src="js/room.js?v=p4fix5"></script>
+    <script defer src="js/room.js?v=2026r-scroll1"></script>
   </body>
 </html>
